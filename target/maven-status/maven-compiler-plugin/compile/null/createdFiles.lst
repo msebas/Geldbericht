@@ -1,0 +1,5 @@
+org/mcservice/geldbericht/database/DbAbstractionLayer.class
+org/mcservice/geldbericht/PrimaryController.class
+module-info.class
+org/mcservice/geldbericht/SecondaryController.class
+org/mcservice/geldbericht/App.class
