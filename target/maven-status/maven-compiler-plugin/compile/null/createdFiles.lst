@@ -1,5 +1,14 @@
 org/mcservice/geldbericht/database/DbAbstractionLayer.class
-org/mcservice/geldbericht/PrimaryController.class
-module-info.class
-org/mcservice/geldbericht/SecondaryController.class
+org/mcservice/geldbericht/data/MonthAccountTurnover.class
+org/mcservice/geldbericht/data/DataObject.class
+org/mcservice/geldbericht/data/Amortisation/AmortisationType.class
+org/mcservice/geldbericht/data/Company.class
 org/mcservice/geldbericht/App.class
+org/mcservice/geldbericht/PrimaryController.class
+org/mcservice/geldbericht/data/Amortisation/ContinousLinearAmortisation.class
+module-info.class
+org/mcservice/geldbericht/data/Account.class
+org/mcservice/geldbericht/database/SQLiteDb.class
+org/mcservice/geldbericht/data/Transaction.class
+org/mcservice/geldbericht/SecondaryController.class
+org/mcservice/geldbericht/data/VatType.class
