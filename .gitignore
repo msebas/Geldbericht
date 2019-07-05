@@ -2,3 +2,7 @@
 *.jar
 *.zip
 *.pdf
+tmp/
+vendor/
+bin/
+target/

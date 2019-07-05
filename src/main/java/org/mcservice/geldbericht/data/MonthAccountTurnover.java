@@ -1,15 +1,42 @@
+/*******************************************************************************
+ * Copyright (C) 2019 Sebastian Müller <sebastian.mueller@mcservice.de>
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package org.mcservice.geldbericht.data;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
-public class MonthAccountTurnover extends DataObject {
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "MonthAccountTurnovers")
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+public class MonthAccountTurnover extends AbstractDataObject {
 	
-	ArrayList<Transaction> transactions=new ArrayList<Transaction>();
-	Company company=null;
-	
+	@ElementCollection
+	List<Transaction> transactions=new ArrayList<Transaction>();
 	LocalDate month=null;
+	@ManyToOne
 	Account account=null;
 	int monthBalanceAssets=0;
 	int initialAssets=0;
@@ -18,6 +45,9 @@ public class MonthAccountTurnover extends DataObject {
 	int initialDebt=0;
 	int finalDebt=0;
 	
+	private MonthAccountTurnover() {
+		super(null,ZonedDateTime.now());
+	}
 	/**
 	 * @param uid
 	 * @param lastChange
@@ -33,11 +63,10 @@ public class MonthAccountTurnover extends DataObject {
 	 * @param finalDebt
 	 */
 	public MonthAccountTurnover(Long uid, ZonedDateTime lastChange, ArrayList<Transaction> transactions,
-			Company company, LocalDate month, Account account, int monthBalanceAssets, int initialAssets,
+			LocalDate month, Account account, int monthBalanceAssets, int initialAssets,
 			int finalAssets, int monthBalanceDebt, int initialDebt, int finalDebt) {
 		super(uid,lastChange);
 		this.transactions = transactions;
-		this.company = company;
 		this.month = month;
 		this.account = account;
 		this.monthBalanceAssets = monthBalanceAssets;
@@ -100,15 +129,6 @@ public class MonthAccountTurnover extends DataObject {
 	}
 	
 	/**
-	 * @param company the company to set
-	 */
-	public void setCompany(Company company) {
-		if(this.company==company || ( this.company!=null && this.company.equals(company) ) )
-			return;
-		this.company = company;
-		this.lastChange=ZonedDateTime.now();
-	}
-	/**
 	 * @param month the month to set
 	 */
 	public void setMonth(LocalDate month) {
@@ -152,14 +172,8 @@ public class MonthAccountTurnover extends DataObject {
 	/**
 	 * @return the transactions
 	 */
-	public ArrayList<Transaction> getTransactions() {
+	public List<Transaction> getTransactions() {
 		return transactions;
-	}
-	/**
-	 * @return the company
-	 */
-	public Company getCompany() {
-		return company;
 	}
 	/**
 	 * @return the month

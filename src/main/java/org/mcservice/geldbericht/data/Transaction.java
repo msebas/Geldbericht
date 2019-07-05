@@ -1,34 +1,62 @@
+/*******************************************************************************
+ * Copyright (C) 2019 Sebastian Müller <sebastian.mueller@mcservice.de>
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package org.mcservice.geldbericht.data;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 
-import org.mcservice.geldbericht.data.Amortisation.AmortisationType;
+import javax.persistence.Entity;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
-public class Transaction  extends DataObject {
+@Entity
+@Table(name = "Transactions")
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+public class Transaction  extends AbstractDataObject {
 	
 	int number=0;
 	
 	int receipts=0;
 	int spending=0;
 	Short accountingContraAccount=null;
-	Short accountingConstGroup=null;
+	Short accountingCostGroup=null;
 	Short accountingCostCenter=null;
 	String voucher=null;
 	LocalDate transactionDate=null;
+	@ManyToOne(targetEntity=VatType.class)
 	VatType vat=null;
 	Long inventoryNumber=null;
-	AmortisationType amortisationType=null;
-	Long amortisationValue=null;
+	//AmortisationType amortisationType=null;
+	//Long amortisationValue=null;
 	String descriptionOfTransaction=null;	
 
+	private Transaction() {
+		super(null,ZonedDateTime.now());
+	}
+	
 	/**
 	 * @param uid
 	 * @param lastChange
 	 * @param receipts
 	 * @param spending
 	 * @param accountingContraAccount
-	 * @param accountingConstGroup
+	 * @param accountingCostGroup
 	 * @param accountingCostCenter
 	 * @param voucher
 	 * @param transactionDate
@@ -38,23 +66,60 @@ public class Transaction  extends DataObject {
 	 * @param amortisationValue
 	 * @param descriptionOfTransaction
 	 */
-	public Transaction(Long uid, ZonedDateTime lastChange, int number, int receipts,
-			int spending, Short accountingContraAccount, Short accountingConstGroup, Short accountingCostCenter,
+	protected Transaction(Long uid, ZonedDateTime lastChange, int number, int receipts,
+			int spending, Short accountingContraAccount, Short accountingCostGroup, Short accountingCostCenter,
 			String voucher, LocalDate transactionDate, VatType vat, Long inventoryNumber,
-			AmortisationType amortisationType, Long amortisationValue, String descriptionOfTransaction) {
+			//AmortisationType amortisationType, Long amortisationValue, 
+			String descriptionOfTransaction) {
 		super(uid, lastChange);
 		this.number=number;
 		this.receipts = receipts;
 		this.spending = spending;
 		this.accountingContraAccount = accountingContraAccount;
-		this.accountingConstGroup = accountingConstGroup;
+		this.accountingCostGroup = accountingCostGroup;
 		this.accountingCostCenter = accountingCostCenter;
 		this.voucher = voucher;
 		this.transactionDate = transactionDate;
 		this.vat = vat;
 		this.inventoryNumber = inventoryNumber;
-		this.amortisationType = amortisationType;
-		this.amortisationValue = amortisationValue;
+		//this.amortisationType = amortisationType;
+		//this.amortisationValue = amortisationValue;
+		this.descriptionOfTransaction = descriptionOfTransaction;
+	}
+	
+	/**
+	 * @param uid
+	 * @param receipts
+	 * @param spending
+	 * @param accountingContraAccount
+	 * @param accountingCostGroup
+	 * @param accountingCostCenter
+	 * @param voucher
+	 * @param transactionDate
+	 * @param vat
+	 * @param inventoryNumber
+	 * @param amortisationType
+	 * @param amortisationValue
+	 * @param descriptionOfTransaction
+	 */
+	public Transaction(int number, int receipts,
+			int spending, Short accountingContraAccount, Short accountingCostGroup, Short accountingCostCenter,
+			String voucher, LocalDate transactionDate, VatType vat, Long inventoryNumber,
+			//AmortisationType amortisationType, Long amortisationValue, 
+			String descriptionOfTransaction) {
+		super(null);
+		this.number=number;
+		this.receipts = receipts;
+		this.spending = spending;
+		this.accountingContraAccount = accountingContraAccount;
+		this.accountingCostGroup = accountingCostGroup;
+		this.accountingCostCenter = accountingCostCenter;
+		this.voucher = voucher;
+		this.transactionDate = transactionDate;
+		this.vat = vat;
+		this.inventoryNumber = inventoryNumber;
+		//this.amortisationType = amortisationType;
+		//this.amortisationValue = amortisationValue;
 		this.descriptionOfTransaction = descriptionOfTransaction;
 	}
 
@@ -135,23 +200,23 @@ public class Transaction  extends DataObject {
 	}
 
 	/**
-	 * @return the accountingConstGroup
+	 * @return the accountingCostGroup
 	 */
-	public Short getAccountingConstGroup() {
-		return accountingConstGroup;
+	public Short getAccountingCostGroup() {
+		return accountingCostGroup;
 	}
 
 	/**
 	 * Sets lastChange to the actual time if the value is set
 	 * 
-	 * @param accountingConstGroup the accountingConstGroup to set
+	 * @param accountingCostGroup the accountingCostGroup to set
 	 */
-	public void setAccountingConstGroup(Short accountingConstGroup) {
-		if(this.accountingConstGroup==accountingConstGroup ||
-				( this.accountingConstGroup!=null && this.accountingConstGroup.equals(accountingConstGroup) )
+	public void setAccountingCostGroup(Short accountingCostGroup) {
+		if(this.accountingCostGroup==accountingCostGroup ||
+				( this.accountingCostGroup!=null && this.accountingCostGroup.equals(accountingCostGroup) )
 				)
 			return;
-		this.accountingConstGroup = accountingConstGroup;
+		this.accountingCostGroup = accountingCostGroup;
 		this.lastChange=ZonedDateTime.now();
 	}
 
@@ -255,49 +320,6 @@ public class Transaction  extends DataObject {
 				)
 			return;
 		this.inventoryNumber = inventoryNumber;
-		this.lastChange=ZonedDateTime.now();
-	}
-
-	/**
-	 * @return the amortisationType
-	 */
-	public AmortisationType getAmortisationType() {
-		return amortisationType;
-	}
-
-	/**
-	 * Sets lastChange to the actual time if the value is set
-	 * 
-	 * @param amortisationType the amortisationType to set
-	 */
-	public void setAmortisationType(AmortisationType amortisationType) {
-		if(this.amortisationType==amortisationType ||
-				( this.amortisationType!=null && this.amortisationType.equals(amortisationType) )
-				)
-			return;
-		this.amortisationType = amortisationType;
-		this.lastChange=ZonedDateTime.now();
-	}
-	
-	/**
-	 * @return the amortisationValue
-	 */
-	public Long getAmortisationValue() {
-		return amortisationValue;
-	}
-
-
-	/**
-	 * Sets lastChange to the actual time if the value is set
-	 * 
-	 * @param amortisationValue the amortisationValue to set
-	 */
-	public void setAmortisationValue(Long amortisationValue) {
-		if(this.amortisationValue==amortisationValue ||
-				( this.amortisationValue!=null && this.amortisationValue.equals(amortisationValue) )
-				)
-			return;
-		this.amortisationValue = amortisationValue;
 		this.lastChange=ZonedDateTime.now();
 	}
 

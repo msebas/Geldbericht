@@ -14,15 +14,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package org.mcservice.geldbericht;
+package org.mcservice.geldbericht.data;
 
-import java.io.IOException;
-import javafx.fxml.FXML;
+import java.time.ZonedDateTime;
 
-public class SecondaryController {
+public class User extends AbstractDataObject {
 
-    @FXML
-    private void switchToPrimary() throws IOException {
-        App.setRoot("primary");
-    }
+	public User(Long uid, ZonedDateTime lastChange) {
+		super(uid, lastChange);
+		// TODO Auto-generated constructor stub
+	}
+
+	public User(Long uid) {
+		super(uid);
+		// TODO Auto-generated constructor stub
+	}
+
 }

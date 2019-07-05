@@ -18,11 +18,15 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/home/Sebastian/workspace/Geldbericht/resources/lib/mariadb-java-client-2.4.1.jar" sourcepath="resources/lib/mariadb-java-client-2.4.1-sources.jar">
+	<classpathentry kind="lib" path="/home/Sebastian/.m2/repository/org/jboss/logging/jboss-logging/3.3.2.Final/jboss-logging-3.3.2.Final.jar" sourcepath="/home/Sebastian/.m2/repository/org/jboss/logging/jboss-logging/3.3.2.Final/jboss-logging-3.3.2.Final-sources.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/Geldbericht/resources/lib/mariadb-java-client-2.4.1-javadoc.jar!/"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="javadoc_location" value="jar:file:/home/Sebastian/.m2/repository/org/jboss/logging/jboss-logging/3.3.2.Final/jboss-logging-3.3.2.Final-javadoc.jar!/"/>
+			<attribute name="maven.groupId" value="org.jboss.logging"/>
+			<attribute name="maven.artifactId" value="jboss-logging"/>
+			<attribute name="maven.version" value="3.3.2.Final"/>
+			<attribute name="maven.scope" value="compile"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/home/Sebastian/workspace/Geldbericht/resources/lib/sqlite-jdbc-3.27.2.1.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

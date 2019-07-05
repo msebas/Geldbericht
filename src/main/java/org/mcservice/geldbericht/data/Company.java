@@ -1,20 +1,60 @@
+/*******************************************************************************
+ * Copyright (C) 2019 Sebastian Müller <sebastian.mueller@mcservice.de>
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package org.mcservice.geldbericht.data;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.Entity;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "Companys")
-public class Company extends DataObject{
+@Table(name = "Companies")
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+public class Company extends AbstractDataObject{
 	
-	ArrayList<Account> accounts=new ArrayList<Account>();
-	
+	@OneToMany(mappedBy="company")
+	List<Account> accounts=new ArrayList<Account>();
 	String companyName=null;
 	String companyNumber=null;
 	String companyBookkeepingAppointment=null;
+	
+	private Company() {
+		super(null,ZonedDateTime.now());
+	}
+
+	/**
+	 * @param uid
+	 * @param lastChange
+	 * @param accounts
+	 * @param companyName
+	 * @param companyNumber
+	 * @param companyBookkeepingAppointment
+	 */
+	public Company(String companyName, String companyNumber, String companyBookkeepingAppointment) {
+		super(null);
+		this.companyName = companyName;
+		this.companyNumber = companyNumber;
+		this.companyBookkeepingAppointment = companyBookkeepingAppointment;
+	}
 	
 	/**
 	 * @param uid
@@ -24,9 +64,9 @@ public class Company extends DataObject{
 	 * @param companyNumber
 	 * @param companyBookkeepingAppointment
 	 */
-	public Company(Long uid, ZonedDateTime lastChange, ArrayList<Account> accounts, String companyName,
+	public Company(ArrayList<Account> accounts, String companyName,
 			String companyNumber, String companyBookkeepingAppointment) {
-		super(uid,lastChange);
+		super(null);
 		this.accounts = accounts;
 		this.companyName = companyName;
 		this.companyNumber = companyNumber;
@@ -36,7 +76,7 @@ public class Company extends DataObject{
 	/**
 	 * @return the accounts
 	 */
-	public ArrayList<Account> getAccounts() {
+	public List<Account> getAccounts() {
 		return accounts;
 	}
 	
@@ -51,6 +91,7 @@ public class Company extends DataObject{
 		this.accounts = accounts;
 		this.lastChange=ZonedDateTime.now();
 	}
+	
 	/**
 	 * @return the companyName
 	 */

@@ -17,73 +17,53 @@
 package org.mcservice.geldbericht.data;
 
 import java.time.ZonedDateTime;
+
 import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 
 @Entity
-@Table(name = "VatTypes")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-public class VatType  extends AbstractDataObject {
+public abstract class AbstractDataObject {
 	
-	protected String name=null;
-	protected double value=0.0;
-	protected boolean defaultVatType=false;
-	
-	private VatType() {
-		super(null,ZonedDateTime.now());
-	}
+	@Id
+	@GeneratedValue(strategy= GenerationType.SEQUENCE)
+	protected final Long uid;
+	protected ZonedDateTime lastChange=ZonedDateTime.now();
 	
 	/**
 	 * @param uid
 	 * @param lastChange
-	 * @param name
-	 * @param value
 	 */
-	protected VatType(Long uid, ZonedDateTime lastChange, String name, double value, 
-			boolean defaultVatType) {
-		super(uid, lastChange);
-		this.name = name;
-		this.value = value;
-		this.defaultVatType=defaultVatType;
+	protected AbstractDataObject(Long uid, ZonedDateTime lastChange) {
+		super();
+		this.uid = uid;
+		this.lastChange = lastChange;
 	}
 	
 	/**
-	 * @return the defaultVatType
+	 * @param uid
 	 */
-	public boolean isDefaultVatType() {
-		return defaultVatType;
+	protected AbstractDataObject(Long uid) {
+		super();
+		this.uid = uid;
 	}
-
 	/**
-	 * @param name
-	 * @param value
+	 * @return the uid
 	 */
-	public VatType(String name, double value, boolean defaultVatType) {
-		super(null);
-		this.name = name;
-		this.value = value;
-		this.defaultVatType=defaultVatType;
+	public Long getUid() {
+		return uid;
 	}
-
-	@Override
-	public String toString() {
-		return "VatType [name=" + name + "]";
-	}
-
 	/**
-	 * @return the VatType name
+	 * @return the lastChange
 	 */
-	public String getName() {
-		return name;
+	public ZonedDateTime getLastChange() {
+		return lastChange;
 	}
-
-	/**
-	 * @return the VatType value
-	 */
-	public double getValue() {
-		return value;
-	}
+	
+	
 
 }

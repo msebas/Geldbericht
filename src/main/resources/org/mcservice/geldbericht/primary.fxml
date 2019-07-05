@@ -1,16 +1,263 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Button?>
 <?import javafx.geometry.Insets?>
 
-<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mcservice.geldbericht.PrimaryController">
+<VBox alignment="CENTER" prefHeight="636.0" prefWidth="967.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mcservice.geldbericht.PrimaryController">
    <children>
-      <Label text="Primary View" />
-      <Button fx:id="primaryButton" text="Switch to Secondary View" onAction="#switchToSecondary"/>
+      <MenuBar VBox.vgrow="NEVER">
+        <menus>
+          <Menu mnemonicParsing="false" text="File">
+            <items>
+              <MenuItem mnemonicParsing="false" text="Close" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Edit">
+            <items>
+              <MenuItem mnemonicParsing="false" onAction="#startCompanyManager" text="Betriebsmanager" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Help">
+            <items>
+              <MenuItem mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+      <TabPane prefHeight="576.0" prefWidth="748.0" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+        <tabs>
+          <Tab text="Buchungen">
+            <content>
+                  <SplitPane dividerPositions="0.38113207547169814" orientation="VERTICAL" prefHeight="535.0" prefWidth="748.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <items>
+                        <VBox prefHeight="261.0" prefWidth="746.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                           <children>
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <ChoiceBox fx:id="companySelector" prefWidth="150.0">
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                       </HBox.margin>
+                                    </ChoiceBox>
+                                    <ChoiceBox fx:id="accountSelector" prefWidth="150.0">
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                       </HBox.margin>
+                                    </ChoiceBox>
+                                    <DatePicker fx:id="monthSelector">
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                       </HBox.margin>
+                                    </DatePicker>
+                                    <Pane prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS">
+                                       <VBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                       </VBox.margin>
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                       </HBox.margin></Pane>
+                                    <Label alignment="CENTER" text="Label">
+                                       <VBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                       </VBox.margin>
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                       </HBox.margin></Label>
+                                    <Label alignment="CENTER" text="Label">
+                                       <VBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                       </VBox.margin>
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                       </HBox.margin></Label>
+                                    <Label alignment="CENTER" text="Label">
+                                       <VBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                       </VBox.margin>
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                       </HBox.margin></Label>
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" top="10.0" />
+                                 </VBox.margin>
+                                 <padding>
+                                    <Insets bottom="5.0" left="5.0" right="5.0" />
+                                 </padding>
+                                 <opaqueInsets>
+                                    <Insets />
+                                 </opaqueInsets>
+                              </HBox>
+                              <GridPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="700.0" prefHeight="344.0" prefWidth="965.0" VBox.vgrow="ALWAYS">
+                                <columnConstraints>
+                                    <ColumnConstraints hgrow="SOMETIMES" percentWidth="7.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" percentWidth="7.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" percentWidth="6.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" percentWidth="4.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" percentWidth="5.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" percentWidth="8.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" percentWidth="4.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" percentWidth="5.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" percentWidth="14.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" percentWidth="7.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" percentWidth="33.0" />
+                                </columnConstraints>
+                                <rowConstraints>
+                                  <RowConstraints fillHeight="false" minHeight="-Infinity" vgrow="NEVER" />
+                                  <RowConstraints fillHeight="false" minHeight="-Infinity" vgrow="NEVER" />
+                                  <RowConstraints fillHeight="false" minHeight="-Infinity" prefHeight="27.0" vgrow="NEVER" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                </rowConstraints>
+                                 <children>
+                                    <Label alignment="CENTER" minHeight="-Infinity" text="Einnahme" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" />
+                                    <Label alignment="CENTER" minHeight="-Infinity" text="Ausgabe" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" />
+                                    <Label alignment="CENTER" minHeight="-Infinity" prefHeight="15.0" text="Kontierung" GridPane.columnIndex="2" GridPane.columnSpan="3" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.vgrow="NEVER" />
+                                    <Label alignment="CENTER" minHeight="-Infinity" text="Gegen- konto" wrapText="true" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" />
+                                    <Label alignment="CENTER" minHeight="-Infinity" text="KG" GridPane.columnIndex="3" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" />
+                                    <Label alignment="CENTER" minHeight="-Infinity" text="KST" GridPane.columnIndex="4" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" />
+                                    <Label alignment="CENTER" minHeight="-Infinity" text="Beleg" GridPane.columnIndex="5" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" />
+                                    <Label alignment="CENTER" minHeight="-Infinity" text="Datum" GridPane.columnIndex="6" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" />
+                                    <Label alignment="CENTER" minHeight="-Infinity" text="Tag" GridPane.columnIndex="6" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" />
+                                    <Label alignment="CENTER" minHeight="-Infinity" text="Monat" textOverrun="CLIP" GridPane.columnIndex="7" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" />
+                                    <Label alignment="CENTER" minHeight="-Infinity" text="USt" GridPane.columnIndex="8" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" />
+                                    <Label alignment="CENTER" minHeight="-Infinity" text="Inv.-Nr." GridPane.columnIndex="9" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" />
+                                    <Label alignment="CENTER" minHeight="-Infinity" text="Stück" GridPane.columnIndex="9" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" />
+                                    <Label alignment="CENTER" minHeight="-Infinity" text="Gegenstand der Buchung" GridPane.columnIndex="10" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" />
+                                    <TextField fx:id="receiptsInput" text="0" GridPane.columnIndex="0" GridPane.rowIndex="2">
+                                       <GridPane.margin>
+                                          <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                       </GridPane.margin>
+                                    </TextField>
+                                    <TextField fx:id="spendingInput" text="12" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                       <GridPane.margin>
+                                          <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                       </GridPane.margin>
+                                    </TextField>
+                                    <TextField fx:id="accountingContraAccountInput" text="2222" GridPane.columnIndex="2" GridPane.rowIndex="2">
+                                       <GridPane.margin>
+                                          <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                       </GridPane.margin>
+                                    </TextField>
+                                    <TextField fx:id="accountingCostGroupInput" text="11" GridPane.columnIndex="3" GridPane.rowIndex="2">
+                                       <GridPane.margin>
+                                          <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                       </GridPane.margin>
+                                    </TextField>
+                                    <TextField fx:id="accountingCostCenterInput" text="333" GridPane.columnIndex="4" GridPane.rowIndex="2">
+                                       <GridPane.margin>
+                                          <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                       </GridPane.margin>
+                                    </TextField>
+                                    <TextField fx:id="voucherInput" text="Beleg" GridPane.columnIndex="5" GridPane.rowIndex="2">
+                                       <GridPane.margin>
+                                          <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                       </GridPane.margin>
+                                    </TextField>
+                                    <TextField fx:id="transactionDateDayInput" text="5" GridPane.columnIndex="6" GridPane.rowIndex="2">
+                                       <GridPane.margin>
+                                          <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                       </GridPane.margin>
+                                    </TextField>
+                                    <TextField fx:id="transactionDateMonthInput" text="6" GridPane.columnIndex="7" GridPane.rowIndex="2">
+                                       <GridPane.margin>
+                                          <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                       </GridPane.margin>
+                                    </TextField>
+                                    <TextField fx:id="inventoryNumberInput" text="777" GridPane.columnIndex="9" GridPane.rowIndex="2">
+                                       <GridPane.margin>
+                                          <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                       </GridPane.margin>
+                                    </TextField>
+                                    <TextField fx:id="descriptionOfTransactionInput" text="Bemerkungen" GridPane.columnIndex="10" GridPane.rowIndex="2">
+                                       <GridPane.margin>
+                                          <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                       </GridPane.margin>
+                                    </TextField>
+                                    <ChoiceBox fx:id="vatInput" GridPane.columnIndex="8" GridPane.rowIndex="2">
+                                       <GridPane.margin>
+                                          <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
+                                       </GridPane.margin>
+                                    </ChoiceBox>
+                                 </children>
+                              </GridPane>
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <Button fx:id="saveChangesButton" mnemonicParsing="false" onAction="#persistChanges" text="Änderungen Speichern">
+                                       <HBox.margin>
+                                          <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+                                       </HBox.margin>
+                                    </Button>
+                                    <Button fx:id="revertChangesButton" mnemonicParsing="false" onAction="#revertChanges" text="Änderungen Verwerfen">
+                                       <HBox.margin>
+                                          <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+                                       </HBox.margin>
+                                    </Button>
+                                    <Pane prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                                    <Button fx:id="insertLineButton" mnemonicParsing="false" onAction="#addRowByFields" text="Zeile einfügen">
+                                       <HBox.margin>
+                                          <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+                                       </HBox.margin>
+                                    </Button>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                        <StackPane>
+                           <children>
+                              <TableView fx:id="dataTableView" minWidth="700.0" prefHeight="319.0" prefWidth="965.0" GridPane.halignment="LEFT" GridPane.hgrow="ALWAYS" GridPane.valignment="TOP" GridPane.vgrow="ALWAYS">
+                                <columns>
+                                  <TableColumn prefWidth="74.0" text="Einnahmen" />
+                                  <TableColumn prefWidth="66.0" text="Ausgaben" />
+                                    <TableColumn prefWidth="81.0" text="Gegenkonto" />
+                                    <TableColumn prefWidth="24.0" text="KG" />
+                                    <TableColumn prefWidth="35.0" text="KST" />
+                                    <TableColumn prefWidth="87.0" text="Beleg" />
+                                    <TableColumn prefWidth="63.0" text="Datum" />
+                                    <TableColumn prefWidth="40.0" text="USt" />
+                                    <TableColumn prefWidth="57.0" text="Inv.-Nr." />
+                                    <TableColumn prefWidth="413.0" text="Gegenstand der Buchung" />
+                                </columns>
+                              </TableView>
+                           </children>
+                        </StackPane>
+                    </items>
+                  </SplitPane>
+            </content>
+          </Tab>
+          <Tab text="Untitled Tab 2">
+            <content>
+              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <VBox prefHeight="324.0" prefWidth="748.0">
+                           <children>
+                              <Label text="Primary View" />
+                              <Button fx:id="primaryButton" onAction="#switchToSecondary" text="Switch to Secondary View" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </AnchorPane>
+            </content>
+          </Tab>
+        </tabs>
+      </TabPane>
+      <HBox prefHeight="19.0" prefWidth="967.0">
+         <children>
+            <Label minHeight="-Infinity" minWidth="-Infinity" text="Status Rechts">
+               <HBox.margin>
+                  <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+               </HBox.margin></Label>
+            <Pane prefHeight="27.0" prefWidth="903.0" HBox.hgrow="ALWAYS" />
+            <Label minHeight="-Infinity" minWidth="-Infinity" text="Status Links">
+               <HBox.margin>
+                  <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+               </HBox.margin></Label>
+         </children>
+      </HBox>
    </children>
-   <padding>
-      <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-   </padding>
 </VBox>

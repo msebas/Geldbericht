@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright (C) 2019 Sebastian Müller <sebastian.mueller@mcservice.de>
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package org.mcservice.geldbericht.database.test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,7 +29,7 @@ import java.time.ZonedDateTime;
 import java.util.TreeSet;
 import org.junit.jupiter.api.io.TempDir;
 import org.mcservice.geldbericht.data.VatType;
-import org.mcservice.geldbericht.database.SQLiteDB;
+import org.mcservice.geldbericht.database.DbAbstractionLayer;
 import org.junit.jupiter.api.Test;
 
 class SQLiteDBTest {
@@ -22,9 +38,12 @@ class SQLiteDBTest {
 	void createTablesTest(@TempDir Path tempDir) throws SQLException {
 		Path dbFile=tempDir.resolve("tempDb.sql");
 		
-		SQLiteDB tstObj=new SQLiteDB(dbFile.toString());
+		DbAbstractionLayer tstObj=new DbAbstractionLayer(dbFile.toString());
 		
-		tstObj.checkAndCreateDatabase();
+		VatType vat1=new VatType("Exception",0,false);
+		VatType vat2=tstObj.persistVatType(vat1);
+		
+		//tstObj.checkAndCreateDatabase();
 		
 		String url = "jdbc:sqlite:"+dbFile.toString();
 		Connection connection = DriverManager.getConnection(url);
@@ -38,11 +57,15 @@ class SQLiteDBTest {
 		
 		assertTrue(tables.contains("Accounts"));
 		assertTrue(tables.contains("Companies"));
+		assertTrue(tables.contains("MonthAccountTurnovers"));
+		assertTrue(tables.contains("Transactions"));
 		assertTrue(tables.contains("VatTypes"));
+		assertNotNull(vat2.getUid());
 	}
 	
 	@Test
 	void insertVatTypesTest(@TempDir Path tempDir) throws SQLException {
+		/*
 		Path dbFile=tempDir.resolve("tempDb.sql");
 		
 		SQLiteDB tstObj=new SQLiteDB(dbFile.toString());
@@ -73,7 +96,7 @@ class SQLiteDBTest {
 		assertEquals(resVat.getName(), vat1.getName());
 		assertEquals(resVat.getValue(), vat1.getValue());
 		assertEquals(resVat.getLastChange(),now);
-				
+			*/	
 	}
 
 }

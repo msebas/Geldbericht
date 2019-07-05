@@ -44,25 +44,18 @@
         </dependency>
         <dependency>
         	<groupId>org.hibernate</groupId>
-        	<artifactId>hibernate-core</artifactId>
-        	<version>5.4.3.Final</version>
-        	<type>pom</type>
-        </dependency>
-        <dependency>
-        	<groupId>org.hibernate</groupId>
         	<artifactId>hibernate-envers</artifactId>
         	<version>5.4.3.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.13</version>
         </dependency>
 		<dependency>
 		    <groupId>org.xerial</groupId>
 		    <artifactId>sqlite-jdbc</artifactId>
 		    <version>3.20.1</version>
-		    <scope>test</scope>
-		</dependency>
-		<dependency>
-		    <groupId>com.zsoltfabok</groupId>
-		    <artifactId>sqlite-dialect</artifactId>
-		    <version>1.0</version>
 		</dependency>
     </dependencies>
     <build>
@@ -90,4 +83,5 @@
             </plugin>
         </plugins>
     </build>
+    
 </project>
