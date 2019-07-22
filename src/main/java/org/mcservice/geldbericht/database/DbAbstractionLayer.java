@@ -19,6 +19,8 @@ package org.mcservice.geldbericht.database;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.Connection;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -81,6 +83,19 @@ public class DbAbstractionLayer {
             throw new ExceptionInInitializerError(ex);
         }
 	}
+	
+	public List<VatType> manageVatTypes(List<VatType> vatTypes, ZonedDateTime lastUpdate) {
+		return getVatTypes();
+	}
+	
+	public List<Account> manageAccounts(List<Account> accounts, ZonedDateTime lastUpdate) {
+		return getAccounts();
+	}
+	
+	public List<Company> manageCompanies(List<Company> companies, ZonedDateTime lastUpdate) {
+		return getCompanies();
+	}
+	
 
 	public List<Account> getAccounts(){
 		return getAllData(Account.class);

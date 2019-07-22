@@ -4,14 +4,12 @@
 /home/Sebastian/workspace/Geldbericht/src/main/java/org/mcservice/geldbericht/data/CompanyProperty.java
 /home/Sebastian/workspace/Geldbericht/src/main/java/org/mcservice/geldbericht/data/User.java
 /home/Sebastian/workspace/Geldbericht/src/main/java/org/mcservice/geldbericht/data/Amortisation/ContinousLinearAmortisation.java
-/home/Sebastian/workspace/Geldbericht/src/main/java/module-info.java
 /home/Sebastian/workspace/Geldbericht/src/main/java/org/mcservice/geldbericht/PrimaryController.java
 /home/Sebastian/workspace/Geldbericht/src/main/java/org/mcservice/geldbericht/App.java
 /home/Sebastian/workspace/Geldbericht/src/main/java/org/mcservice/geldbericht/CompanyManagerController.java
 /home/Sebastian/workspace/Geldbericht/src/main/java/org/mcservice/geldbericht/SecondaryController.java
 /home/Sebastian/workspace/Geldbericht/src/main/java/org/hibernate/dialect2/SQLiteMetadataBuilderInitializer.java
 /home/Sebastian/workspace/Geldbericht/src/main/java/org/mcservice/geldbericht/data/Transaction.java
-/home/Sebastian/workspace/Geldbericht/src/main/java/org/mcservice/geldbericht/database/test/SQLiteDBTest.java
 /home/Sebastian/workspace/Geldbericht/src/main/java/org/mcservice/geldbericht/data/Company.java
 /home/Sebastian/workspace/Geldbericht/src/main/java/org/mcservice/geldbericht/data/Amortisation/AmortisationType.java
 /home/Sebastian/workspace/Geldbericht/src/main/java/org/mcservice/geldbericht/data/Account.java

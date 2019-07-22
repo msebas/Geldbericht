@@ -25,6 +25,11 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
+
+import org.mcservice.javafx.Converter;
+import org.mcservice.javafx.TrimStringConverter;
 
 @Entity
 @Table(name = "Companies")
@@ -33,8 +38,17 @@ public class Company extends AbstractDataObject{
 	
 	@OneToMany(mappedBy="company")
 	List<Account> accounts=new ArrayList<Account>();
+	
+	@Size(min = 2, max = 256)
+	@Converter(converter=TrimStringConverter.class)
 	String companyName=null;
+	
+	@Pattern(regexp = "[A-Za-z0-9\\-]{5}")
+	@Converter(converter=TrimStringConverter.class)
 	String companyNumber=null;
+	
+	@Pattern(regexp = "[0-9]{10}")
+	@Converter(converter=TrimStringConverter.class)
 	String companyBookkeepingAppointment=null;
 	
 	private Company() {
@@ -55,7 +69,7 @@ public class Company extends AbstractDataObject{
 		this.companyNumber = companyNumber;
 		this.companyBookkeepingAppointment = companyBookkeepingAppointment;
 	}
-	
+
 	/**
 	 * @param uid
 	 * @param lastChange
@@ -142,6 +156,50 @@ public class Company extends AbstractDataObject{
 			return;
 		this.companyBookkeepingAppointment = companyBookkeepingAppointment;
 		this.lastChange=ZonedDateTime.now();
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((accounts == null) ? 0 : accounts.hashCode());
+		result = prime * result
+				+ ((companyBookkeepingAppointment == null) ? 0 : companyBookkeepingAppointment.hashCode());
+		result = prime * result + ((companyName == null) ? 0 : companyName.hashCode());
+		result = prime * result + ((companyNumber == null) ? 0 : companyNumber.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Company other = (Company) obj;
+		if (accounts == null) {
+			if (other.accounts != null)
+				return false;
+		} else if (!accounts.equals(other.accounts))
+			return false;
+		if (companyBookkeepingAppointment == null) {
+			if (other.companyBookkeepingAppointment != null)
+				return false;
+		} else if (!companyBookkeepingAppointment.equals(other.companyBookkeepingAppointment))
+			return false;
+		if (companyName == null) {
+			if (other.companyName != null)
+				return false;
+		} else if (!companyName.equals(other.companyName))
+			return false;
+		if (companyNumber == null) {
+			if (other.companyNumber != null)
+				return false;
+		} else if (!companyNumber.equals(other.companyNumber))
+			return false;
+		return true;
 	}
 
 }

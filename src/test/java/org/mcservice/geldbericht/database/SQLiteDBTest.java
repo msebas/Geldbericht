@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package org.mcservice.geldbericht.database.test;
+package org.mcservice.geldbericht.database;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,11 +27,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.ZonedDateTime;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.junit.jupiter.api.io.TempDir;
 import org.mcservice.geldbericht.data.VatType;
 import org.mcservice.geldbericht.database.DbAbstractionLayer;
+import org.mcservice.javafx.AdvancedMatcher;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+@Tag("DB")
 class SQLiteDBTest {
 	
 	@Test
@@ -63,8 +69,51 @@ class SQLiteDBTest {
 		assertNotNull(vat2.getUid());
 	}
 	
+	@Tag("Active")
 	@Test
 	void insertVatTypesTest(@TempDir Path tempDir) throws SQLException {
+		AdvancedMatcher a1;
+		
+		a1=new AdvancedMatcher("[0-9]{5}");
+		a1.reset("1234");
+		assertEquals("1234",a1.completeSquence());
+		assertTrue(a1.hitEnd());
+		a1.reset("12345");
+		assertEquals("12345",a1.completeSquence());
+		assertTrue(a1.requireEnd());
+		
+		a1=new AdvancedMatcher("[0-9]{5}-1[0-9]{1,}");
+		a1.reset("1234");
+		assertEquals("1234",a1.completeSquence());
+		assertTrue(a1.hitEnd());
+		a1.reset("12345");
+		assertEquals("12345-1",a1.completeSquence());
+		assertFalse(a1.requireEnd());
+		a1.reset("12345-12");
+		assertEquals("12345-12",a1.completeSquence());
+		assertFalse(a1.requireEnd());
+		
+		a1=new AdvancedMatcher("(?!.*a)");
+		a1.reset("No little  in this string.");
+		assertTrue(a1.matches());
+		
+//		
+//		Pattern p; 
+//		Matcher m;
+//		
+//		p = Pattern.compile("[0-9]{5}");
+//		m=p.matcher("12345");
+//		
+//		assertTrue(m.matches());
+//		assertTrue(!m.requireEnd());
+//		
+//		p = Pattern.compile("[0-9]{5,}");
+//		m=p.matcher("12345");
+//		
+//		assertTrue(m.matches());
+//		assertFalse(m.requireEnd());
+//		
+		
 		/*
 		Path dbFile=tempDir.resolve("tempDb.sql");
 		

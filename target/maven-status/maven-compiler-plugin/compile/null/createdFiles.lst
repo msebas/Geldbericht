@@ -9,8 +9,6 @@ org/mcservice/geldbericht/PrimaryController$TransactionComparator.class
 org/hibernate/dialect2/SQLiteMetadataBuilderInitializer.class
 org/hibernate/dialect2/SQLiteDialect$4.class
 org/mcservice/geldbericht/PrimaryController.class
-module-info.class
-org/mcservice/geldbericht/database/test/SQLiteDBTest.class
 org/mcservice/geldbericht/data/Transaction.class
 org/mcservice/geldbericht/database/DbAbstractionLayer.class
 org/hibernate/dialect2/SQLiteMetadataBuilderInitializer$1.class

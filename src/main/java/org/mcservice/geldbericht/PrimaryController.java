@@ -195,9 +195,9 @@ public class PrimaryController {
     }
 	
 	@FXML
-	protected void startCompanyManager() throws IOException {
+	protected void startCompanyManager() throws Exception {
 		FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("companyManager.fxml"));
-		CompanyManagerController controller = new CompanyManagerController(companies, db, lastUpdate);
+		CompanyManagerController controller = new CompanyManagerController(db);
 		fxmlLoader.setController(controller);
 		Scene scene = new Scene(fxmlLoader.load());
         
