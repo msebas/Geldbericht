@@ -35,7 +35,7 @@ import org.mcservice.geldbericht.data.Company;
 import org.mcservice.geldbericht.data.CompanyProperty;
 import org.mcservice.geldbericht.database.DbAbstractionLayer;
 import org.mcservice.javafx.AnnotationBasedFormatter;
-import org.mcservice.javafx.ValidatingTextFieldTableCell;
+import org.mcservice.javafx.table.ValidatingTextFieldTableCell;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -193,9 +193,6 @@ public class CompanyManagerController {
 		}
 		companyTableView.getSelectionModel().cellSelectionEnabledProperty().set(true);
 		
-		// when character or numbers pressed it will start edit in editable
-		// fields
-		
 		companyTableView.setOnKeyTyped(event -> {
 			String actChar=event.getCharacter();
 						
@@ -205,24 +202,8 @@ public class CompanyManagerController {
 						companyTableView.focusModelProperty().get().focusedCellProperty().get();
 				companyTableView.edit(focusedCell.getRow(), focusedCell.getTableColumn());
 				this.lastKeyCode.set(null);
-			}/* * / else if (event.getCode() == KeyCode.RIGHT
-					|| event.getCode() == KeyCode.TAB) {
-				companyTableView.getSelectionModel().selectNext();
-				event.consume();
-			} else if (event.getCode() == KeyCode.LEFT) {
-				companyTableView.getSelectionModel().selectPrevious(); //due to a bug
-				// stopping it from working on
-				// the first column in the last row of the table
-				//selectPrevious();
-				event.consume();
 			}
-		/* */
 		});
 	}
-/*
-	@SuppressWarnings("unchecked")
-	private void editFocusedCell() {
-		
-	}
-  */  
+	
 }

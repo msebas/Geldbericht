@@ -71,7 +71,6 @@ import javafx.stage.Stage;
 @Retention(RetentionPolicy.RUNTIME)
 @interface EnableManageCompany {}
 
-@Tag("Active")
 @Tag("GUI")
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.WARN)
@@ -328,7 +327,6 @@ class CompanyManagerTest extends MockedApplicationTest{
     @CreateCompanies(2)
     public void checkCancelCallNoChanges() {
     	companies=new ArrayList<Company>(companies);
-    	when(db.manageCompanies(anyList(),any(ZonedDateTime.class))).thenReturn(null);
     	
     	clickOn("#cancelButton");
     	verify(db,times(0)).manageCompanies(anyList(),any(ZonedDateTime.class));

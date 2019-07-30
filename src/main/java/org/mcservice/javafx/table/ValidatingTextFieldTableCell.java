@@ -1,30 +1,53 @@
 /**
  * 
  */
-package org.mcservice.javafx;
+package org.mcservice.javafx.table;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import org.mcservice.javafx.AnnotationBasedFormatter;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.scene.control.Cell;
+import javafx.scene.Node;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
+import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.layout.Pane;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 import javafx.util.converter.DefaultStringConverter;
 
 /**
- * A class like {@link TextFieldTableCell<S,T>} that adds on top a validation
- * via a {@link Callback<T,Boolean>} that is checked to return true. 
+ * A class like {@link javafx.scene.control.cell.TextFieldTableCell<S,T>} that adds on top a validation,
+ * the ability to set a {@link TextFormatter<T>} for the internal TextField and 
+ * a key memory to prevent lost keys on state changes.
+ * 
+ * The validation is provided via a {@link Callback<T,Boolean>} that is checked 
+ * to return true on validation success. 
+ * If this validation fails the "cell-validation-error" class is added to 
+ * the cell. If the validation does not fail the class is removed if present.
+ * The user is responsible to configure an appropriate CSS configuration if 
+ * required.
+ * 
+ * The {@link TextFormatter<T>} has to be copied for each created {@link TextField}.
+ * To do this a new TextFormatter is created.
+ *  
+ * Differing from the original {@link TextFieldTableCell<S,T>} this class opens 
+ * its internal {@link TextField} to inheriting classes via a protected getter 
+ * method.
  *
  * @param <S> The type of the TableView generic type
  * @param <T> The type of the elements contained within the TableColumn.
- * @since JavaFX 2.2
  */
-public class ValidatingTextFieldTableCell<S,T> extends TableCell<S,T> {
+public class ValidatingTextFieldTableCell<S,T> extends TextFieldTableCell<S,T> {
 
 	/***************************************************************************
 	 *                                                                         *
@@ -74,14 +97,6 @@ public class ValidatingTextFieldTableCell<S,T> extends TableCell<S,T> {
 	}
 	
 	/**
-	 * Provides a {@link TextField} that allows editing of the cell content when
-	 * the cell is double-clicked, or when
-	 * {@link TableView#edit(int, javafx.scene.control.TableColumn) } is called.
-	 * This method will work  on any {@link TableColumn} instance, regardless of
-	 * its generic type. However, to enable this, a {@link StringConverter} must
-	 * be provided that will convert the given String (from what the user typed
-	 * in) into an instance of type T. This item will then be passed along to the
-	 * {@link TableColumn#onEditCommitProperty()} callback.
 	 *
 	 * @param <S> The type of the TableView generic type
 	 * @param <T> The type of the elements contained within the TableColumn
@@ -113,26 +128,21 @@ public class ValidatingTextFieldTableCell<S,T> extends TableCell<S,T> {
      *      the given String (from what the user typed in) into an instance of
      *      type T.
      */
-    
-	/**
-	 * @param converter
-	 */
 	public ValidatingTextFieldTableCell(StringConverter<T> converter,Callback<T,Boolean> verify,
 			ObjectProperty<String> lastTypedKey, TextFormatter<T> textFormatter) {
-		this.getStyleClass().add("text-field-table-cell");
+		super(converter);
 		setVerify(verify);
 		setConverter(converter);
-		this.setLastTypedKey(lastTypedKey);
-		this.setTextFormatter(textFormatter);
+		setLastTypedKey(lastTypedKey);
+		setTextFormatter(textFormatter);
 	}
 	
 	public ValidatingTextFieldTableCell(AnnotationBasedFormatter<S, T> textFormatter,
 			ObjectProperty<String> lastTypedKey) {
-		this.getStyleClass().add("text-field-table-cell");
+		super(textFormatter.getValueConverter());
 		setVerify(textFormatter.getVerificator());
-		setConverter(textFormatter.getValueConverter());
-		this.setLastTypedKey(lastTypedKey);
-		this.setTextFormatter(textFormatter);
+		setLastTypedKey(lastTypedKey);
+		setTextFormatter(textFormatter);
 		
 	}
 
@@ -144,9 +154,6 @@ public class ValidatingTextFieldTableCell<S,T> extends TableCell<S,T> {
 
 	private ObjectProperty<Callback<T,Boolean>> verify = 
 			new SimpleObjectProperty<Callback<T,Boolean>>(this, "verify");
-	private ObjectProperty<StringConverter<T>> converter =
-            new SimpleObjectProperty<StringConverter<T>>(this, "converter");
-	private TextField textField;
 	private ObjectProperty<String> lastTypedKey = null;
 	private ObjectProperty<TextFormatter<T>> textFormatter =
 				new SimpleObjectProperty<TextFormatter<T>>(this, "formatter");
@@ -188,39 +195,44 @@ public class ValidatingTextFieldTableCell<S,T> extends TableCell<S,T> {
 	}
 
 	/**
+	 * This method might not work as expected. An exception is thrown if 
+	 * the correct text field could not be found.
+	 * 
 	 * @return the textField
 	 */
-	protected final TextField getTextField() {
-		return textField;
+	public final TextField getTextField() {
+		if(!isEditing()) {
+			return null;
+		}
+		Node tmpField=this.getGraphic();
+		if (null==tmpField)
+			return null;
+		if (tmpField instanceof TextField)
+			return (TextField) tmpField;
+		else {
+			Collection<Node> possFields;
+			if (tmpField instanceof Pane) {
+				possFields=new ArrayList<Node>();
+				for (Node tmpNode: ((Pane) tmpField).getChildren()) {
+					if(tmpNode instanceof TextField)
+						possFields.add(tmpField);
+				}
+			} else {
+				possFields=tmpField.lookupAll(".text-field");
+			}
+			if(possFields.size()==1) {
+				tmpField=possFields.iterator().next();
+				if (tmpField instanceof TextField)
+					return (TextField) tmpField;
+			}
+		}
+		
+		throw new RuntimeException("Could not identify text field.");
 	}
 
 	public void setLastTypedKey(ObjectProperty<String> lastTypedKey) {
 		this.lastTypedKey = lastTypedKey;
 	}
-
-	/**
-     * The {@link StringConverter} property.
-     * @return the {@link StringConverter} property
-     */
-    public final ObjectProperty<StringConverter<T>> converterProperty() {
-        return converter;
-    }
-
-    /**
-     * Sets the {@link StringConverter} to be used in this cell.
-     * @param value the {@link StringConverter} to be used in this cell
-     */
-    public final void setConverter(StringConverter<T> value) {
-        converterProperty().set(value);
-    }
-
-    /**
-     * Returns the {@link StringConverter} used in this cell.
-     * @return the {@link StringConverter} used in this cell
-     */
-    public final StringConverter<T> getConverter() {
-        return converterProperty().get();
-    }
 
 	/**
 	 * @param verify the verify to set
@@ -245,47 +257,26 @@ public class ValidatingTextFieldTableCell<S,T> extends TableCell<S,T> {
 		super.startEdit();
 
 		if (isEditing()) {
-			if (textField == null) {
-				textField = CellUtils.createTextField(this, getConverter());
+			TextField textField=getTextField();
+			if(getTextFormatter()!=null) {
+				//The default value is passed here only for convenience,
+				//it is overwritten one line below.
+				textField.setTextFormatter(new TextFormatter<T>(
+						getTextFormatter().getValueConverter(),
+						getTextFormatter().getValue(),getTextFormatter().getFilter()));
 			}
-			if(this.textFormatter.get() instanceof AnnotationBasedFormatter) {
-				//FIXME This does not work
-				//@SuppressWarnings("unchecked")
-				//AnnotationBasedFormatter<S,T> actFormatter=((AnnotationBasedFormatter<S,T>) textFormatter.get());
-				//actFormatter.setCallback(c -> {this.commitEdit(this.converter.get().fromString(c));});
-			}
-			
-			textField.setTextFormatter(new TextFormatter<T>(getTextFormatter().getValueConverter(),
-		    		getTextFormatter().getValue(),getTextFormatter().getFilter()));
-			
-		    textField.setText(CellUtils.getItemText((Cell<T>)this, getConverter()));
-	        this.setText(null);
-	        this.setGraphic(textField);
+
 	        if(lastTypedKey.get()!=null) {
 	        	textField.setText(textField.getText()+lastTypedKey.get());
-	        }
-
-	        // requesting focus so that key input can immediately go into the TextField (see RT-28132)
-	        textField.requestFocus();
-	        if(lastTypedKey.get()!=null) {
 	        	textField.deselect();
 	        	textField.end();
-	        } else {
-	        	textField.selectAll();
 	        }
 		}
 	}
 
 	/** {@inheritDoc} */
-	@Override public void cancelEdit() {
-		super.cancelEdit();
-		CellUtils.cancelEdit(this, getConverter(), null);
-	}
-
-	/** {@inheritDoc} */
 	@Override public void updateItem(T item, boolean empty) {
 		super.updateItem(item, empty);
-		CellUtils.updateItem(this, getConverter(), null, null, textField);
 
 		if(!this.verify.get().call(item)) {
 			if(!this.getStyleClass().contains("cell-validation-error")) {

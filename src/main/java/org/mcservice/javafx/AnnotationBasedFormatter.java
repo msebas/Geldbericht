@@ -1,10 +1,8 @@
 package org.mcservice.javafx;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.validation.Validation;
@@ -16,6 +14,7 @@ import javafx.scene.control.TextFormatter;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 import javafx.util.converter.DefaultStringConverter;
+import javafx.util.converter.IntegerStringConverter;
 
 public class AnnotationBasedFormatter<S,V> extends TextFormatter<V> {
 
@@ -44,18 +43,23 @@ public class AnnotationBasedFormatter<S,V> extends TextFormatter<V> {
 	@SuppressWarnings("unchecked")
 	protected static <S,V> StringConverter<V> createConverter(Field field,Class<S> baseClass) {
 		try {
-			if(field.getType()==String.class) {
-				org.mcservice.javafx.Converter converterClass=
-						field.getAnnotation(org.mcservice.javafx.Converter.class);
-				if (converterClass != null) {
-					return (StringConverter<V>) converterClass.converter().getConstructor().newInstance();
-				}
-				return (StringConverter<V>) new DefaultStringConverter();
-			} 
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException("Casting annotation failed.");
-		}	
+			org.mcservice.javafx.table.TableViewConverter converterClass=
+					field.getAnnotation(org.mcservice.javafx.table.TableViewConverter.class);
+			if (converterClass != null) {
+				return (StringConverter<V>) converterClass.converter().getConstructor().newInstance();
+			}
+		} catch (Throwable e) {
+			ClassCastException loc = new ClassCastException("Casting or creating annotatated converter failed.");
+			loc.initCause(e);
+			throw loc;
+		}
+
+		if(field.getType()==String.class) {
+			return (StringConverter<V>) new DefaultStringConverter();
+		}
+		if(field.getType()==Integer.class || field.getType()==Integer.TYPE) {
+			return (StringConverter<V>) new IntegerStringConverter();
+		}
 		throw new RuntimeException("No converter for this class yet implemented.");
 	}
 	
@@ -76,6 +80,8 @@ public class AnnotationBasedFormatter<S,V> extends TextFormatter<V> {
 			} else if (field.getAnnotation(javax.validation.constraints.Size.class) != null) {
 				javax.validation.constraints.Size constraint=field.getAnnotation(javax.validation.constraints.Size.class);
 				p = Pattern.compile(String.format(".{%s,%s}",constraint.min(),constraint.max()));				
+			} else if(field.getType()==Integer.class || field.getType()==Integer.TYPE) {
+				p = Pattern.compile("[1-9][0-9]{0,}");
 			}
 			
 			if(p!=null) {

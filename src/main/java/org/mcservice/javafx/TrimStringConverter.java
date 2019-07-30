@@ -10,16 +10,13 @@ public class TrimStringConverter extends StringConverter<String> {
 	/** {@inheritDoc} */
     @Override 
     public String toString(String value) {
-    	if(value==null)
-    		return "";
-    	else
-    		return value.trim();
+    	return (value==null) ? "" : value.trim();
     }
 
     /** {@inheritDoc} */
     @Override 
     public String fromString(String value) {
-        return value;
+    	return (value==null) ? "" : value.trim();
     }
 
 }

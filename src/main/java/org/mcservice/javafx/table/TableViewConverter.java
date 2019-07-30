@@ -1,4 +1,4 @@
-package org.mcservice.javafx;
+package org.mcservice.javafx.table;
 
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -8,6 +8,6 @@ import java.lang.annotation.Target;
 
 @Retention(RUNTIME)
 @Target(FIELD)
-public @interface Converter {
+public @interface TableViewConverter {
 	Class<?> converter();
 }

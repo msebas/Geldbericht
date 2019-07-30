@@ -28,8 +28,10 @@ import javax.persistence.Table;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
-import org.mcservice.javafx.Converter;
 import org.mcservice.javafx.TrimStringConverter;
+import org.mcservice.javafx.table.TableViewColumn;
+import org.mcservice.javafx.table.TableViewColumnOrder;
+import org.mcservice.javafx.table.TableViewConverter;
 
 @Entity
 @Table(name = "Companies")
@@ -40,15 +42,21 @@ public class Company extends AbstractDataObject{
 	List<Account> accounts=new ArrayList<Account>();
 	
 	@Size(min = 2, max = 256)
-	@Converter(converter=TrimStringConverter.class)
+	@TableViewColumn(colName="Name")
+	@TableViewColumnOrder(10)
+	@TableViewConverter(converter=TrimStringConverter.class)
 	String companyName=null;
 	
 	@Pattern(regexp = "[A-Za-z0-9\\-]{5}")
-	@Converter(converter=TrimStringConverter.class)
+	@TableViewColumn(colName="Betriebsnummer")
+	@TableViewColumnOrder(20)
+	@TableViewConverter(converter=TrimStringConverter.class)
 	String companyNumber=null;
 	
 	@Pattern(regexp = "[0-9]{10}")
-	@Converter(converter=TrimStringConverter.class)
+	@TableViewColumn(colName="Buchstelle")
+	@TableViewColumnOrder(30)
+	@TableViewConverter(converter=TrimStringConverter.class)
 	String companyBookkeepingAppointment=null;
 	
 	private Company() {
