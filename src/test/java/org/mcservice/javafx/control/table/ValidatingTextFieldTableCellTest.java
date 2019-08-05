@@ -1,4 +1,4 @@
-package org.mcservice.javafx.table;
+package org.mcservice.javafx.control.table;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -10,55 +10,28 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.ArgumentMatchers.any;
 
 import java.lang.reflect.Field;
-import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.function.UnaryOperator;
-import java.util.stream.Stream;
-
-import javax.validation.constraints.Pattern;
-
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.mcservice.geldbericht.data.Company;
 import org.mcservice.javafx.AnnotationBasedFormatter;
-import org.mcservice.javafx.TrimStringConverter;
-import org.mcservice.javafx.table.MemberVariableTest.allFine;
-import org.mockito.ArgumentCaptor;
+import org.mcservice.javafx.control.table.ValidatingTextFieldTableCell;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.testfx.framework.junit5.ApplicationTest;
-
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.FXCollections;
 import javafx.embed.swing.JFXPanel;
-import javafx.geometry.Insets;
-import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TextFormatter.Change;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination.ModifierValue;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 import javafx.util.converter.DefaultStringConverter;

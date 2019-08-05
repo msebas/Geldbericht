@@ -35,7 +35,7 @@ import org.mcservice.geldbericht.data.Company;
 import org.mcservice.geldbericht.data.CompanyProperty;
 import org.mcservice.geldbericht.database.DbAbstractionLayer;
 import org.mcservice.javafx.AnnotationBasedFormatter;
-import org.mcservice.javafx.table.ValidatingTextFieldTableCell;
+import org.mcservice.javafx.control.table.ValidatingTextFieldTableCell;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;

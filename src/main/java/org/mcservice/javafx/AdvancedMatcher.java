@@ -1,5 +1,8 @@
 package org.mcservice.javafx;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -8,25 +11,42 @@ public class AdvancedMatcher {
 	Pattern pattern; 
 	Matcher matcher;
 	String actInput; /**< The actual input string */
-	static final int MAX_UNICODE=0xFF; //It is too slow to test the full UTF-8 range //0x10FFFF;
+	static final int MAX_UNICODE=0x10FFFF;
+	List<String> completions = new ArrayList<String>(1024);
+	Boolean requireEnd = null;
+	boolean completionSet=false;
+	String completion = null ;
 
 	public AdvancedMatcher(String regexp){
-		this.pattern = Pattern.compile(regexp);
-		this.matcher = pattern.matcher("");
+		this(Pattern.compile(regexp));
 	} 
 	
 	public AdvancedMatcher(Pattern pattern){
 		this.pattern = pattern;
 		this.matcher = pattern.matcher("");
+		for(char i=0;i<256;++i) {
+			completions.add(String.valueOf(i));
+		}
 	} 
 	
 	public void reset(String input) {
+		requireEnd = null;
+		completion = null;
+		completionSet=false;
 		this.matcher.reset(input);
 		this.actInput=input;
 	}
 	
 	public boolean matches() {
 		return matcher.matches();
+	}
+	
+	public int groupCount() {
+		return matcher.groupCount();
+	}
+	
+	public String group(int i) {
+		return matcher.group(i);
 	}
 	
 	public boolean hitEnd() {
@@ -51,12 +71,18 @@ public class AdvancedMatcher {
 		//To be clear, "return m.requireEnd();" does not solve this problem
 		if(!matcher.matches())
 			return false;
-		for(int i=0;i<MAX_UNICODE;++i) {
-			Matcher tmpM=pattern.matcher(actInput+String.valueOf(Character.toChars(i)));
-			if(tmpM.matches() || tmpM.hitEnd())
+		if(requireEnd!=null)
+			return requireEnd;
+		
+		for(String actCompl : completions) {
+			Matcher tmpM=pattern.matcher(actInput.concat(actCompl));
+			if(tmpM.matches() || tmpM.hitEnd()) {
+				requireEnd=false;
 				return false;
+			}
 		}
 		
+		requireEnd=true;
 		return true;
 	}
 	
@@ -71,31 +97,55 @@ public class AdvancedMatcher {
 	 */
 	public String completeSquence() {
 		if(matcher.matches())
-			return actInput;
+			return null;
 		if(!matcher.hitEnd())
 			return null;
+		if(completions.size()==0)
+			return null;
+		if(completionSet)
+			return completion;
 		
 		String result = actInput;
-		char[] next;
+		String next;
 		do {
 			next=null;
-			for(int i=0;i<MAX_UNICODE;++i) {
-				Matcher tmpM=pattern.matcher(result+String.valueOf(Character.toChars(i)));
+			for(String actCompl : completions) {
+				Matcher tmpM=pattern.matcher(result.concat(actCompl));
 				if(tmpM.matches() || tmpM.hitEnd()) {
 					if (next!=null) {
 						next=null;
 						break;
 					} else {
-						next=Character.toChars(i);
+						next=actCompl;
 					}
 				}
 			}
 			if(next!=null)
-				result=result+String.valueOf(next);
+				result=result.concat(next);
 		} while(next!=null);
-		
+		result=result.substring(actInput.length());
+		completionSet=true;
+		if(result.length()==0)
+			return null;
+		completion=result;
 		return result;
-	}	
+	}
+
+	public void setCompletions(List<String> completions) {
+		if(null==completions) {
+			for(int i=0;i<MAX_UNICODE;++i) {
+				this.completions.add(String.valueOf(Character.toChars(i)));
+			}
+		} else {
+			this.completions.clear();
+			HashSet<String> inserted=new HashSet<String>();
+			for(String cmpl: completions)
+				if(!inserted.contains(cmpl)) {
+					this.completions.add(cmpl);
+					inserted.add(cmpl);
+				}
+		}
+	}
 }
 
 

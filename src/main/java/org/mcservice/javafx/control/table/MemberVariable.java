@@ -1,4 +1,4 @@
-package org.mcservice.javafx.table;
+package org.mcservice.javafx.control.table;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;

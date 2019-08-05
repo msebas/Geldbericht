@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.mcservice.javafx.table;
+package org.mcservice.javafx.control.table;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -1,4 +1,4 @@
-package org.mcservice.javafx.table;
+package org.mcservice.javafx.control.table;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.mcservice.javafx.control.table.MemberVariable;
+import org.mcservice.javafx.control.table.ReflectionTableView;
+
 import javafx.embed.swing.JFXPanel;
 
 @Tag("Table")
@@ -25,7 +28,7 @@ class ReflectionTableViewSetupTest{
     	
 		tableView = new ReflectionTableView<TestTypes.Test3S2I>(TestTypes.Test3S2I.class);
 		
-    	assertEquals(4,this.tableView.getColumns().size());
+    	assertEquals(5,this.tableView.getColumns().size());
     	Object act=tableView.getColumns().get(0).getOnEditCommit();
     	assertTrue(act instanceof MemberVariable);
 		assertEquals(TestTypes.Test3S2I.class.getDeclaredField("firstString"),((MemberVariable<?,?>) act).field);
@@ -43,6 +46,10 @@ class ReflectionTableViewSetupTest{
 		act=tableView.getColumns().get(3).getOnEditCommit();
     	assertTrue(act instanceof MemberVariable);
 		assertEquals(TestTypes.Test3S2I.class.getDeclaredField("firstInt"),((MemberVariable<?,?>) act).field);
+		
+		act=tableView.getColumns().get(4).getOnEditCommit();
+    	assertTrue(act instanceof MemberVariable);
+		assertEquals(TestTypes.Test3S2I.class.getDeclaredField("secondInt"),((MemberVariable<?,?>) act).field);
 		
     	//tableView.getColumns().get(0).getCellValueFactory(new PropertyValueFactory<S,String>(field.getName()));
     	//tableView.getColumns().get(0).getCellFactory(ValidatingTextFieldTableCell.forTableColumn(formatter,this.memoryKeyCode));

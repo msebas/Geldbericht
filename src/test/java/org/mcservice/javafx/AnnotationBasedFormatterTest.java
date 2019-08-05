@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.atLeastOnce;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -21,7 +22,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mcservice.javafx.AnnotationBasedFormatter.AnnotationBasedFilter;
-import org.mcservice.javafx.table.TestTypes;
+import org.mcservice.javafx.control.table.TestTypes;
 
 import javafx.scene.control.TextFormatter.Change;
 import javafx.util.converter.DefaultStringConverter;
@@ -129,7 +130,7 @@ class AnnotationBasedFormatterTest{
 		when(changeMock.getControlNewText()).thenReturn("Name");
 		
 		assertEquals(changeMock,stringFormatter.getFilter().apply(changeMock));
-		verify(changeMock,times(1)).getControlNewText();    	
+		verify(changeMock,atLeastOnce()).getControlNewText();    	
     }
 	
 	@Test
@@ -143,7 +144,7 @@ class AnnotationBasedFormatterTest{
 		when(changeMock.getControlNewText()).thenReturn("");
 		
 		assertEquals(changeMock,stringFormatter.getFilter().apply(changeMock));
-		verify(changeMock,times(1)).getControlNewText();    	
+		verify(changeMock,atLeastOnce()).getControlNewText();    	
     }
 
 	@Test
@@ -174,7 +175,7 @@ class AnnotationBasedFormatterTest{
 		when(changeMock.getControlNewText()).thenReturn("Theo1");
 		
 		assertEquals(changeMock,stringFormatter.getFilter().apply(changeMock));
-		verify(changeMock,times(1)).getControlNewText();
+		verify(changeMock,atLeastOnce()).getControlNewText();
     }
 	
 	@Test
@@ -226,7 +227,7 @@ class AnnotationBasedFormatterTest{
 		
 		when(changeMock.getControlNewText()).thenReturn(tstChars);
 		assertEquals(valid ? changeMock : null,integerFormatter.getFilter().apply(changeMock));
-		verify(changeMock,times(1)).getControlNewText();
+		verify(changeMock,atLeastOnce()).getControlNewText();
     }
     
 }

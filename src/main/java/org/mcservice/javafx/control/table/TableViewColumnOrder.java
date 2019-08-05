@@ -1,4 +1,4 @@
-package org.mcservice.javafx.table;
+package org.mcservice.javafx.control.table;
 
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -10,6 +10,6 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RUNTIME)
 @Target(FIELD)
-public @interface TableViewColumn {
-	String colName() default "";
+public @interface TableViewColumnOrder {
+	int value() default 100;
 }

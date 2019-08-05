@@ -1,4 +1,4 @@
-package org.mcservice.javafx.table;
+package org.mcservice.javafx.control.table;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mcservice.javafx.control.table.MemberVariable;
 import org.mockito.junit.jupiter.MockitoExtension;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.control.TableColumn;

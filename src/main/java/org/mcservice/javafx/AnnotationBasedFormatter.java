@@ -2,7 +2,6 @@ package org.mcservice.javafx;
 
 import java.lang.reflect.Field;
 import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
 import javax.validation.Validation;
@@ -43,8 +42,8 @@ public class AnnotationBasedFormatter<S,V> extends TextFormatter<V> {
 	@SuppressWarnings("unchecked")
 	protected static <S,V> StringConverter<V> createConverter(Field field,Class<S> baseClass) {
 		try {
-			org.mcservice.javafx.table.TableViewConverter converterClass=
-					field.getAnnotation(org.mcservice.javafx.table.TableViewConverter.class);
+			org.mcservice.javafx.control.table.TableViewConverter converterClass=
+					field.getAnnotation(org.mcservice.javafx.control.table.TableViewConverter.class);
 			if (converterClass != null) {
 				return (StringConverter<V>) converterClass.converter().getConstructor().newInstance();
 			}
@@ -63,11 +62,10 @@ public class AnnotationBasedFormatter<S,V> extends TextFormatter<V> {
 		throw new RuntimeException("No converter for this class yet implemented.");
 	}
 	
-	protected static class AnnotationBasedFilter implements UnaryOperator<Change>{
-		private AdvancedMatcher matcher = null;
-		private Consumer<String> endEditCallback = null;
+	protected static class AnnotationBasedFilter extends BaseMatcherCallbackFilter{
 		
 		protected AnnotationBasedFilter(Field field) {
+			super(null);
 			Pattern p = null;
 			
 			if(field.getAnnotation(javax.validation.constraints.Pattern.class) != null) {
@@ -87,43 +85,7 @@ public class AnnotationBasedFormatter<S,V> extends TextFormatter<V> {
 			if(p!=null) {
 				setMatcher(new AdvancedMatcher(p));
 			}
-		}
-		
-		@Override
-		public Change apply(Change change) {
-			if (null == this.matcher) {
-				return change;
-			}
-			
-			matcher.reset(change.getControlNewText());
-			
-			if(matcher.matches()) {
-				if(matcher.requireEnd() && endEditCallback!=null) {
-					endEditCallback.accept(change.getControlNewText());
-				}
-			}
-			
-			if(matcher.hitEnd() || matcher.matches()) {
-				return change;
-			}
-			
-			return null;
-		}
-
-		/**
-		 * @param matcher the matcher to set
-		 */
-		public final void setMatcher(AdvancedMatcher matcher) {
-			this.matcher = matcher;
-		}
-
-		/**
-		 * @param endEditCallback the endEditCallback to set
-		 */
-		public final void setEndEditCallback(Consumer<String> endEditCallback) {
-			this.endEditCallback = endEditCallback;
-		}
-		
+		}		
 	}
 
 }

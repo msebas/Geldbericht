@@ -1,4 +1,4 @@
-package org.mcservice.javafx.table;
+package org.mcservice.javafx.control.table;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 import org.mcservice.javafx.AnnotationBasedFormatter;
 

@@ -29,9 +29,9 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 import org.mcservice.javafx.TrimStringConverter;
-import org.mcservice.javafx.table.TableViewColumn;
-import org.mcservice.javafx.table.TableViewColumnOrder;
-import org.mcservice.javafx.table.TableViewConverter;
+import org.mcservice.javafx.control.table.TableViewColumn;
+import org.mcservice.javafx.control.table.TableViewColumnOrder;
+import org.mcservice.javafx.control.table.TableViewConverter;
 
 @Entity
 @Table(name = "Companies")

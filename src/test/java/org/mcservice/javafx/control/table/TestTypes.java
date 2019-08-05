@@ -1,4 +1,4 @@
-package org.mcservice.javafx.table;
+package org.mcservice.javafx.control.table;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -7,6 +7,9 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 import org.mcservice.javafx.TrimStringConverter;
+import org.mcservice.javafx.control.table.TableViewColumn;
+import org.mcservice.javafx.control.table.TableViewColumnOrder;
+import org.mcservice.javafx.control.table.TableViewConverter;
 
 public class TestTypes {
 
