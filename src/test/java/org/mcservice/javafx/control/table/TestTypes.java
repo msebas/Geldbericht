@@ -1,5 +1,6 @@
 package org.mcservice.javafx.control.table;
 
+import javax.money.MonetaryAmount;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -109,6 +110,32 @@ public class TestTypes {
 		}
 		public void setThirdString(String thirdString) {
 			this.thirdString = thirdString;
+		}
+	}
+
+	public static class Test1S1M{
+
+    	@NotNull
+    	@TableViewColumn(colName="col1")
+    	@TableViewColumnOrder(10)
+    	private String firstString;
+    	
+    	@NotNull
+    	@TableViewColumn(colName="col2")
+    	@TableViewColumnOrder(20)
+    	private MonetaryAmount firstMoney;
+
+		public MonetaryAmount getFirstMoney() {
+			return firstMoney;
+		}
+		public void setFirstMoney(MonetaryAmount firstMoney) {
+			this.firstMoney = firstMoney;
+		}
+		public String getFirstString() {
+			return firstString;
+		}
+		public void setFirstString(String firstString) {
+			this.firstString = firstString;
 		}
 	}
 	

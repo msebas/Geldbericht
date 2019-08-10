@@ -93,7 +93,7 @@ public class ValidatingTextFieldTableCell<S,T> extends TextFieldTableCell<S,T> {
 	public static <S,T> Callback<TableColumn<S,T>, TableCell<S,T>> forTableColumn(
 			final StringConverter<T> converter,final Callback<T,Boolean> verify,
 			final ObjectProperty<String> lastTypedKey, final TextFormatter<T> textFormatter) {
-		return list -> new ValidatingTextFieldTableCell<S,T>(converter,verify,lastTypedKey,textFormatter);
+		return list -> new ValidatingTextFieldTableCell<S,T>(converter,verify,lastTypedKey,textFormatter,null,false);
 	}
 	
 	/**
@@ -105,8 +105,9 @@ public class ValidatingTextFieldTableCell<S,T> extends TextFieldTableCell<S,T> {
 	 *      TableColumn, that enables textual editing of the content.
 	 */
 	public static <S,T> Callback<TableColumn<S,T>, TableCell<S,T>> forTableColumn(
-			AnnotationBasedFormatter<S,T> textFormatter, final ObjectProperty<String> lastTypedKey) {
-		return list -> new ValidatingTextFieldTableCell<S,T>(textFormatter,lastTypedKey);
+			AnnotationBasedFormatter<S,T> textFormatter, final ObjectProperty<String> lastTypedKey, 
+			final Boolean allwaysOverwrite) {
+		return list -> new ValidatingTextFieldTableCell<S,T>(textFormatter,lastTypedKey,allwaysOverwrite);
 	}
 	
 	/***************************************************************************
@@ -129,21 +130,25 @@ public class ValidatingTextFieldTableCell<S,T> extends TextFieldTableCell<S,T> {
      *      type T.
      */
 	public ValidatingTextFieldTableCell(StringConverter<T> converter,Callback<T,Boolean> verify,
-			ObjectProperty<String> lastTypedKey, TextFormatter<T> textFormatter) {
+			ObjectProperty<String> lastTypedKey, TextFormatter<T> textFormatter, 
+			Callback<S,Boolean> editableCallback,Boolean allwaysOverwrite) {
 		super(converter);
 		setVerify(verify);
 		setConverter(converter);
 		setLastTypedKey(lastTypedKey);
 		setTextFormatter(textFormatter);
+		setEditableCallback(editableCallback);
+		setAllwaysOverwrite(allwaysOverwrite);
 	}
 	
 	public ValidatingTextFieldTableCell(AnnotationBasedFormatter<S, T> textFormatter,
-			ObjectProperty<String> lastTypedKey) {
+			ObjectProperty<String> lastTypedKey,Boolean allwaysOverwrite) {
 		super(textFormatter.getValueConverter());
 		setVerify(textFormatter.getVerificator());
 		setLastTypedKey(lastTypedKey);
 		setTextFormatter(textFormatter);
-		
+		setEditableCallback(textFormatter.getEditableCallback());
+		setAllwaysOverwrite(allwaysOverwrite);
 	}
 
 	/***************************************************************************
@@ -154,10 +159,13 @@ public class ValidatingTextFieldTableCell<S,T> extends TextFieldTableCell<S,T> {
 
 	private ObjectProperty<Callback<T,Boolean>> verify = 
 			new SimpleObjectProperty<Callback<T,Boolean>>(this, "verify");
+	private ObjectProperty<Callback<S,Boolean>> editableCallback = 
+			new SimpleObjectProperty<Callback<S,Boolean>>(this, "editableCallback");
 	private ObjectProperty<String> lastTypedKey = null;
+	private ObjectProperty<Boolean> allwaysOverwrite = 
+			new SimpleObjectProperty<Boolean>(this, "allwaysOverwrite");
 	private ObjectProperty<TextFormatter<T>> textFormatter =
 				new SimpleObjectProperty<TextFormatter<T>>(this, "formatter");
-	
 	
 	/**
 	 * @return the verify
@@ -171,6 +179,48 @@ public class ValidatingTextFieldTableCell<S,T> extends TextFieldTableCell<S,T> {
 	 */
 	public final ObjectProperty<Callback<T, Boolean>> verifyProperty() {
 		return verify;
+	}
+
+	/**
+	 * @return the editableCallback
+	 */
+	public final Boolean getAllwaysOverwrite() {
+		return allwaysOverwrite.get();
+	}
+	
+	/**
+	 * @return the AllwaysOverwriteProperty
+	 */
+	public final ObjectProperty<Boolean> allwaysOverwriteProperty() {
+		return allwaysOverwrite;
+	}
+
+	/**
+	 * @param verify the AllwaysOverwrite to set
+	 */
+	public final void setAllwaysOverwrite(Boolean allwaysOverwrite) {
+		allwaysOverwriteProperty().set(allwaysOverwrite);
+	}
+	
+	/**
+	 * @return the editableCallback
+	 */
+	public final Callback<S, Boolean> getEditableCallback() {
+		return editableCallback.get();
+	}
+	
+	/**
+	 * @return the editableCallbackProperty
+	 */
+	public final ObjectProperty<Callback<S, Boolean>> editableCallbackProperty() {
+		return editableCallback;
+	}
+
+	/**
+	 * @param verify the editableCallback to set
+	 */
+	public final void setEditableCallback(Callback<S, Boolean> editableCallback) {
+		editableCallbackProperty().set(editableCallback);
 	}
 	
 	/**
@@ -240,6 +290,7 @@ public class ValidatingTextFieldTableCell<S,T> extends TextFieldTableCell<S,T> {
 	public final void setVerify(Callback<T, Boolean> verify) {
 		verifyProperty().set(verify);
 	}
+	
 
 	/***************************************************************************
 	 *                                                                         *
@@ -267,7 +318,11 @@ public class ValidatingTextFieldTableCell<S,T> extends TextFieldTableCell<S,T> {
 			}
 
 	        if(lastTypedKey.get()!=null) {
-	        	textField.setText(textField.getText()+lastTypedKey.get());
+	        	if(getAllwaysOverwrite()!=null && getAllwaysOverwrite()) {
+	        		textField.setText(lastTypedKey.get());
+	        	} else {
+	        		textField.setText(textField.getText()+lastTypedKey.get());
+	        	}	        	
 	        	textField.deselect();
 	        	textField.end();
 	        }
@@ -284,6 +339,10 @@ public class ValidatingTextFieldTableCell<S,T> extends TextFieldTableCell<S,T> {
 			}
 		} else {
 			this.getStyleClass().remove("cell-validation-error");	
+		}
+		
+		if(getEditableCallback()!=null && this.getTableRow()!=null) {
+			this.setEditable(getEditableCallback().call(this.getTableRow().getItem()));
 		}
 	}
 

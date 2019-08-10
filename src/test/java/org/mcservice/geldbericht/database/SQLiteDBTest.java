@@ -18,6 +18,7 @@ package org.mcservice.geldbericht.database;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -46,7 +47,7 @@ class SQLiteDBTest {
 		
 		DbAbstractionLayer tstObj=new DbAbstractionLayer(dbFile.toString());
 		
-		VatType vat1=new VatType("Exception",0,false);
+		VatType vat1=new VatType("Exception","E",new BigDecimal(0),false);
 		VatType vat2=tstObj.persistVatType(vat1);
 		
 		//tstObj.checkAndCreateDatabase();

@@ -15,7 +15,7 @@ import javafx.embed.swing.JFXPanel;
 @Tag("GUI")
 class ReflectionTableViewSetupTest{
 	
-	ReflectionTableView<TestTypes.Test3S2I> tableView=null;
+	ReflectionTableView<?> tableView=null;
 	
 	@BeforeEach
 	public void setUp() {
@@ -24,7 +24,7 @@ class ReflectionTableViewSetupTest{
 	}
         
     @Test
-    public void checkStructure() throws Exception {
+    public void checkStructure3S2I() throws Exception {
     	
 		tableView = new ReflectionTableView<TestTypes.Test3S2I>(TestTypes.Test3S2I.class);
 		
@@ -51,8 +51,24 @@ class ReflectionTableViewSetupTest{
     	assertTrue(act instanceof MemberVariable);
 		assertEquals(TestTypes.Test3S2I.class.getDeclaredField("secondInt"),((MemberVariable<?,?>) act).field);
 		
-    	//tableView.getColumns().get(0).getCellValueFactory(new PropertyValueFactory<S,String>(field.getName()));
-    	//tableView.getColumns().get(0).getCellFactory(ValidatingTextFieldTableCell.forTableColumn(formatter,this.memoryKeyCode));
+    }
+    
+    @Test
+    public void checkStructure1S1M() throws Exception {
+    	
+		tableView = new ReflectionTableView<TestTypes.Test1S1M>(TestTypes.Test1S1M.class);
+		
+    	assertEquals(2,this.tableView.getColumns().size());
+    	Object act=tableView.getColumns().get(0).getOnEditCommit();
+    	assertTrue(act instanceof MemberVariable);
+		assertEquals(TestTypes.Test1S1M.class.getDeclaredField("firstString"),((MemberVariable<?,?>) act).field);
+		assertEquals(TestTypes.Test1S1M.class.getMethod("getFirstString"),((MemberVariable<?,?>) act).getter);
+		assertEquals(TestTypes.Test1S1M.class.getMethod("setFirstString",String.class),((MemberVariable<?,?>) act).setter);
+				
+		act=tableView.getColumns().get(1).getOnEditCommit();
+    	assertTrue(act instanceof MemberVariable);
+		assertEquals(TestTypes.Test1S1M.class.getDeclaredField("firstMoney"),((MemberVariable<?,?>) act).field);
+		
     }
     
     

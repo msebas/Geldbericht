@@ -1,13 +1,24 @@
 package org.mcservice.javafx;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.money.MonetaryAmount;
+import javax.money.format.MonetaryAmountFormat;
+import javax.money.format.MonetaryFormats;
+import javax.money.format.MonetaryParseException;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.constraints.Pattern.Flag;
 
+import org.javamoney.moneta.Money;
+import org.mcservice.javafx.control.table.TableViewFinalIfNotNull;
 
 import javafx.scene.control.TextFormatter;
 import javafx.util.Callback;
@@ -39,6 +50,20 @@ public class AnnotationBasedFormatter<S,V> extends TextFormatter<V> {
 		return (V item) -> validator.validateValue(this.fieldClass, this.field.getName(),item).isEmpty();
 	}
 	
+	public Callback<S, Boolean> getEditableCallback(){
+		if(!field.isAnnotationPresent(TableViewFinalIfNotNull.class)){
+			return null;
+		}
+		return val -> {
+			try {
+				return null==val ? true : null==fieldClass.getMethod(field.getAnnotation(TableViewFinalIfNotNull.class).value()).invoke(val);
+			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
+					| NoSuchMethodException | SecurityException e) {
+				throw new RuntimeException(e); //If this ever happens it is an implementation error
+			}
+		};
+	}
+	
 	@SuppressWarnings("unchecked")
 	protected static <S,V> StringConverter<V> createConverter(Field field,Class<S> baseClass) {
 		try {
@@ -55,10 +80,37 @@ public class AnnotationBasedFormatter<S,V> extends TextFormatter<V> {
 
 		if(field.getType()==String.class) {
 			return (StringConverter<V>) new DefaultStringConverter();
-		}
-		if(field.getType()==Integer.class || field.getType()==Integer.TYPE) {
+		} else if(field.getType()==Integer.class || field.getType()==Integer.TYPE) {
 			return (StringConverter<V>) new IntegerStringConverter();
-		}
+		} else if(field.getType()==MonetaryAmount.class || field.getType()==Money.class) {
+			return (StringConverter<V>) new StringConverter<V>() {
+				
+				MonetaryAmountFormat moneyFormatter = MonetaryFormats.getAmountFormat(Locale.GERMANY);
+				Matcher m=Pattern.compile("[0-9]{1,3}([\\\\. ][0-9]{3}){0,}(,[0-9]{0,2})?[ ]{0,}").matcher("");
+
+				@Override
+				public String toString(V object) {
+					if (object==null)
+						return null;
+					if(!(object instanceof MonetaryAmount))
+						throw new MonetaryParseException("Non monetary amount instance as input.", 0);
+					return moneyFormatter.format((MonetaryAmount)object);
+				}
+
+				@Override
+				public V fromString(String string) {
+					if (string==null)
+						return null;
+					m.reset(string);
+					if(m.matches()) {
+						string=string.strip().concat(" EUR");
+					}
+					Money res=Money.parse(string, moneyFormatter);
+					return (V) res;
+				}
+				
+			};
+		}			
 		throw new RuntimeException("No converter for this class yet implemented.");
 	}
 	
@@ -67,6 +119,7 @@ public class AnnotationBasedFormatter<S,V> extends TextFormatter<V> {
 		protected AnnotationBasedFilter(Field field) {
 			super(null);
 			Pattern p = null;
+			List<String> completions = null;
 			
 			if(field.getAnnotation(javax.validation.constraints.Pattern.class) != null) {
 				Flag[] flags=field.getAnnotation(javax.validation.constraints.Pattern.class).flags();
@@ -80,10 +133,18 @@ public class AnnotationBasedFormatter<S,V> extends TextFormatter<V> {
 				p = Pattern.compile(String.format(".{%s,%s}",constraint.min(),constraint.max()));				
 			} else if(field.getType()==Integer.class || field.getType()==Integer.TYPE) {
 				p = Pattern.compile("[1-9][0-9]{0,}");
+				completions=List.of("0","1","2","8","9");
+			} else if(field.getType()==MonetaryAmount.class || field.getType()==Money.class) {
+				p = Pattern.compile("(([1-9][0-9]{0,2}([\\. ][0-9]{3}){0,})||0)(,[0-9]{0,2})?( ([A-Z]{3}||\\p{Sc}))?");
+				completions=List.of("0","1","2","8","9"," ",".",",","€","$","A","B","Y","Z");
 			}
 			
-			if(p!=null) {
-				setMatcher(new AdvancedMatcher(p));
+			if(null!=p) {
+				AdvancedMatcher matcher=new AdvancedMatcher(p);
+				if(null!=completions) {
+					matcher.setCompletions(completions);
+				}
+				setMatcher(matcher);
 			}
 		}		
 	}

@@ -3,12 +3,14 @@ package org.mcservice.javafx.control.table;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import javax.validation.Validation;
 import javax.validation.Validator;
 
-
+import javafx.beans.property.ObjectProperty;
 import javafx.event.EventHandler;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableColumn.CellEditEvent;
@@ -19,14 +21,16 @@ public class MemberVariable<S,T> implements EventHandler<CellEditEvent<S,T>>{
 	public final Method setter;
 	public final Method getter;
 	private TableColumn<S,T> tableColumn = null;
-	private Collection<S> itemsWithErrors=null;
+	private ObjectProperty<? extends Collection<S>> itemsWithErrors=null;
+	private List<ItemUpdateListener> listeners;
 	
 	private static Validator validator=Validation.buildDefaultValidatorFactory().getValidator();
 	
 	private MemberVariable(Field field, Method setter, Method getter){
 		this.field=field;
 		this.setter=setter;
-		this.getter=getter;	
+		this.getter=getter;
+		this.listeners=new ArrayList<ItemUpdateListener>();
 	}
 	
 	public static <S,T> MemberVariable<S,T> fromName(String fieldName, Class<S> owningClass) throws SecurityException {
@@ -67,21 +71,23 @@ public class MemberVariable<S,T> implements EventHandler<CellEditEvent<S,T>>{
 	/**
 	 * @return the itemsWithErrors
 	 */
-	public Collection<S> getItemsWithErrors() {
+	public ObjectProperty<? extends Collection<S>> getItemsWithErrors() {
 		return itemsWithErrors;
 	}
 
 	/**
 	 * @param itemsWithErrors the itemsWithErrors to set
 	 */
-	public void setItemsWithErrors(Collection<S> itemsWithErrors) {
+	public void setItemsWithErrors(ObjectProperty<? extends Collection<S>> itemsWithErrors) {
 		this.itemsWithErrors = itemsWithErrors;
 	}
 	
 	@Override
 	public void handle(CellEditEvent<S, T> editEvent) {		
 		S actItem=editEvent.getRowValue();
+		boolean trueChange=false;
 		try {
+			trueChange=!twoEqual(this.getter.invoke(actItem),editEvent.getNewValue());
 			this.setter.invoke(actItem, editEvent.getNewValue());
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			//We cannot handle here any exception, but setters should not throw exceptions and all access or
@@ -90,18 +96,36 @@ public class MemberVariable<S,T> implements EventHandler<CellEditEvent<S,T>>{
 		}
 		
 		if(validator.validate(actItem).size()>0) {
-			if (this.itemsWithErrors!=null && !this.itemsWithErrors.contains(actItem)) {
-				this.itemsWithErrors.add(actItem);
+			if (this.itemsWithErrors!=null && !this.itemsWithErrors.get().contains(actItem)) {
+				this.itemsWithErrors.get().add(actItem);
 			}
 			if(validator.validateProperty(actItem,this.field.getName()).isEmpty()) {
 				tableColumn.getTableView().getSelectionModel().selectNext();
 			}
 		} else {
 			if (this.itemsWithErrors!=null) {
-				this.itemsWithErrors.remove(actItem);
+				this.itemsWithErrors.get().remove(actItem);
 			}			
 			tableColumn.getTableView().getSelectionModel().selectNext();
 		}
+		
+		for (ItemUpdateListener itemUpdateListener : listeners) {
+			itemUpdateListener.changed(trueChange);
+		}
+
+	}
 	
+	private boolean twoEqual(Object a,Object b) {
+		if(a==null || b==null)
+			return a==b;
+		return a.equals(b);
+	}
+	
+	public void addListener(ItemUpdateListener listener) {
+		this.listeners.add(listener);
+	}
+
+    public void removeListener(ItemUpdateListener listener) {
+		this.listeners.remove(listener);
 	}
 }

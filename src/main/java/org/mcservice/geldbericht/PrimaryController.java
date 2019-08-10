@@ -17,11 +17,16 @@
 package org.mcservice.geldbericht;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+
+import javax.money.MonetaryAmount;
+import javax.money.format.MonetaryAmountFormat;
+import javax.money.format.MonetaryFormats;
 
 import org.mcservice.geldbericht.data.Account;
 import org.mcservice.geldbericht.data.Company;
@@ -34,7 +39,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
@@ -104,8 +108,8 @@ public class PrimaryController {
     public void initialize() {
 		List<VatType> vatTypes=db.getVatTypes();
 		if (vatTypes.size()==0) {
-			db.persistVatType(new VatType("Voll",19,true));
-			db.persistVatType(new VatType("Reduziert",7,false));
+			db.persistVatType(new VatType("Voll","V",new BigDecimal(19),true));
+			db.persistVatType(new VatType("Reduziert","R",new BigDecimal(7),false));
 			vatTypes=db.getVatTypes();
 		}
 		vatInput.setItems(FXCollections.observableList(vatTypes));
@@ -143,8 +147,9 @@ public class PrimaryController {
 	@FXML
     protected void addRowByFields() throws IOException {
 		int counter=this.dataTableView.getItems().size()+1;
-		int receipts=Integer.parseInt(this.receiptsInput.getText().replace(",",""));
-		int spending=Integer.parseInt(this.spendingInput.getText().replace(",",""));
+		MonetaryAmountFormat moneyFormatter = MonetaryFormats.getAmountFormat(Locale.GERMANY);
+		MonetaryAmount receipts=moneyFormatter.parse(this.receiptsInput.getText().replace(",",""));
+		MonetaryAmount spending=moneyFormatter.parse(this.spendingInput.getText().replace(",",""));
 		String contraAccount=this.accountingContraAccountInput.getText().strip();
 		String costGroup=this.accountingCostGroupInput.getText().strip();
 		String costCenter=this.accountingCostCenterInput.getText().strip();
@@ -196,7 +201,7 @@ public class PrimaryController {
 	
 	@FXML
 	protected void startCompanyManager() throws Exception {
-		FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("companyManager.fxml"));
+		FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("CompanyManager.fxml"));
 		CompanyManagerController controller = new CompanyManagerController(db);
 		fxmlLoader.setController(controller);
 		Scene scene = new Scene(fxmlLoader.load());

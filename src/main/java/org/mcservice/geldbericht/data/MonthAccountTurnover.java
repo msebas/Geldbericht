@@ -21,6 +21,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.money.MonetaryAmount;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
@@ -38,12 +39,12 @@ public class MonthAccountTurnover extends AbstractDataObject {
 	LocalDate month=null;
 	@ManyToOne
 	Account account=null;
-	int monthBalanceAssets=0;
-	int initialAssets=0;
-	int finalAssets=0;
-	int monthBalanceDebt=0;
-	int initialDebt=0;
-	int finalDebt=0;
+	MonetaryAmount monthBalanceAssets;
+	MonetaryAmount initialAssets;
+	MonetaryAmount finalAssets;
+	MonetaryAmount monthBalanceDebt;
+	MonetaryAmount initialDebt;
+	MonetaryAmount finalDebt;
 	
 	private MonthAccountTurnover() {
 		super(null,ZonedDateTime.now());
@@ -63,8 +64,8 @@ public class MonthAccountTurnover extends AbstractDataObject {
 	 * @param finalDebt
 	 */
 	public MonthAccountTurnover(Long uid, ZonedDateTime lastChange, ArrayList<Transaction> transactions,
-			LocalDate month, Account account, int monthBalanceAssets, int initialAssets,
-			int finalAssets, int monthBalanceDebt, int initialDebt, int finalDebt) {
+			LocalDate month, Account account, MonetaryAmount monthBalanceAssets, MonetaryAmount initialAssets,
+			MonetaryAmount finalAssets, MonetaryAmount monthBalanceDebt, MonetaryAmount initialDebt, MonetaryAmount finalDebt) {
 		super(uid,lastChange);
 		this.transactions = transactions;
 		this.month = month;
@@ -153,7 +154,7 @@ public class MonthAccountTurnover extends AbstractDataObject {
 	/**
 	 * @param initialAssets the initialAssets to set
 	 */
-	public void setInitialAssets(int initialAssets) {
+	public void setInitialAssets(MonetaryAmount initialAssets) {
 		if(this.initialAssets==initialAssets)
 			return;
 		this.initialAssets = initialAssets;
@@ -162,7 +163,7 @@ public class MonthAccountTurnover extends AbstractDataObject {
 	/**
 	 * @param initialDebt the initialDebt to set
 	 */
-	public void setInitialDebt(int initialDebt) {
+	public void setInitialDebt(MonetaryAmount initialDebt) {
 		if(this.initialDebt==initialDebt)
 			return;
 		this.initialDebt = initialDebt;
@@ -190,37 +191,37 @@ public class MonthAccountTurnover extends AbstractDataObject {
 	/**
 	 * @return the monthBalanceAssets
 	 */
-	public int getMonthBalanceAssets() {
+	public MonetaryAmount getMonthBalanceAssets() {
 		return monthBalanceAssets;
 	}
 	/**
 	 * @return the initialAssets
 	 */
-	public int getInitialAssets() {
+	public MonetaryAmount getInitialAssets() {
 		return initialAssets;
 	}
 	/**
 	 * @return the finalAssets
 	 */
-	public int getFinalAssets() {
+	public MonetaryAmount getFinalAssets() {
 		return finalAssets;
 	}
 	/**
 	 * @return the monthBalanceDebt
 	 */
-	public int getMonthBalanceDebt() {
+	public MonetaryAmount getMonthBalanceDebt() {
 		return monthBalanceDebt;
 	}
 	/**
 	 * @return the initialDebt
 	 */
-	public int getInitialDebt() {
+	public MonetaryAmount getInitialDebt() {
 		return initialDebt;
 	}
 	/**
 	 * @return the finalDebt
 	 */
-	public int getFinalDebt() {
+	public MonetaryAmount getFinalDebt() {
 		return finalDebt;
 	}
 }

@@ -15,6 +15,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.atLeastOnce;
 
+import org.javamoney.moneta.Money;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,7 @@ class AnnotationBasedFormatterTest{
 	
 	AnnotationBasedFormatter<TestTypes.Test3S2I,String> stringFormatter;
 	AnnotationBasedFormatter<TestTypes.Test3S2I,Integer> integerFormatter;
+	AnnotationBasedFormatter<TestTypes.Test1S1M,Money> moneyFormatter;
 	
 	@BeforeEach
 	public void setUp() {
@@ -227,6 +229,56 @@ class AnnotationBasedFormatterTest{
 		
 		when(changeMock.getControlNewText()).thenReturn(tstChars);
 		assertEquals(valid ? changeMock : null,integerFormatter.getFilter().apply(changeMock));
+		verify(changeMock,atLeastOnce()).getControlNewText();
+    }
+    
+    static Stream<Arguments> moneyVariants() {
+        return Stream.of(
+        		Arguments.of("1E2",false),
+        		Arguments.of("G",false),
+        		Arguments.of(" ",false),
+        		Arguments.of("1.23.1",false),
+        		Arguments.of("1.23,21 EUR",false),
+        		Arguments.of("1,234",false),
+        		Arguments.of(",",false),
+        		Arguments.of(".",false),
+        		Arguments.of("€",false),
+        		Arguments.of("1.123,34,34",false),
+        		Arguments.of("37a",false),
+        		Arguments.of("0",true),
+        		Arguments.of("1",true),
+        		Arguments.of("0,1",true),
+        		Arguments.of("1,0",true),
+        		Arguments.of("0,00",true),
+        		Arguments.of("1,09",true),
+        		Arguments.of("23,0",true),
+        		Arguments.of("233,0",true),
+        		Arguments.of("1.000",true),
+        		Arguments.of("1.066,0",true),
+        		Arguments.of("1.065,00",true),
+        		Arguments.of("19.000.066,0",true),
+        		Arguments.of("123.054.706.000,67",true),
+        		Arguments.of("1 EUR",true),
+        		Arguments.of("1 €",true),
+        		Arguments.of("1 USD",true),
+        		Arguments.of("1 $",true),
+        		Arguments.of("1,23 EUR",true),
+        		Arguments.of("1,24 €",true),
+        		Arguments.of("1,25 USD",true)       		
+        		);
+    }
+        
+    @ParameterizedTest
+    @MethodSource("moneyVariants")
+    public void checkMoneyMatcherFails(String tstChars, boolean valid) throws Exception {
+    	moneyFormatter = new AnnotationBasedFormatter<TestTypes.Test1S1M,Money>(
+    			TestTypes.Test1S1M.class.getDeclaredField("firstMoney"),
+    			TestTypes.Test1S1M.class,null);
+		
+    	Change changeMock = mock(Change.class);
+		
+		when(changeMock.getControlNewText()).thenReturn(tstChars);
+		assertEquals(valid ? changeMock : null,moneyFormatter.getFilter().apply(changeMock));
 		verify(changeMock,atLeastOnce()).getControlNewText();
     }
     

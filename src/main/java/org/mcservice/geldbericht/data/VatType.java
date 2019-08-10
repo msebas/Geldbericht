@@ -16,9 +16,20 @@
  ******************************************************************************/
 package org.mcservice.geldbericht.data;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.validation.constraints.Size;
+
+import org.hibernate.validator.constraints.Range;
+import org.mcservice.javafx.PercentageBigDecimalStringConverter;
+import org.mcservice.javafx.TrimStringConverter;
+import org.mcservice.javafx.control.table.TableViewColumn;
+import org.mcservice.javafx.control.table.TableViewColumnOrder;
+import org.mcservice.javafx.control.table.TableViewConverter;
+import org.mcservice.javafx.control.table.TableViewFinalIfNotNull;
+
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 
@@ -27,9 +38,30 @@ import javax.persistence.InheritanceType;
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public class VatType  extends AbstractDataObject {
 	
+	@Size(min = 2, max = 256)
+	@TableViewColumn(colName="Bezeichnung")
+	@TableViewColumnOrder(20)
+	@TableViewConverter(converter=TrimStringConverter.class)
 	protected String name=null;
-	protected double value=0.0;
+	
+	@Size(min = 1, max = 4)
+	@TableViewColumn(colName="Kurzbezeichnung")
+	@TableViewColumnOrder(10)
+	@TableViewConverter(converter=TrimStringConverter.class)
+	protected String shortName=null;
+	
+	@TableViewColumn(colName="Steuersatz")
+	@TableViewColumnOrder(30)
+	@TableViewConverter(converter=PercentageBigDecimalStringConverter.class)
+	@TableViewFinalIfNotNull("getUid")
+	@Range(min=0)
+	protected BigDecimal value=new BigDecimal(0);
+	
 	protected boolean defaultVatType=false;
+	
+	@TableViewColumn(colName="Ausblenden")
+	@TableViewColumnOrder(40)
+	protected boolean disabledVatType=false;
 	
 	private VatType() {
 		super(null,ZonedDateTime.now());
@@ -41,12 +73,15 @@ public class VatType  extends AbstractDataObject {
 	 * @param name
 	 * @param value
 	 */
-	protected VatType(Long uid, ZonedDateTime lastChange, String name, double value, 
-			boolean defaultVatType) {
+	public VatType(Long uid, ZonedDateTime lastChange, String name,
+			String shortName, BigDecimal value,	boolean defaultVatType,
+			boolean disabledVatType) {
 		super(uid, lastChange);
 		this.name = name;
+		this.shortName = shortName;
 		this.value = value;
 		this.defaultVatType=defaultVatType;
+		this.disabledVatType=disabledVatType;
 	}
 	
 	/**
@@ -60,16 +95,17 @@ public class VatType  extends AbstractDataObject {
 	 * @param name
 	 * @param value
 	 */
-	public VatType(String name, double value, boolean defaultVatType) {
+	public VatType(String name, String shortName, BigDecimal value, boolean defaultVatType) {
 		super(null);
 		this.name = name;
+		this.shortName = shortName;
 		this.value = value;
 		this.defaultVatType=defaultVatType;
 	}
 
 	@Override
 	public String toString() {
-		return "VatType [name=" + name + "]";
+		return shortName;
 	}
 
 	/**
@@ -82,8 +118,59 @@ public class VatType  extends AbstractDataObject {
 	/**
 	 * @return the VatType value
 	 */
-	public double getValue() {
+	public BigDecimal getValue() {
 		return value;
+	}
+
+	/**
+	 * @return the shortName
+	 */
+	public String getShortName() {
+		return shortName;
+	}
+
+	/**
+	 * @return the disabledVatType
+	 */
+	public boolean isDisabledVatType() {
+		return disabledVatType;
+	}
+
+	/**
+	 * @param disabledVatType the disabledVatType to set
+	 */
+	public void setDisabledVatType(boolean disabledVatType) {
+		this.disabledVatType = disabledVatType;
+	}
+
+	/**
+	 * @param name the name to set
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	/**
+	 * @param shortName the shortName to set
+	 */
+	public void setShortName(String shortName) {
+		this.shortName = shortName;
+	}
+
+	/**
+	 * @param defaultVatType the defaultVatType to set
+	 */
+	public void setDefaultVatType(boolean defaultVatType) {
+		this.defaultVatType = defaultVatType;
+	}
+
+	/**
+	 * @param value the value to set
+	 */
+	public void setValue(BigDecimal value) {
+		if(getUid()!=null)
+			throw new RuntimeException("Cannot change value of VatType with UID.");
+		this.value = value;
 	}
 
 }

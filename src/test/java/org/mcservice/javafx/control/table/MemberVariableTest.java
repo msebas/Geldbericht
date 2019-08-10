@@ -13,7 +13,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.reset;
 
 import java.util.ArrayList;
-
+import java.util.Collection;
 
 import javax.validation.constraints.Max;
 
@@ -24,6 +24,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mcservice.javafx.control.table.MemberVariable;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableColumn.CellEditEvent;
@@ -114,7 +117,8 @@ class MemberVariableTest{
     	doReturn(testView).when(testColumn).getTableView();
     	doReturn(testSelectionModel).when(testView).getSelectionModel();
     	
-    	ArrayList<allFine> errorList=new ArrayList<allFine>();
+     	ObjectProperty<Collection<allFine>> errorList = new SimpleObjectProperty<Collection<allFine>>(this, "itemsWithErrors");
+     	errorList.set(new ArrayList<allFine>());
     	
     	allFine item=new allFine();
     	item.setMyMember(0);
@@ -127,6 +131,8 @@ class MemberVariableTest{
 							    	 .thenReturn(Integer.valueOf(2))
 							    	 .thenReturn(Integer.valueOf(1));
     	
+    	
+    	
  
     	act.setTableColumn(testColumn);
     	act.setItemsWithErrors(errorList);
@@ -137,7 +143,7 @@ class MemberVariableTest{
     	
     	verify(testEvent, times(1)).getRowValue();
     	verify(testSelectionModel, never()).selectNext();
-    	assertTrue(errorList.contains(item));
+    	assertTrue(errorList.get().contains(item));
     	assertEquals(5,item.getMyMember());
     	
     	
@@ -145,14 +151,14 @@ class MemberVariableTest{
     	act.handle(testEvent);
     	
     	verify(testSelectionModel, never()).selectNext();
-    	assertTrue(errorList.contains(item));
-    	assertEquals(1,errorList.size());
+    	assertTrue(errorList.get().contains(item));
+    	assertEquals(1,errorList.get().size());
     	assertEquals(7,item.getMyMember());
     	
     	//Check if the item is removed correctly if the error is removed
     	act.handle(testEvent);
     	
-    	assertFalse(errorList.contains(item));
+    	assertFalse(errorList.get().contains(item));
     	verify(testSelectionModel).selectNext();
     	assertEquals(3,item.getMyMember());
     	
@@ -166,7 +172,7 @@ class MemberVariableTest{
     	act.handle(testEvent);
     	
     	verify(testSelectionModel, times(1)).selectNext();
-    	assertTrue(errorList.contains(item));
+    	assertTrue(errorList.get().contains(item));
     	assertEquals(2,item.getMyMember());
     }
     

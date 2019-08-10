@@ -86,9 +86,9 @@ public class Company extends AbstractDataObject{
 	 * @param companyNumber
 	 * @param companyBookkeepingAppointment
 	 */
-	public Company(ArrayList<Account> accounts, String companyName,
+	public Company(Long uid, ZonedDateTime lastChange,ArrayList<Account> accounts, String companyName,
 			String companyNumber, String companyBookkeepingAppointment) {
-		super(null);
+		super(uid,lastChange);
 		this.accounts = accounts;
 		this.companyName = companyName;
 		this.companyNumber = companyNumber;
@@ -105,7 +105,7 @@ public class Company extends AbstractDataObject{
 	/**
 	 * @param accounts the accounts to set
 	 */
-	public void setAccounts(ArrayList<Account> accounts) {
+	public void setAccounts(List<Account> accounts) {
 		if(this.accounts==accounts ||
 				( this.accounts!=null && this.accounts.equals(accounts) )
 				)

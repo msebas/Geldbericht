@@ -19,6 +19,7 @@ package org.mcservice.geldbericht.data;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 
+import javax.money.MonetaryAmount;
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
@@ -32,8 +33,8 @@ public class Transaction  extends AbstractDataObject {
 	
 	int number=0;
 	
-	int receipts=0;
-	int spending=0;
+	MonetaryAmount receipts;
+	MonetaryAmount spending;
 	Short accountingContraAccount=null;
 	Short accountingCostGroup=null;
 	Short accountingCostCenter=null;
@@ -66,8 +67,8 @@ public class Transaction  extends AbstractDataObject {
 	 * @param amortisationValue
 	 * @param descriptionOfTransaction
 	 */
-	protected Transaction(Long uid, ZonedDateTime lastChange, int number, int receipts,
-			int spending, Short accountingContraAccount, Short accountingCostGroup, Short accountingCostCenter,
+	protected Transaction(Long uid, ZonedDateTime lastChange, int number, MonetaryAmount receipts,
+			MonetaryAmount spending, Short accountingContraAccount, Short accountingCostGroup, Short accountingCostCenter,
 			String voucher, LocalDate transactionDate, VatType vat, Long inventoryNumber,
 			//AmortisationType amortisationType, Long amortisationValue, 
 			String descriptionOfTransaction) {
@@ -102,8 +103,8 @@ public class Transaction  extends AbstractDataObject {
 	 * @param amortisationValue
 	 * @param descriptionOfTransaction
 	 */
-	public Transaction(int number, int receipts,
-			int spending, Short accountingContraAccount, Short accountingCostGroup, Short accountingCostCenter,
+	public Transaction(int number, MonetaryAmount receipts,
+			MonetaryAmount spending, Short accountingContraAccount, Short accountingCostGroup, Short accountingCostCenter,
 			String voucher, LocalDate transactionDate, VatType vat, Long inventoryNumber,
 			//AmortisationType amortisationType, Long amortisationValue, 
 			String descriptionOfTransaction) {
@@ -143,7 +144,7 @@ public class Transaction  extends AbstractDataObject {
 	/**
 	 * @return the receipts
 	 */
-	public int getReceipts() {
+	public MonetaryAmount getReceipts() {
 		return receipts;
 	}
 
@@ -152,7 +153,7 @@ public class Transaction  extends AbstractDataObject {
 	 * 
 	 * @param receipts the receipts to set
 	 */
-	public void setReceipts(int receipts) {
+	public void setReceipts(MonetaryAmount receipts) {
 		if(this.receipts==receipts)
 			return;
 		this.receipts = receipts;
@@ -162,7 +163,7 @@ public class Transaction  extends AbstractDataObject {
 	/**
 	 * @return the spending
 	 */
-	public int getSpending() {
+	public MonetaryAmount getSpending() {
 		return spending;
 	}
 
@@ -171,7 +172,7 @@ public class Transaction  extends AbstractDataObject {
 	 * 
 	 * @param spending the spending to set
 	 */
-	public void setSpending(int spending) {
+	public void setSpending(MonetaryAmount spending) {
 		if(this.spending==spending)
 			return;
 		this.spending = spending;

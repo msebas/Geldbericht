@@ -10,8 +10,6 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RUNTIME)
 @Target(FIELD)
-public @interface TableViewColumn {
-	String colName() default "";
-	boolean editable() default true;
-	String pattern() default "";
+public @interface TableViewFinalIfNotNull {
+	String value();
 }

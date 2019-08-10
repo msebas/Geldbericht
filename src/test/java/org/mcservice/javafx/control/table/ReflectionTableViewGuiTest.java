@@ -53,10 +53,7 @@ class ReflectionTableViewGuiTest extends ApplicationTest{
         this.companies=this.tableView.getItems();
 
         this.tableView.getItems().add(new TestTypes.Test3S());
-        
-        tableView.setEditable(true);
-        tableView.getSelectionModel().cellSelectionEnabledProperty().set(true);
-        tableView.setEditHandler();
+        this.tableView.setEditHandler();
         
         tableView.setFixedCellSize(30);
         tableView.prefWidthProperty().bind(stage.widthProperty());
@@ -167,7 +164,6 @@ class ReflectionTableViewGuiTest extends ApplicationTest{
     	assertEquals("Num32",tableView.getItems().get(0).getSecondString());
     	assertEquals("1234567890",tableView.getItems().get(0).getThirdString());
     }
-    
     
     @Test
     public void checkInputChain() throws Exception {

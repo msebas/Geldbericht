@@ -93,7 +93,7 @@ class ValidatingTextFieldTableCellTest{
     	doReturn(verifyCallback).when(fmt).getVerificator();
     	doReturn(mockedConverter).when(fmt).getValueConverter();
     	
-    	cell=ValidatingTextFieldTableCell.forTableColumn(fmt,keyProperty).call(null);
+    	cell=ValidatingTextFieldTableCell.forTableColumn(fmt,keyProperty,false).call(null);
     	advCell=(ValidatingTextFieldTableCell <?,String>) cell;
     	assertEquals(mockedConverter,advCell.converterProperty().get());
     	assertEquals(verifyCallback,advCell.verifyProperty().get());
@@ -155,7 +155,7 @@ class ValidatingTextFieldTableCellTest{
     	DefaultStringConverter mockedConverter = mock(DefaultStringConverter.class);
     	when(mockedConverter.toString(any())).thenReturn("Start");
     	advCell=spy(new ValidatingTextFieldTableCell<String, String>(
-    				mockedConverter,verifyCallback,keyProperty,null));
+    				mockedConverter,verifyCallback,keyProperty,null,null,false));
     	TableColumn<String,String> testColumn = spy(new TableColumn<String,String>("Name"));
     	TableView<String> testView = spy(new TableView<String>());
     	testView.getColumns().add(testColumn);

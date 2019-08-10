@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -33,6 +34,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mcservice.AfterFXInitBeforeEach;
 import org.mcservice.MockedApplicationTest;
+import org.mcservice.geldbericht.App;
+import org.mcservice.geldbericht.CompanyManagerController;
 import org.mcservice.geldbericht.data.Company;
 import org.mcservice.geldbericht.database.DbAbstractionLayer;
 import org.mockito.Mock;
@@ -41,41 +44,41 @@ import org.testfx.util.BoundsQueryUtils;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 
+
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination.Modifier;
 import javafx.scene.input.KeyCombination.ModifierValue;
 import javafx.scene.input.MouseButton;
 import javafx.stage.Stage;
 
-@Retention(RetentionPolicy.RUNTIME)
-@interface CreateCompanies {
-	   int value() default 3;
-	}
-@Retention(RetentionPolicy.RUNTIME)
-@interface CreateCompany {
-	String name();
-	String number();
-	String appointment();
-}
-@Retention(RetentionPolicy.RUNTIME)
-@interface EnableManageCompany {}
-
+@Tag("Active")
 @Tag("GUI")
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.WARN)
 //@MockitoSettings(strictness = Strictness.STRICT_STUBS)
 class CompanyManagerTest extends MockedApplicationTest{
+	
+	@Retention(RetentionPolicy.RUNTIME)
+	private @interface CreateCompanies {
+		   int value() default 3;
+		}
+	@Retention(RetentionPolicy.RUNTIME)
+	private @interface CreateCompany {
+		String name();
+		String number();
+		String appointment();
+	}
+	@Retention(RetentionPolicy.RUNTIME)
+	private @interface EnableManageCompany {}
 	
 	@Mock
 	DbAbstractionLayer db;
@@ -86,7 +89,7 @@ class CompanyManagerTest extends MockedApplicationTest{
 		
 	@Override 
 	public void start(Stage stage) throws Exception {
-		FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("companyManager.fxml"));
+		FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("CompanyManager.fxml"));
 		CompanyManagerController controller = new CompanyManagerController(db);
 		fxmlLoader.setController(controller);
 		Scene scene = new Scene(fxmlLoader.load());
@@ -189,6 +192,12 @@ class CompanyManagerTest extends MockedApplicationTest{
         		);
     }
         
+    
+    @Test
+    @Disabled
+    public void manual() {
+    	sleep(3600000);
+    }
    
     @ParameterizedTest
     @MethodSource("columnNumberGetterNameProvider")
@@ -214,6 +223,7 @@ class CompanyManagerTest extends MockedApplicationTest{
     
     
     @Test
+    //@Tag("Active")
     public void checkEditSelect() throws Exception {
     	clickOn("#addButton");
     	KeyCodeCombination ctrlA=new KeyCodeCombination(KeyCode.A, ModifierValue.UP, ModifierValue.DOWN, 
@@ -251,6 +261,7 @@ class CompanyManagerTest extends MockedApplicationTest{
     }
     
     @Test
+    //@Tag("Active")
     public void checkInputChain() throws Exception {
     	clickOn("#addButton");
     	String[] inputStrings=new String[] {"#Company & Söhnė",
