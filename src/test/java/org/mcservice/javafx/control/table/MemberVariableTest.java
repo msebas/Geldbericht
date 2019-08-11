@@ -125,15 +125,8 @@ class MemberVariableTest{
     	
 		CellEditEvent<allFine,Integer> testEvent=mock(CellEditEvent.class);
     	when(testEvent.getRowValue()).thenReturn(item);
-    	when(testEvent.getNewValue()).thenReturn(Integer.valueOf(5))
-							    	 .thenReturn(Integer.valueOf(7))
-							    	 .thenReturn(Integer.valueOf(3))
-							    	 .thenReturn(Integer.valueOf(2))
-							    	 .thenReturn(Integer.valueOf(1));
+    	when(testEvent.getNewValue()).thenReturn(Integer.valueOf(5));
     	
-    	
-    	
- 
     	act.setTableColumn(testColumn);
     	act.setItemsWithErrors(errorList);
     	reset(testSelectionModel);
@@ -148,6 +141,9 @@ class MemberVariableTest{
     	
     	
     	//Check if the item is not added twice to the errorList
+    	mock(CellEditEvent.class);
+    	when(testEvent.getRowValue()).thenReturn(item);
+    	when(testEvent.getNewValue()).thenReturn(Integer.valueOf(7));
     	act.handle(testEvent);
     	
     	verify(testSelectionModel, never()).selectNext();
@@ -156,6 +152,9 @@ class MemberVariableTest{
     	assertEquals(7,item.getMyMember());
     	
     	//Check if the item is removed correctly if the error is removed
+    	mock(CellEditEvent.class);
+    	when(testEvent.getRowValue()).thenReturn(item);
+    	when(testEvent.getNewValue()).thenReturn(Integer.valueOf(3));
     	act.handle(testEvent);
     	
     	assertFalse(errorList.get().contains(item));
@@ -167,6 +166,9 @@ class MemberVariableTest{
     	assertEquals(testColumn,act.getTableColumn());
     	
     	//Check if select next is called when item contains errors, but field is correct
+    	mock(CellEditEvent.class);
+    	when(testEvent.getRowValue()).thenReturn(item);
+    	when(testEvent.getNewValue()).thenReturn(Integer.valueOf(2));
     	reset(testSelectionModel);
     	item.otherMember=1;
     	act.handle(testEvent);

@@ -140,7 +140,7 @@ public class VatTypeManagerController {
 
 	@FXML
     private void add() throws IOException {
-		VatType newVatType = new VatType("","",new BigDecimal(0),!vatTypeTableView.getItems().isEmpty());
+		VatType newVatType = new VatType("","",new BigDecimal(0),vatTypeTableView.getItems().isEmpty());
 		vatTypeTableView.getItems().add(newVatType);
 		vatTypeTableView.getItemsWithErrors().add(newVatType);
 		

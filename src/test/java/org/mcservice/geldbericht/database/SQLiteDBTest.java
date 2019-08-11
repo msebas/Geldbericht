@@ -35,6 +35,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mcservice.geldbericht.data.VatType;
 import org.mcservice.geldbericht.database.DbAbstractionLayer;
 import org.mcservice.javafx.AdvancedMatcher;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -42,6 +43,7 @@ import org.junit.jupiter.api.Test;
 class SQLiteDBTest {
 	
 	@Test
+	@Disabled
 	void createTablesTest(@TempDir Path tempDir) throws SQLException {
 		Path dbFile=tempDir.resolve("tempDb.sql");
 		
@@ -72,6 +74,7 @@ class SQLiteDBTest {
 	
 	@Tag("Active")
 	@Test
+	@Disabled
 	void insertVatTypesTest(@TempDir Path tempDir) throws SQLException {
 		AdvancedMatcher a1;
 		

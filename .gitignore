@@ -2,6 +2,7 @@
 *.jar
 *.zip
 *.pdf
+*.sqlite
 tmp/
 vendor/
 bin/

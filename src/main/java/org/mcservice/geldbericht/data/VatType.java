@@ -57,11 +57,11 @@ public class VatType  extends AbstractDataObject {
 	@Range(min=0)
 	protected BigDecimal value=new BigDecimal(0);
 	
-	protected boolean defaultVatType=false;
+	protected Boolean defaultVatType=false;
 	
 	@TableViewColumn(colName="Ausblenden")
 	@TableViewColumnOrder(40)
-	protected boolean disabledVatType=false;
+	protected Boolean disabledVatType=false;
 	
 	private VatType() {
 		super(null,ZonedDateTime.now());
@@ -74,8 +74,8 @@ public class VatType  extends AbstractDataObject {
 	 * @param value
 	 */
 	public VatType(Long uid, ZonedDateTime lastChange, String name,
-			String shortName, BigDecimal value,	boolean defaultVatType,
-			boolean disabledVatType) {
+			String shortName, BigDecimal value,	Boolean defaultVatType,
+			Boolean disabledVatType) {
 		super(uid, lastChange);
 		this.name = name;
 		this.shortName = shortName;
@@ -87,7 +87,7 @@ public class VatType  extends AbstractDataObject {
 	/**
 	 * @return the defaultVatType
 	 */
-	public boolean isDefaultVatType() {
+	public Boolean isDefaultVatType() {
 		return defaultVatType;
 	}
 
@@ -95,7 +95,7 @@ public class VatType  extends AbstractDataObject {
 	 * @param name
 	 * @param value
 	 */
-	public VatType(String name, String shortName, BigDecimal value, boolean defaultVatType) {
+	public VatType(String name, String shortName, BigDecimal value, Boolean defaultVatType) {
 		super(null);
 		this.name = name;
 		this.shortName = shortName;
@@ -132,14 +132,14 @@ public class VatType  extends AbstractDataObject {
 	/**
 	 * @return the disabledVatType
 	 */
-	public boolean isDisabledVatType() {
+	public Boolean isDisabledVatType() {
 		return disabledVatType;
 	}
 
 	/**
 	 * @param disabledVatType the disabledVatType to set
 	 */
-	public void setDisabledVatType(boolean disabledVatType) {
+	public void setDisabledVatType(Boolean disabledVatType) {
 		this.disabledVatType = disabledVatType;
 	}
 
@@ -160,7 +160,7 @@ public class VatType  extends AbstractDataObject {
 	/**
 	 * @param defaultVatType the defaultVatType to set
 	 */
-	public void setDefaultVatType(boolean defaultVatType) {
+	public void setDefaultVatType(Boolean defaultVatType) {
 		this.defaultVatType = defaultVatType;
 	}
 

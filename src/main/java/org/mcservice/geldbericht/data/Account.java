@@ -21,6 +21,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.money.MonetaryAmount;
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.validation.constraints.Pattern;
@@ -51,21 +56,22 @@ public class Account extends AbstractDataObject {
 	@TableViewConverter(converter=TrimStringConverter.class)
 	protected String accountNumber=null;
 	
-	@Size(min = 2, max = 256)
+	@Size(min = 2, max = 255)
 	@TableViewColumn(colName="Kontenname")
 	@TableViewColumnOrder(20)
 	@TableViewConverter(converter=TrimStringConverter.class)
 	protected String accountName=null;
 	
-	
 	@TableViewColumn(colName="Kontostand", editable=false)
 	@TableViewColumnOrder(30)
+	@Convert(converter = MonetaryAmountConverter.class)
 	protected MonetaryAmount balance;
 	
 	@TableViewColumn(colName="Initialer Kontostand")
 	@TableViewColumnOrder(40)
 	@TableViewFinalIfNotNull("getUid")
 	@Range(min=0)
+	@Convert(converter = MonetaryAmountConverter.class)
 	protected MonetaryAmount initialBalance;
 
 	@OneToMany(mappedBy="account")

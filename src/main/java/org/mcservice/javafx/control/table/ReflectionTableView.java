@@ -14,21 +14,20 @@ import javax.money.MonetaryAmount;
 import org.javamoney.moneta.Money;
 import org.mcservice.javafx.AnnotationBasedFormatter;
 
-import javafx.scene.Node;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.TableCell;
+import com.sun.javafx.property.PropertyReference;
+
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TablePosition;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.util.Callback;
 
 public class ReflectionTableView<S> extends TableView<S> {
@@ -107,36 +106,41 @@ public class ReflectionTableView<S> extends TableView<S> {
 								
 				actColumn.setEditable(field.getAnnotation(TableViewColumn.class).editable());
 				actColumn.setCellValueFactory(new PropertyValueFactory<S,Boolean>(field.getName()));
-				actColumn.setCellFactory(CheckBoxTableCell.forTableColumn(actColumn));
+				//TODO Find out why this does not work
+				//actColumn.setCellFactory(CheckBoxTableCell.forTableColumn(actColumn));
 				
-				//This does not work
-//				//This adds a listener that toggles the checkbox if space is hit and the box is selected.
-//				actColumn.setCellFactory(new Callback<TableColumn<S, Boolean>, TableCell<S, Boolean>>() {
-//					Callback<TableColumn<S, Boolean>, TableCell<S, Boolean>> superCallback=
-//							CheckBoxTableCell.forTableColumn(actColumn);
-//					@Override
-//					public TableCell<S, Boolean> call(TableColumn<S, Boolean> param) {
-//						TableCell<S, Boolean> result=superCallback.call(param);
-//						if(result!=null) {
-//							result.setOnKeyReleased(new EventHandler<KeyEvent>() {
-//								CheckBoxTableCell<S, Boolean> cell=(CheckBoxTableCell<S, Boolean>) result;
-//								@Override
-//								public void handle(KeyEvent event) {
-//									System.out.println("Happen");
-//									if(event.getCode()==KeyCode.SPACE) {
-//										Node chk=cell.getGraphic();
-//										if (null!=chk && chk instanceof CheckBox) {
-//											((CheckBox) chk).fire();
-//										}
-//									}
-//								}
-//							});
-//						}
-//						return result;
-//					}					
-//				});
+				//FIXME There should be a more elegant solution.
+				actColumn.setCellFactory( CheckBoxTableCell.forTableColumn(new Callback<Integer, ObservableValue<Boolean>>() {
+					
+					class InternalBooleanProperty<K> extends SimpleBooleanProperty {
+						private final K item;
+						
+						public InternalBooleanProperty(K referenceItem){
+							this.item=referenceItem;
+							this.set(propertyMethod.get(item));
+						}
+						
+					    /**
+					     * {@inheritDoc}
+					     */
+					    @Override
+					    public void set(boolean newValue) {
+					    	super.set(newValue);
+					    	propertyMethod.set(item, newValue);
+					    }
+					}
+					
+					private PropertyReference<Boolean> propertyMethod=new PropertyReference<Boolean>(referenceClass,field.getName());
+										
+					@Override
+					public ObservableValue<Boolean> call(Integer param) {
+						ObservableBooleanValue newObs=new InternalBooleanProperty<S>(getItems().get(param));
+						return newObs;
+					}
+				}));
 				
 				this.getColumns().add(actColumn);
+				//FIXME Add correct keyboard behavior.
 			}
 		}
 		
@@ -148,6 +152,18 @@ public class ReflectionTableView<S> extends TableView<S> {
 		setEditable(true);
         getSelectionModel().cellSelectionEnabledProperty().set(true);
 	}
+	
+
+	class ProductFx{
+		public ObservableValue<Boolean> s;
+		
+		ObservableValue<Boolean> getPrintedProperty(){
+			return s;
+		}
+		
+	};
+	
+	private void updateInDatabase(ProductFx p) {};
 
 	private <K> void createAnnotationBasedValidatingTextField(Field field, K defaultValue, Boolean overwrite) {
 		TableColumn<S,K> actColumn = new TableColumn<S,K>(getColumnName(field));

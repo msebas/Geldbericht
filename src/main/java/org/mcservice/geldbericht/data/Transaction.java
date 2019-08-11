@@ -20,6 +20,8 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 
 import javax.money.MonetaryAmount;
+import javax.persistence.Convert;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
@@ -33,7 +35,9 @@ public class Transaction  extends AbstractDataObject {
 	
 	int number=0;
 	
+	@Convert(converter = MonetaryAmountConverter.class)
 	MonetaryAmount receipts;
+	@Convert(converter = MonetaryAmountConverter.class)
 	MonetaryAmount spending;
 	Short accountingContraAccount=null;
 	Short accountingCostGroup=null;

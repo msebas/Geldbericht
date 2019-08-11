@@ -22,7 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.money.MonetaryAmount;
+import javax.persistence.Convert;
 import javax.persistence.ElementCollection;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
@@ -39,11 +41,17 @@ public class MonthAccountTurnover extends AbstractDataObject {
 	LocalDate month=null;
 	@ManyToOne
 	Account account=null;
+	@Convert(converter = MonetaryAmountConverter.class)
 	MonetaryAmount monthBalanceAssets;
+	@Convert(converter = MonetaryAmountConverter.class)
 	MonetaryAmount initialAssets;
+	@Convert(converter = MonetaryAmountConverter.class)
 	MonetaryAmount finalAssets;
+	@Convert(converter = MonetaryAmountConverter.class)
 	MonetaryAmount monthBalanceDebt;
+	@Convert(converter = MonetaryAmountConverter.class)
 	MonetaryAmount initialDebt;
+	@Convert(converter = MonetaryAmountConverter.class)
 	MonetaryAmount finalDebt;
 	
 	private MonthAccountTurnover() {

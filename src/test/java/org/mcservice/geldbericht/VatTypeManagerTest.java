@@ -60,6 +60,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PopupControl;
@@ -83,6 +84,8 @@ class VatTypeManagerTest extends MockedApplicationTest{
 	@Retention(RetentionPolicy.RUNTIME)
 	private @interface CreateVatTypes {
 		   int value() default 3;
+		   boolean manyDefault() default false;
+		   int disabled() default 0;
 		}
 	@Retention(RetentionPolicy.RUNTIME)
 	private @interface CreateVatType {
@@ -104,6 +107,7 @@ class VatTypeManagerTest extends MockedApplicationTest{
 	List<VatType> vatTypes=null;
 	TableView<VatType> tableView=null;
 	ComboBox<VatType> vatTypeSelector=null;
+	Label changesLabel=null;
 	int allVatTypes=0;
 		
 	@Override 
@@ -116,13 +120,13 @@ class VatTypeManagerTest extends MockedApplicationTest{
         stage.show();
     }
 
-	public List<VatType> createVatTypes(int n){
+	public List<VatType> createVatTypes(int n,boolean manyDefault){
 		List<VatType> result = new ArrayList<VatType>(n);
 		if(n==0)
 			return result;
-		for (int j = 0; j < n-1; j++) {
+		for (int j = 0; j < n; j++) {
 			result.add(new VatType(String.format("VatType %d",allVatTypes+j),
-					String.format("%d",allVatTypes+j),new BigDecimal(0),false));
+					String.format("%d",allVatTypes+j),new BigDecimal(0),manyDefault ? j%2==1 : false));
 		}
 		allVatTypes+=n;
 		return result;
@@ -136,9 +140,13 @@ class VatTypeManagerTest extends MockedApplicationTest{
 			Method actTest=testInfo.getTestMethod().get();
 			for (Annotation annotation : actTest.getAnnotations()) {
 				if (annotation.annotationType().equals(CreateVatTypes.class)) {
-					for (int i=0;i<((CreateVatTypes) annotation).value();++i) {
-						act.addAll(createVatTypes(3));
+					List<VatType> res = createVatTypes(((CreateVatTypes) annotation).value(),
+							((CreateVatTypes) annotation).manyDefault());
+					for (int i = 0; i < ((CreateVatTypes) annotation).disabled(); i++) {
+						res.get(i).setDisabledVatType(true);
 					}
+					act.addAll(res);
+					
 				}
 				
 				if (annotation.annotationType().equals(CreateVatType.class)) {
@@ -174,6 +182,12 @@ class VatTypeManagerTest extends MockedApplicationTest{
 			ComboBox<VatType> tmpView =(ComboBox<VatType>) tmpNode;
 			vatTypeSelector=tmpView;
 		}
+		tmpNode=lookup("#changesLabel").query();
+		if (tmpNode instanceof Label) {
+			@SuppressWarnings("unchecked")
+			Label tmpView =(Label) tmpNode;
+			changesLabel=tmpView;
+		}
     }
     
     public TableCell<?, ?> getCell(int columnIndex, int rowIndex) {
@@ -208,7 +222,7 @@ class VatTypeManagerTest extends MockedApplicationTest{
 	
 	@Tag("Active")
     @Test
-    //@Disabled
+    @Disabled
     @CreateVatTypes
     public void manual() {
     	sleep(3600000);
@@ -218,23 +232,21 @@ class VatTypeManagerTest extends MockedApplicationTest{
     @CreateVatTypes(1)
     public void checkAutofillSingleVatType() {
     	assertTrue(vatTypeSelector.getValue().equals(vatTypes.get(0)));
-    	assertTrue(tableView.getItems().containsAll(vatTypes));
-    	assertEquals(tableView.getItems().size(),vatTypes.size());
     	Node t=lookup("#addButton").query();
     	assertTrue(t instanceof Button);
     	assertFalse(((Button) t).isDisabled());
     	
     	t=lookup("#persistButton").query();
     	assertTrue(t instanceof Button);
-    	assertTrue(((Button) t).isDisabled());
+    	assertFalse(((Button) t).isDisabled());
     	
     	t=lookup("#changesLabel").query();
     	assertTrue(t instanceof Label);
-    	assertEquals("Keine Änderungen",((Label) t).getText());
+    	assertEquals("Ungespeicherte Änderungen",((Label) t).getText());
     	
     	t=lookup("#persistButton").query();
     	assertTrue(t instanceof Button);
-    	assertTrue(((Button) t).isDisabled());
+    	assertFalse(((Button) t).isDisabled());
     	t=lookup("#cancelButton").query();
     	
     	clickOn(t);
@@ -243,19 +255,15 @@ class VatTypeManagerTest extends MockedApplicationTest{
     	verify(db,times(0)).manageVatTypes(eq(tableView.getItems()),any());
     	assertFalse(tableView.getScene().getWindow().isShowing());
     }
-    
+
     @Test
     @CreateVatTypes(2)
-    public void checkNoAutofillTwoVatTypesPersistAndClose() {
-    	assertTrue(vatTypeSelector.getValue()==null);
-    	assertTrue(tableView.getItems()==null);
-    	Node t=lookup("#addButton").query();
-    	assertTrue(t instanceof Button);
-    	assertTrue(((Button) t).isDisabled());
+    public void checkAutofillTwoVatTypesNoChangesPersistAndClose() {
+    	assertTrue(vatTypeSelector.getValue()==vatTypes.get(0));
     	
-    	t=lookup("#persistButton").query();
+    	Node t=lookup("#persistButton").query();
     	assertTrue(t instanceof Button);
-    	assertTrue(((Button) t).isDisabled());
+    	assertFalse(((Button) t).isDisabled());
     	
     	((Button) t).setDisable(false);
     	clickOn(t);
@@ -265,34 +273,55 @@ class VatTypeManagerTest extends MockedApplicationTest{
     }
     
     @Test
-    @CreateVatTypes()
-    public void selectAVatTypeSelectNextVatType() {
-    	clickOn(vatTypeSelector);
-    	LabeledText l = getPopupList().get(0);
-    	clickOn(l);
-    	    	
-    	assertTrue(vatTypeSelector.getValue()==this.vatTypes.get(0));
-    	assertTrue(tableView.getItems().containsAll(vatTypes));
-    	assertEquals(tableView.getItems().size(),vatTypes.size());
-
-    	clickOn(vatTypeSelector);
-    	l = getPopupList().get(1);
-    	clickOn(l);
+    @CreateVatTypes(value=4, disabled=2)
+    public void checkAutofillWithDisabledVatTypes() {
+    	assertTrue(vatTypeSelector.getValue()==vatTypes.get(2));
     	
-    	assertTrue(vatTypeSelector.getValue()==this.vatTypes.get(1));
-    	assertTrue(tableView.getItems().containsAll(vatTypes));
-    	assertEquals(tableView.getItems().size(),vatTypes.size());
-    	
-    	clickOn(vatTypeSelector);
-    	l = getPopupList().get(1);
-    	clickOn(l);
-    	
-    	assertTrue(vatTypeSelector.getValue()==this.vatTypes.get(1));
-    	assertTrue(tableView.getItems().containsAll(vatTypes));
-    	assertEquals(tableView.getItems().size(),vatTypes.size());
+    	Node t=lookup("#persistButton").query();
+    	assertTrue(t instanceof Button);
+    	assertFalse(((Button) t).isDisabled());
     }
     
     @Tag("Active")
+    @Test
+    @CreateVatTypes(value=4, disabled=4)
+    public void checkAutofillAllDisabledVatTypes() {
+    	assertTrue(vatTypeSelector.getValue()==null);
+    	
+    	Node t=lookup("#persistButton").query();
+    	assertTrue(t instanceof Button);
+    	assertTrue(((Button) t).isDisabled());
+    	
+    	for (int i = 0; i < 4; i++) {
+			Node graphic=getCell(3,i).getGraphic();
+			assertTrue(vatTypes.get(i).isDisabledVatType());
+			assertTrue(graphic instanceof CheckBox);
+			assertTrue(((CheckBox) graphic).isSelected());
+		}
+    }
+    
+    @Test
+    @CreateVatTypes(value=4,manyDefault=true)
+    public void selectAVatTypeSelectNextVatType() {
+    	assertEquals(4,tableView.getItems().size());
+    	
+    	for (int i = 0; i < vatTypes.size(); i++) {
+			assertEquals(i==1,vatTypes.get(i).isDefaultVatType());
+		}
+    	
+    	for (int i = 0; i < vatTypes.size(); i++) {
+    		clickOn(vatTypeSelector);
+        	LabeledText l = getPopupList().get(i);
+        	clickOn(l);
+        	
+        	assertTrue(vatTypeSelector.getValue()==this.vatTypes.get(i));
+        	
+        	for (int j = 0; j < vatTypes.size(); j++) {
+    			assertEquals(j==i,vatTypes.get(j).isDefaultVatType());
+    		}
+    	}
+    }
+    
     @Test
     public void ClickAddButtonFillNewVatType() {
     	clickOn("#addButton");
@@ -311,18 +340,22 @@ class VatTypeManagerTest extends MockedApplicationTest{
     	assertFalse(tableView.getItems().get(0).isDisabledVatType());
     }
     
-    @Tag("Active")
+    
     @Test
-    public void ClickAddButtonFillNewDisabledVatType() {
+    public void EmptyTableClickAddButtonFillNewDisabledVatType() {
     	clickOn("#addButton");
     	assertEquals(1,tableView.getItems().size());
     	assertEquals("",tableView.getItems().get(0).getName());
     	assertEquals("",tableView.getItems().get(0).getShortName());
+    	assertEquals(vatTypeSelector.getValue(),tableView.getItems().get(0));
+    	assertEquals("1 fehlerhafte Einträge",changesLabel.getText());
     	
     	doubleClickOn(getCell(0, 0)).write("12 %").type(KeyCode.ENTER);
     	write("VatType Name").type(KeyCode.ENTER);
-    	write("12 %").type(KeyCode.ENTER).type(KeyCode.SPACE);
+    	write("12 %").type(KeyCode.ENTER);
     	
+    	clickOn(getCell(3,0));
+
     	assertEquals(1,tableView.getItems().size());
     	assertEquals("VatType Name",tableView.getItems().get(0).getName());
     	assertEquals("12 %",tableView.getItems().get(0).getShortName());
@@ -330,14 +363,46 @@ class VatTypeManagerTest extends MockedApplicationTest{
     	assertTrue(tableView.getItems().get(0).isDisabledVatType());
     }
     
+    @Test
+    @CreateVatType()
+    public void PrefilledTableClickAddButtonFillNewEnabledVatType() {
+    	assertEquals(vatTypeSelector.getValue(),tableView.getItems().get(0));
+    	assertEquals("Keine Änderungen",changesLabel.getText());
+    	
+    	clickOn("#addButton");
+    	assertEquals(2,tableView.getItems().size());
+    	assertEquals("",tableView.getItems().get(1).getName());
+    	assertEquals("",tableView.getItems().get(1).getShortName());
+    	assertFalse(tableView.getItems().get(1).isDisabledVatType());
+    	assertEquals("1 fehlerhafte Einträge",changesLabel.getText());
+    	assertEquals(vatTypeSelector.getValue(),tableView.getItems().get(0));
+    	
+    	doubleClickOn(getCell(0, 1)).write("12 %").type(KeyCode.ENTER);
+    	write("VatType Name").type(KeyCode.ENTER);
+    	write("12 %").type(KeyCode.ENTER);
+    	
+    	clickOn(getCell(3,1));
+    	clickOn(getCell(3,1));
+
+    	assertEquals(2,tableView.getItems().size());
+    	assertEquals("VatType Name",tableView.getItems().get(1).getName());
+    	assertEquals("12 %",tableView.getItems().get(1).getShortName());
+    	assertEquals(0.12,tableView.getItems().get(1).getValue().doubleValue());
+    	assertFalse(tableView.getItems().get(1).isDisabledVatType());
+    }
+    
     
     @Test
     @CreateVatType(insertError=true)
     public void CorrectVatTypeClickPersistButton() {
     	assertTrue(getCell(0,0).getStyleClass().contains("cell-validation-error"));
+    	assertEquals(vatTypeSelector.getValue(),tableView.getItems().get(0));
+    	assertEquals("1 fehlerhafte Einträge",changesLabel.getText());
+    	
     	Node t=lookup("#persistButton").query();
     	assertTrue(t instanceof Button);
     	assertTrue(((Button) t).isDisabled());
+    	
     	
     	doubleClickOn(getCell(1, 0)).write(" Stuff").type(KeyCode.ENTER);
     	
@@ -347,8 +412,8 @@ class VatTypeManagerTest extends MockedApplicationTest{
     	type(KeyCode.BACK_SPACE,3);
     	write("12 %").type(KeyCode.ENTER);
     	
+    	assertEquals("Ungespeicherte Änderungen",changesLabel.getText());
     	assertFalse(((Button) t).isDisabled());
-    	
     	assertEquals("12 %",tableView.getItems().get(0).getShortName());
     	
     	clickOn(t);
