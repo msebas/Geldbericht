@@ -6,7 +6,8 @@
 <hibernate-configuration>
 	<session-factory>
 		<!-- SQL Dialect/Driver -->
-		<property name="hibernate.connection.driver_class">com.mysql.cj.jdbc.Driver</property>
+		<property name="hibernate.dialect">org.hibernate.dialect2.SQLiteDialect</property>
+		<property name="hibernate.connection.driver_class">org.sqlite.JDBC</property>
 		
 		<!-- Integration -->
 		<property name="hibernate.archive.autodetection">class</property>
@@ -15,10 +16,10 @@
         <property name="hibernate.current_session_context_class">org.hibernate.context.internal.ThreadLocalSessionContext</property>    
             
         <!-- Database Connection Settings -->    
-        <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/geldberichtDb?serverTimezone=Europe/Berlin</property>
-		<property name="hibernate.connection.username">testUser</property>
-		<property name="hibernate.connection.password">localPassword</property>
-        <property name="connection.pool_size">4</property>
+        <property name="hibernate.connection.url">jdbc:sqlite:/home/Sebastian/workspace/Geldbericht/tmp/sqlite.db</property>
+        <property name="hibernate.connection.username"></property>
+        <property name="hibernate.connection.password"></property>
+        <property name="connection.pool_size">1</property>
         
         <property name="hibernate.connection.autocommit">false</property>
         <property name="hibernate.cache.use_second_level_cache">false</property>

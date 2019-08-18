@@ -159,6 +159,7 @@ public class AccountManagerController {
 		applyUpdate=false;
 		actCompany=companySelector.getValue();
 		ObservableList<Account> accounts;
+		db.loadAccountsToCompany(actCompany);
 		accounts=FXCollections.observableArrayList(new ArrayList<Account>(actCompany.getAccounts()));
 		List<Account> act=new ArrayList<Account>();
 		for (Account account : accounts) {

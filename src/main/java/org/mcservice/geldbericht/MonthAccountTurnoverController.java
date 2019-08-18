@@ -74,7 +74,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-public class PrimaryController {
+public class MonthAccountTurnoverController {
 	
 	protected DbAbstractionLayer db=null;
 	protected ZonedDateTime lastUpdate=ZonedDateTime.now();
@@ -144,7 +144,7 @@ public class PrimaryController {
         App.setRoot("secondary");
     }
 	
-	public PrimaryController() {
+	public MonthAccountTurnoverController() {
 		this.db=new DbAbstractionLayer("/tmp/geldberichtTestDB.sqlite");
 		this.transactionUpdateListener=new ListChangeListener<Transaction>() {
 			@Override

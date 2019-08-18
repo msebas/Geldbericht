@@ -27,6 +27,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
+import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
@@ -70,12 +71,11 @@ public class DbAbstractionLayer {
 		try {
 			StandardServiceRegistryBuilder builder=new StandardServiceRegistryBuilder().configure("hibernate.cfg.xml");
 			
-			if(null!=dbPath)
-				builder.applySetting("hibernate.connection.url", "jdbc:sqlite:"+dbPath);
+			//if(null!=dbPath)
+				//builder.applySetting("hibernate.connection.url", "jdbc:sqlite:"+dbPath);
 			
             ServiceRegistry serviceRegistry = builder.build();
-            
-            
+                        
             Metadata metadata = new MetadataSources(serviceRegistry).getMetadataBuilder().build();
             factory=(SessionFactory) metadata.getSessionFactoryBuilder().build();
         } catch (Throwable ex) {
@@ -85,15 +85,20 @@ public class DbAbstractionLayer {
 	}
 	
 	public List<VatType> manageVatTypes(List<VatType> vatTypes, ZonedDateTime lastUpdate) {
-		return getVatTypes();
+		return mergeAll(vatTypes,VatType.class);
 	}
 	
 	public List<Account> manageAccounts(List<Account> accounts, ZonedDateTime lastUpdate) {
-		return getAccounts();
+		return mergeAll(accounts,Account.class);
 	}
 	
 	public List<Company> manageCompanies(List<Company> companies, ZonedDateTime lastUpdate) {
-		return getCompanies();
+		return mergeAll(companies,Company.class);
+	}
+	
+
+	public Company mergeCompany(Company company) {
+		return merge(company,Company.class);
 	}
 	
 
@@ -157,6 +162,43 @@ public class DbAbstractionLayer {
 		return merge(vatType, VatType.class);
 	}
 	
+	public void loadAccountsToCompany(Company company){
+		//TODO check if initialized before session is created..
+		Session session=factory.openSession();
+		try {
+			session.refresh(company);
+			Hibernate.initialize(company.getAccounts());
+		} finally {
+			session.getTransaction().rollback();
+			session.close();
+		}
+	}
+
+	public void loadMonthsToAccount(Account account){
+		//TODO check if initialized before session is created..
+		Session session=factory.openSession();
+		try {
+			session.refresh(account);
+			Hibernate.initialize(account.getBalanceMonths());
+		} finally {
+			session.getTransaction().rollback();
+			session.close();
+		}
+	}
+
+	public void loadTransactionsToMonth(MonthAccountTurnover month){
+		//TODO check if initialized before session is created..
+		Session session=factory.openSession();
+		try {
+			
+			session.refresh(month);
+			Hibernate.initialize(month.getTransactions());
+		} finally {
+			session.getTransaction().rollback();
+			session.close();
+		}
+	}
+	
 	protected <T extends AbstractDataObject> T persist(T data, Class<T> type){
 		T result=null;
 		Session session=factory.getCurrentSession();
@@ -193,14 +235,17 @@ public class DbAbstractionLayer {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	protected <T extends AbstractDataObject> T merge(T data, Class<T> type){
-		T result=null;
 		Session session=factory.getCurrentSession();
 		org.hibernate.Transaction transaction=session.beginTransaction();
 		
 		try {
-			result = (T) session.merge(data);
+			if(data.getUid()==null) {
+				Long uid=(Long) session.save(data);
+				data=session.byId(type).getReference(uid);
+			} else {
+				session.merge(data);
+			}
 			
 			transaction.commit();
 			transaction=null;
@@ -211,6 +256,72 @@ public class DbAbstractionLayer {
 			session.close();
 		}
 		
-		return result;
+		return data;
+	}
+	
+	protected <T extends AbstractDataObject> List<T> mergeAll(List<T> data, Class<T> type){
+		Session session=factory.getCurrentSession();
+		org.hibernate.Transaction transaction=session.beginTransaction();
+		
+		try {
+			for (int i=0;i<data.size();++i) {
+				if(data.get(i).getUid()==null) {
+					Long uid=(Long) session.save(data.get(i));
+					data.set(i,session.byId(type).getReference(uid));
+				} else {
+					session.merge(data.get(i));
+				}
+			}
+			
+			transaction.commit();
+			transaction=null;
+		} finally {
+			if(null!=transaction) {
+				transaction.rollback();
+			}
+			session.close();
+		}
+		
+		return data;
+	}
+	
+	
+	public List<List<? extends AbstractDataObject>> mergeData(List<List<? extends AbstractDataObject>> dataList) {
+		Session session=factory.getCurrentSession();
+		org.hibernate.Transaction transaction=session.beginTransaction();
+		//This has to be unchecked and use rawtypes to allow replacing the objects by the persisted ones
+		//The correct type is guaranteed by using the runtime classes of the instances to create the references 
+		try {
+			//Here we have to persist first anything to that things persisted later hold a reference.
+			//The simplest approach is to walk down the relation graph, but to do it this was is quite slow...
+			mergeByClass(dataList, session, Transaction.class);
+			mergeByClass(dataList, session, MonthAccountTurnover.class);
+			mergeByClass(dataList, session, null);
+			
+			transaction.commit();
+			transaction=null;
+		} finally {
+			if(null!=transaction) {
+				transaction.rollback();
+			}
+			session.close();
+		}
+		return dataList;
+	}
+	
+	@SuppressWarnings("unchecked")
+	protected void mergeByClass(List<List<? extends AbstractDataObject>> dataList, Session session, Class<?> type) {
+		for(@SuppressWarnings("rawtypes") List data:dataList) {
+			for (int i=0;i<data.size();++i) {
+				if(type == null || type.isInstance(data.get(i))) {
+					if(((AbstractDataObject) data.get(i)).getUid()==null) {
+						Long uid=(Long) session.save(data.get(i));
+						data.set(i,session.byId(data.get(i).getClass()).getReference(uid));
+					} else {
+						session.merge(data.get(i));
+					}
+				}
+			}
+		}
 	}
 }

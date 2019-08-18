@@ -3,6 +3,8 @@
 *.zip
 *.pdf
 *.sqlite
+*.pdf
+*.png
 tmp/
 vendor/
 bin/

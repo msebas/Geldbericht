@@ -5,10 +5,6 @@ package org.mcservice.javafx.control.table;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
 import org.mcservice.javafx.AnnotationBasedFormatter;
 
 import javafx.beans.property.ObjectProperty;
@@ -317,7 +313,7 @@ public class ValidatingTextFieldTableCell<S,T> extends TextFieldTableCell<S,T> {
 						getTextFormatter().getValue(),getTextFormatter().getFilter()));
 			}
 
-	        if(lastTypedKey.get()!=null) {
+	        if(lastTypedKey!=null && lastTypedKey.get()!=null) {
 	        	if(getAllwaysOverwrite()!=null && getAllwaysOverwrite()) {
 	        		textField.setText(lastTypedKey.get());
 	        	} else {

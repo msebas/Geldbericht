@@ -14,7 +14,7 @@ public class BaseMatcherCallbackFilter implements UnaryOperator<Change> {
 	private Consumer<List<String>> matchedGroupsCallback = null;
 	private Consumer<Boolean> matchCallback = null;
 
-	protected BaseMatcherCallbackFilter(Pattern p) {
+	public BaseMatcherCallbackFilter(Pattern p) {
 		if (p != null) {
 			setMatcher(new AdvancedMatcher(p));
 		}
@@ -44,9 +44,9 @@ public class BaseMatcherCallbackFilter implements UnaryOperator<Change> {
 					change.getAnchor()!=change.getControlNewText().length())
 				return change;
 				
-			String completedSqe=matcher.completeSquence();
-			if(completedSqe!=null) {
-				change.setText(change.getText().concat(completedSqe));
+			String completedSqence=matcher.completeSquence();
+			if(completedSqence!=null) {
+				change.setText(change.getText().concat(completedSqence));
 				change.setAnchor(change.getControlNewText().length());
 				change.setCaretPosition(change.getControlNewText().length());
 			}

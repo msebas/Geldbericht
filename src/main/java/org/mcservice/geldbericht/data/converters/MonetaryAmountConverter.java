@@ -1,4 +1,4 @@
-package org.mcservice.geldbericht.data;
+package org.mcservice.geldbericht.data.converters;
 
 import java.math.BigDecimal;
 

@@ -21,34 +21,86 @@ import java.time.ZonedDateTime;
 
 import javax.money.MonetaryAmount;
 import javax.persistence.Convert;
-import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.validation.constraints.Size;
+
+import org.hibernate.validator.constraints.Range;
+import org.mcservice.geldbericht.data.converters.MonetaryAmountConverter;
+import org.mcservice.geldbericht.data.converters.VatTypeStringConverter;
+import org.mcservice.javafx.TrimStringConverter;
+import org.mcservice.javafx.control.date.DayMonthFieldColumnFactory;
+import org.mcservice.javafx.control.table.TableViewColumn;
+import org.mcservice.javafx.control.table.TableViewColumnOrder;
+import org.mcservice.javafx.control.table.TableViewConverter;
+import org.mcservice.javafx.control.table.factories.SelectorColumnFactory;
 
 @Entity
 @Table(name = "Transactions")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-public class Transaction  extends AbstractDataObject {
+public class Transaction extends AbstractDataObject implements Comparable<Transaction> {
 	
+	@TableViewColumn(colName="Nr.",editable = false)
+	@TableViewColumnOrder(10)
 	int number=0;
 	
+	@TableViewColumn(colName="Einnahmen")
+	@TableViewColumnOrder(20)
+	@Range(min=0)
 	@Convert(converter = MonetaryAmountConverter.class)
 	MonetaryAmount receipts;
+	
+	@TableViewColumn(colName="Ausgaben")
+	@TableViewColumnOrder(25)
+	@Range(min=0)
 	@Convert(converter = MonetaryAmountConverter.class)
 	MonetaryAmount spending;
-	Short accountingContraAccount=null;
-	Short accountingCostGroup=null;
-	Short accountingCostCenter=null;
+	
+	
+	@Range(min=0,max=999999)
+	@TableViewColumn(colName="Gegenkonto")
+	@TableViewColumnOrder(30)
+	Integer accountingContraAccount=null;
+	
+	@Range(min=0,max=99)
+	@TableViewColumn(colName="KG")
+	@TableViewColumnOrder(33)
+	Integer accountingCostGroup=null;
+	
+	@Range(min=0,max=999)
+	@TableViewColumn(colName="KST")
+	@TableViewColumnOrder(36)
+	Integer accountingCostCenter=null;
+	
+	@Size(max = 255)
+	@TableViewColumn(colName="Beleg")
+	@TableViewColumnOrder(40)
+	@TableViewConverter(converter=TrimStringConverter.class)
 	String voucher=null;
+	
+	@TableViewColumn(colName="Datum",fieldGenerator=DayMonthFieldColumnFactory.class)
+	@TableViewColumnOrder(50)
 	LocalDate transactionDate=null;
-	@ManyToOne(targetEntity=VatType.class)
+	
+	@ManyToOne(targetEntity=VatType.class, fetch = FetchType.EAGER)
+	@TableViewColumn(colName="Steuer",fieldGenerator=SelectorColumnFactory.class)
+	@TableViewColumnOrder(60)
+	@TableViewConverter(converter=VatTypeStringConverter.class)
 	VatType vat=null;
+		
+	@TableViewColumn(colName="Inv.-Nr.")
+	@TableViewColumnOrder(70)
 	Long inventoryNumber=null;
 	//AmortisationType amortisationType=null;
 	//Long amortisationValue=null;
+	
+	@Size(max = 255)
+	@TableViewColumn(colName="Gegenstand der Buchung")
+	@TableViewColumnOrder(90)
 	String descriptionOfTransaction=null;	
 
 	private Transaction() {
@@ -72,7 +124,7 @@ public class Transaction  extends AbstractDataObject {
 	 * @param descriptionOfTransaction
 	 */
 	protected Transaction(Long uid, ZonedDateTime lastChange, int number, MonetaryAmount receipts,
-			MonetaryAmount spending, Short accountingContraAccount, Short accountingCostGroup, Short accountingCostCenter,
+			MonetaryAmount spending, Integer accountingContraAccount, Integer accountingCostGroup, Integer accountingCostCenter,
 			String voucher, LocalDate transactionDate, VatType vat, Long inventoryNumber,
 			//AmortisationType amortisationType, Long amortisationValue, 
 			String descriptionOfTransaction) {
@@ -108,7 +160,7 @@ public class Transaction  extends AbstractDataObject {
 	 * @param descriptionOfTransaction
 	 */
 	public Transaction(int number, MonetaryAmount receipts,
-			MonetaryAmount spending, Short accountingContraAccount, Short accountingCostGroup, Short accountingCostCenter,
+			MonetaryAmount spending, Integer accountingContraAccount, Integer accountingCostGroup, Integer accountingCostCenter,
 			String voucher, LocalDate transactionDate, VatType vat, Long inventoryNumber,
 			//AmortisationType amortisationType, Long amortisationValue, 
 			String descriptionOfTransaction) {
@@ -139,10 +191,7 @@ public class Transaction  extends AbstractDataObject {
 	 * @param number the number to set
 	 */
 	public void setNumber(int number) {
-		if(this.number==number)
-			return;
 		this.number = number;
-		this.lastChange=ZonedDateTime.now();
 	}
 
 	/**
@@ -186,7 +235,7 @@ public class Transaction  extends AbstractDataObject {
 	/**
 	 * @return the accountingContraAccount
 	 */
-	public Short getAccountingContraAccount() {
+	public Integer getAccountingContraAccount() {
 		return accountingContraAccount;
 	}
 
@@ -195,7 +244,7 @@ public class Transaction  extends AbstractDataObject {
 	 * 
 	 * @param accountingContraAccount the accountingContraAccount to set
 	 */
-	public void setAccountingContraAccount(Short accountingContraAccount) {
+	public void setAccountingContraAccount(Integer accountingContraAccount) {
 		if(this.accountingContraAccount==accountingContraAccount ||
 				( this.accountingContraAccount!=null && this.accountingContraAccount.equals(accountingContraAccount) )
 				)
@@ -207,7 +256,7 @@ public class Transaction  extends AbstractDataObject {
 	/**
 	 * @return the accountingCostGroup
 	 */
-	public Short getAccountingCostGroup() {
+	public Integer getAccountingCostGroup() {
 		return accountingCostGroup;
 	}
 
@@ -216,7 +265,7 @@ public class Transaction  extends AbstractDataObject {
 	 * 
 	 * @param accountingCostGroup the accountingCostGroup to set
 	 */
-	public void setAccountingCostGroup(Short accountingCostGroup) {
+	public void setAccountingCostGroup(Integer accountingCostGroup) {
 		if(this.accountingCostGroup==accountingCostGroup ||
 				( this.accountingCostGroup!=null && this.accountingCostGroup.equals(accountingCostGroup) )
 				)
@@ -228,7 +277,7 @@ public class Transaction  extends AbstractDataObject {
 	/**
 	 * @return the accountingCostCenter
 	 */
-	public Short getAccountingCostCenter() {
+	public Integer getAccountingCostCenter() {
 		return accountingCostCenter;
 	}
 
@@ -237,7 +286,7 @@ public class Transaction  extends AbstractDataObject {
 	 * 
 	 * @param accountingCostCenter the accountingCostCenter to set
 	 */
-	public void setAccountingCostCenter(Short accountingCostCenter) {
+	public void setAccountingCostCenter(Integer accountingCostCenter) {
 		if(this.accountingCostCenter==accountingCostCenter ||
 				( this.accountingCostCenter!=null && this.accountingCostCenter.equals(accountingCostCenter) )
 				)
@@ -347,6 +396,11 @@ public class Transaction  extends AbstractDataObject {
 			return;
 		this.descriptionOfTransaction = descriptionOfTransaction;
 		this.lastChange=ZonedDateTime.now();
+	}
+
+	@Override
+	public int compareTo(Transaction o) {
+		return number-o.number;
 	}
 	
 }

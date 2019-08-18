@@ -3,10 +3,11 @@ package org.mcservice.javafx.control.date;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import javafx.beans.property.SimpleObjectProperty;
 
-public class DayMonthField extends AbstractTimeField{
+public class DayMonthField extends AbstractTimeField implements Supplier<LocalDate>,Consumer<LocalDate>{
 
 	public DayMonthField() {
 		super(new SimpleObjectProperty<LocalDate>(LocalDate.now()),"([0-2]{0,1}[0-9]|3[0-1])\\.(1[0-2]|[0]{0,1}[0-9])");
@@ -27,10 +28,15 @@ public class DayMonthField extends AbstractTimeField{
 		setBaseDate(LocalDate.of(year,1,1));
 	}
 	
-	public void setEndEditCallback(Consumer<String> endEditCallback) {
-		this.filter.setEndEditCallback(endEditCallback);
+
+	@Override
+	public LocalDate get() {
+		return getDate();
 	}
 	
-	
-
+	@Override
+	public void accept(LocalDate t) {
+		this.setBaseDate(t);
+		this.setText(String.format("%02d.%02d",t.getDayOfMonth(),t.getMonthValue()));
+	}
 }

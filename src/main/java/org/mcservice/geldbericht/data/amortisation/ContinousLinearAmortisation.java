@@ -14,33 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package org.mcservice.geldbericht.data.Amortisation;
+package org.mcservice.geldbericht.data.amortisation;
 
 import java.time.Duration;
 
-public abstract class AmortisationType {
-	
-	Long uid=null;
-	String name=null;
-	
-	public Long getUid() {
-		return uid;
-	}
-	
-	public String getName() {
-		return name;
-	}
-	
-	public AmortisationType(Long uid, String name) {
-		super();
-		this.uid = uid;
-		this.name = name;
-	}
+public class ContinousLinearAmortisation extends AmortisationType{
 
-	public double getValueAfterAmortisation(double value,Duration timediff) {
-		return value-this.getAmortisation(value,timediff);
+	double rate=0;
+	
+	public ContinousLinearAmortisation(Long uid, String name,double rate) {
+		super(uid, name);
+		this.rate=rate;
 	}
 	
-	public abstract double getAmortisation(double value,Duration timediff);
-
+	public double getAmortisation(double value,Duration timediff) {
+		if (rate*timediff.getSeconds()>value)
+			return value;
+		return rate*timediff.getSeconds();
+	}
 }

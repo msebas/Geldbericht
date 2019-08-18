@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.OneToMany;
@@ -38,7 +39,7 @@ import org.mcservice.javafx.control.table.TableViewConverter;
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public class Company extends AbstractDataObject{
 	
-	@OneToMany(mappedBy="company")
+	@OneToMany(mappedBy="company", fetch = FetchType.LAZY)
 	List<Account> accounts=new ArrayList<Account>();
 	
 	@Size(min = 2, max = 256)

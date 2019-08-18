@@ -87,7 +87,7 @@ public class MemberVariable<S,T> implements EventHandler<CellEditEvent<S,T>>{
 		S actItem=editEvent.getRowValue();
 		boolean trueChange=false;
 		try {
-			trueChange=!twoEqual(this.getter.invoke(actItem),editEvent.getNewValue());
+			trueChange=!nullEquals(this.getter.invoke(actItem),editEvent.getNewValue());
 			this.setter.invoke(actItem, editEvent.getNewValue());
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			//We cannot handle here any exception, but setters should not throw exceptions and all access or
@@ -115,7 +115,7 @@ public class MemberVariable<S,T> implements EventHandler<CellEditEvent<S,T>>{
 
 	}
 	
-	private boolean twoEqual(Object a,Object b) {
+	private boolean nullEquals(Object a,Object b) {
 		if(a==null || b==null)
 			return a==b;
 		return a.equals(b);
@@ -128,4 +128,8 @@ public class MemberVariable<S,T> implements EventHandler<CellEditEvent<S,T>>{
     public void removeListener(ItemUpdateListener listener) {
 		this.listeners.remove(listener);
 	}
+    
+    public Class<?> getType(){
+    	return field.getType();
+    }
 }

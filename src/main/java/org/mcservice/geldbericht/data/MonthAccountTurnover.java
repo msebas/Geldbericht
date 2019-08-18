@@ -22,22 +22,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.money.MonetaryAmount;
+import javax.money.MonetaryAmountFactory;
+
 import javax.persistence.Convert;
 import javax.persistence.ElementCollection;
-import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import org.mcservice.geldbericht.data.converters.MonetaryAmountConverter;
 
 @Entity
 @Table(name = "MonthAccountTurnovers")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-public class MonthAccountTurnover extends AbstractDataObject {
+public class MonthAccountTurnover extends AbstractDataObject implements Comparable<MonthAccountTurnover> {
 	
-	@ElementCollection
+	@ElementCollection(fetch = FetchType.LAZY)
+	@OrderBy("number ASC")
 	List<Transaction> transactions=new ArrayList<Transaction>();
+	
 	LocalDate month=null;
 	@ManyToOne
 	Account account=null;
@@ -54,9 +62,31 @@ public class MonthAccountTurnover extends AbstractDataObject {
 	@Convert(converter = MonetaryAmountConverter.class)
 	MonetaryAmount finalDebt;
 	
+	@Transient
+	protected boolean checkTransactions=false;
+	
+	public static MonthAccountTurnover getEmptyMonthAccountTurnover(LocalDate month, Account account) {
+		MonthAccountTurnover result=new MonthAccountTurnover();
+		result.month=month;
+		result.account=account;
+		result.transactions=new ArrayList<Transaction>();
+		MonetaryAmount balance=result.account.getBalance();
+		MonetaryAmountFactory<? extends MonetaryAmount> factory = balance.getFactory().setCurrency(balance.getCurrency());
+		result.monthBalanceAssets=factory.setNumber(0).create();
+		result.initialAssets=balance.isPositiveOrZero()?factory.setAmount(balance).create():factory.setNumber(0).create();
+		result.finalAssets=factory.setAmount(result.initialAssets).create();
+		result.monthBalanceDebt=factory.setNumber(0).create();
+		result.initialDebt=balance.isNegative()?factory.setAmount(balance).create():factory.setNumber(0).create();
+		result.initialDebt=result.initialDebt.multiply(-1);
+		result.finalDebt=factory.setAmount(result.initialDebt).create();
+		
+		return result;
+	}
+	
 	private MonthAccountTurnover() {
 		super(null,ZonedDateTime.now());
 	}
+	
 	/**
 	 * @param uid
 	 * @param lastChange
@@ -93,6 +123,7 @@ public class MonthAccountTurnover extends AbstractDataObject {
 	public void updateTranaction(int number, Transaction transaction) {
 		if(this.transactions.get(number).equals(transaction))
 			return;
+		checkTransactions=true;
 		transaction.setNumber(number);
 		this.transactions.set(number,transaction);
 		this.lastChange=ZonedDateTime.now();
@@ -102,6 +133,7 @@ public class MonthAccountTurnover extends AbstractDataObject {
 	 * @param runningTransaction The runningTransaction to append
 	 */
 	public void appendTranaction(Transaction transaction) {
+		checkTransactions=true;
 		transaction.setNumber(this.transactions.size());
 		this.transactions.add(transaction);
 		this.lastChange=ZonedDateTime.now();
@@ -112,6 +144,7 @@ public class MonthAccountTurnover extends AbstractDataObject {
 	 * @param runningTransaction The runningTransaction to insert
 	 */
 	public void insertTranaction(int number, Transaction transaction) {
+		checkTransactions=true;
 		this.transactions.add(number,transaction);
 		this.lastChange=ZonedDateTime.now();
 		for(int i=number;i<this.transactions.size();++i) {
@@ -123,6 +156,7 @@ public class MonthAccountTurnover extends AbstractDataObject {
 	 * @param number The number of the runningTransaction the should be removed
 	 */
 	public void removeTranaction(int number) {
+		checkTransactions=true;
 		this.transactions.remove(number);
 		this.lastChange=ZonedDateTime.now();
 		for(int i=number;i<this.transactions.size();++i) {
@@ -133,48 +167,8 @@ public class MonthAccountTurnover extends AbstractDataObject {
 	/**
 	 */
 	public void removeAllTranactions() {
+		checkTransactions=true;
 		this.transactions.clear();
-		this.lastChange=ZonedDateTime.now();
-	}
-	
-	/**
-	 * @param month the month to set
-	 */
-	public void setMonth(LocalDate month) {
-		if(this.month==month ||
-				( this.month!=null && this.month.equals(month) )
-				)
-			return;
-		this.month = month;
-		this.lastChange=ZonedDateTime.now();
-	}
-	/**
-	 * @param account the account to set
-	 */
-	public void setAccount(Account account) {
-		if(this.account==account ||
-				( this.account!=null && this.account.equals(account) )
-				)
-			return;
-		this.account = account;
-		this.lastChange=ZonedDateTime.now();
-	}
-	/**
-	 * @param initialAssets the initialAssets to set
-	 */
-	public void setInitialAssets(MonetaryAmount initialAssets) {
-		if(this.initialAssets==initialAssets)
-			return;
-		this.initialAssets = initialAssets;
-		this.lastChange=ZonedDateTime.now();
-	}
-	/**
-	 * @param initialDebt the initialDebt to set
-	 */
-	public void setInitialDebt(MonetaryAmount initialDebt) {
-		if(this.initialDebt==initialDebt)
-			return;
-		this.initialDebt = initialDebt;
 		this.lastChange=ZonedDateTime.now();
 	}
 	
@@ -182,7 +176,15 @@ public class MonthAccountTurnover extends AbstractDataObject {
 	 * @return the transactions
 	 */
 	public List<Transaction> getTransactions() {
+		checkTransactions=true;
 		return transactions;
+	}
+	/**
+	 * @return the month
+	 */
+	public boolean isInMonth(LocalDate date) {
+		return month.getMonthValue()==date.getMonthValue() && 
+				month.getYear()==date.getYear();
 	}
 	/**
 	 * @return the month
@@ -231,5 +233,73 @@ public class MonthAccountTurnover extends AbstractDataObject {
 	 */
 	public MonetaryAmount getFinalDebt() {
 		return finalDebt;
+	}
+	
+	/**
+	 * @param initialAssets the initialAssets to set
+	 */
+	public void setInitialAssets(MonetaryAmount initialAssets) {
+		this.initialAssets = initialAssets;
+	}
+
+	/**
+	 * @param initialDebt the initialDebt to set
+	 */
+	public void setInitialDebt(MonetaryAmount initialDebt) {
+		this.initialDebt = initialDebt;
+	}
+
+	/**
+	 * Updates the internal accountings, reads all transactions if they were requested at any
+	 * point by a getter, otherwise transactions are not checked. If any change to a transaction 
+	 * did occur without a getter, setter or transaction manipulation method called this change
+	 * is not reflected in the calculated balance. If transactions are skipped only a possible 
+	 * change in the values of initial assets and debts is assumed.
+	 *  
+	 * @return newMonthBalance-oldMonthBalance (zero if no change did happen/cancel out), 
+	 *         add it to your actual balance to update it.
+	 */
+	public MonetaryAmount updateBalance() {
+		MonetaryAmount initialBalance=this.getInitialAssets().subtract(this.getInitialDebt());
+		
+		MonetaryAmount change=this.getMonthBalanceAssets().subtract(this.getMonthBalanceDebt());
+		MonetaryAmountFactory<? extends MonetaryAmount> factory = 
+				initialAssets.getFactory().setCurrency(initialAssets.getCurrency());
+		if(checkTransactions) {
+			transactions.sort(null);
+			MonetaryAmount nBalanceAssets = factory.setNumber(0).create();
+			MonetaryAmount nBalanceDebt = factory.setNumber(0).create();
+			int i=0;
+			for (Transaction transaction : transactions) {
+				nBalanceAssets=nBalanceAssets.add(transaction.getReceipts());
+				nBalanceDebt=nBalanceDebt.add(transaction.getSpending());
+				if(transaction.getLastChange().isAfter(this.getLastChange())) {
+					this.lastChange=transaction.getLastChange();
+				}
+				++i;
+				transaction.setNumber(i);
+			}
+			monthBalanceAssets=nBalanceAssets;
+			monthBalanceDebt=nBalanceDebt;
+			//We cannot set checkTransactions to false here,
+			//because a reference to a transaction might still
+			//exist outside.
+		}
+				
+		MonetaryAmount finalBalance=initialBalance.add(monthBalanceAssets).subtract(monthBalanceDebt);
+		if(finalBalance.isPositiveOrZero()) {
+			finalAssets=finalBalance;
+			finalDebt=factory.setNumber(0).create();
+		} else {
+			finalAssets=factory.setNumber(0).create();
+			finalDebt=finalBalance.multiply(-1);
+		}
+		
+		return monthBalanceAssets.subtract(monthBalanceDebt).subtract(change);
+	}
+
+	@Override
+	public int compareTo(MonthAccountTurnover o) {
+		return o.getMonth().compareTo(month);
 	}
 }

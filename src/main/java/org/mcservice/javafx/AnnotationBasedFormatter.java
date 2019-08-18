@@ -18,6 +18,7 @@ import javax.validation.Validator;
 import javax.validation.constraints.Pattern.Flag;
 
 import org.javamoney.moneta.Money;
+import org.mcservice.javafx.control.table.DefaultTableMonetaryAmountConverter;
 import org.mcservice.javafx.control.table.TableViewFinalIfNotNull;
 
 import javafx.scene.control.TextFormatter;
@@ -25,6 +26,8 @@ import javafx.util.Callback;
 import javafx.util.StringConverter;
 import javafx.util.converter.DefaultStringConverter;
 import javafx.util.converter.IntegerStringConverter;
+import javafx.util.converter.LongStringConverter;
+import javafx.util.converter.ShortStringConverter;
 
 public class AnnotationBasedFormatter<S,V> extends TextFormatter<V> {
 
@@ -80,36 +83,14 @@ public class AnnotationBasedFormatter<S,V> extends TextFormatter<V> {
 
 		if(field.getType()==String.class) {
 			return (StringConverter<V>) new DefaultStringConverter();
+		} else if(field.getType()==Short.class || field.getType()==Short.TYPE) {
+			return (StringConverter<V>) new ShortStringConverter();
 		} else if(field.getType()==Integer.class || field.getType()==Integer.TYPE) {
 			return (StringConverter<V>) new IntegerStringConverter();
+		} else if(field.getType()==Long.class || field.getType()==Long.TYPE) {
+			return (StringConverter<V>) new LongStringConverter();
 		} else if(field.getType()==MonetaryAmount.class || field.getType()==Money.class) {
-			return (StringConverter<V>) new StringConverter<V>() {
-				
-				MonetaryAmountFormat moneyFormatter = MonetaryFormats.getAmountFormat(Locale.GERMANY);
-				Matcher m=Pattern.compile("[0-9]{1,3}([\\\\. ][0-9]{3}){0,}(,[0-9]{0,2})?[ ]{0,}").matcher("");
-
-				@Override
-				public String toString(V object) {
-					if (object==null)
-						return null;
-					if(!(object instanceof MonetaryAmount))
-						throw new MonetaryParseException("Non monetary amount instance as input.", 0);
-					return moneyFormatter.format((MonetaryAmount)object);
-				}
-
-				@Override
-				public V fromString(String string) {
-					if (string==null)
-						return null;
-					m.reset(string);
-					if(m.matches()) {
-						string=string.strip().concat(" EUR");
-					}
-					Money res=Money.parse(string, moneyFormatter);
-					return (V) res;
-				}
-				
-			};
+			return (StringConverter<V>) new DefaultTableMonetaryAmountConverter();
 		}			
 		throw new RuntimeException("No converter for this class yet implemented.");
 	}
