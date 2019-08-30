@@ -37,7 +37,7 @@ class MonthAccountTurnoverPDFTest {
 		for (int i = 0; i < 46; i++) {
 			month.getTransactions().add(new Transaction(i, Money.of(i<30?0:2*i*i, "EUR"), Money.of(i*i-i*4+14, "EUR"), 
 					4444,22,333, String.format("Beleg %d",i), LocalDate.of(2019, 04+i/27, i%27+3), 
-					vat, 9999L, String.format("description of transaction %d",i)));
+					vat, "9999L", String.format("description of transaction %d",i)));
 		}
 		
 		account.addBalanceMonth(month);

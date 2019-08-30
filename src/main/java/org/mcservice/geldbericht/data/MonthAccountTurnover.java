@@ -2,17 +2,17 @@
  * Copyright (C) 2019 Sebastian Müller <sebastian.mueller@mcservice.de>
  * 
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  * 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package org.mcservice.geldbericht.data;
 
@@ -63,8 +63,9 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	MonetaryAmount finalDebt;
 	
 	@Transient
-	protected boolean checkTransactions=false;
+	protected boolean transactionsLoaded=false;
 	
+
 	public static MonthAccountTurnover getEmptyMonthAccountTurnover(LocalDate month, Account account) {
 		MonthAccountTurnover result=new MonthAccountTurnover();
 		result.month=month;
@@ -123,7 +124,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	public void updateTranaction(int number, Transaction transaction) {
 		if(this.transactions.get(number).equals(transaction))
 			return;
-		checkTransactions=true;
+		transactionsLoaded=true;
 		transaction.setNumber(number);
 		this.transactions.set(number,transaction);
 		this.lastChange=ZonedDateTime.now();
@@ -133,7 +134,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	 * @param runningTransaction The runningTransaction to append
 	 */
 	public void appendTranaction(Transaction transaction) {
-		checkTransactions=true;
+		transactionsLoaded=true;
 		transaction.setNumber(this.transactions.size());
 		this.transactions.add(transaction);
 		this.lastChange=ZonedDateTime.now();
@@ -144,7 +145,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	 * @param runningTransaction The runningTransaction to insert
 	 */
 	public void insertTranaction(int number, Transaction transaction) {
-		checkTransactions=true;
+		transactionsLoaded=true;
 		this.transactions.add(number,transaction);
 		this.lastChange=ZonedDateTime.now();
 		for(int i=number;i<this.transactions.size();++i) {
@@ -156,7 +157,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	 * @param number The number of the runningTransaction the should be removed
 	 */
 	public void removeTranaction(int number) {
-		checkTransactions=true;
+		transactionsLoaded=true;
 		this.transactions.remove(number);
 		this.lastChange=ZonedDateTime.now();
 		for(int i=number;i<this.transactions.size();++i) {
@@ -167,7 +168,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	/**
 	 */
 	public void removeAllTranactions() {
-		checkTransactions=true;
+		transactionsLoaded=true;
 		this.transactions.clear();
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -176,7 +177,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	 * @return the transactions
 	 */
 	public List<Transaction> getTransactions() {
-		checkTransactions=true;
+		transactionsLoaded=true;
 		return transactions;
 	}
 	/**
@@ -239,14 +240,31 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	 * @param initialAssets the initialAssets to set
 	 */
 	public void setInitialAssets(MonetaryAmount initialAssets) {
-		this.initialAssets = initialAssets;
+		if(this.initialAssets==initialAssets ||
+				( this.initialAssets!=null && this.initialAssets.equals(initialAssets) )
+				)
+			return;
+		this.initialAssets = initialAssets; 
+		this.lastChange=ZonedDateTime.now();
 	}
 
 	/**
 	 * @param initialDebt the initialDebt to set
 	 */
 	public void setInitialDebt(MonetaryAmount initialDebt) {
-		this.initialDebt = initialDebt;
+		if(this.initialDebt==initialDebt ||
+				( this.initialDebt!=null && this.initialDebt.equals(initialDebt) )
+				)
+			return;
+		this.initialDebt = initialDebt; 
+		this.lastChange=ZonedDateTime.now();
+	}
+	
+	/**
+	 * @return the transactionsLoaded
+	 */
+	public boolean isTransactionsLoaded() {
+		return transactionsLoaded;
 	}
 
 	/**
@@ -265,7 +283,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 		MonetaryAmount change=this.getMonthBalanceAssets().subtract(this.getMonthBalanceDebt());
 		MonetaryAmountFactory<? extends MonetaryAmount> factory = 
 				initialAssets.getFactory().setCurrency(initialAssets.getCurrency());
-		if(checkTransactions) {
+		if(transactionsLoaded) {
 			transactions.sort(null);
 			MonetaryAmount nBalanceAssets = factory.setNumber(0).create();
 			MonetaryAmount nBalanceDebt = factory.setNumber(0).create();
@@ -300,6 +318,6 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 
 	@Override
 	public int compareTo(MonthAccountTurnover o) {
-		return o.getMonth().compareTo(month);
+		return -o.getMonth().compareTo(month);
 	}
 }

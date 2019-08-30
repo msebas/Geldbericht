@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -26,10 +28,9 @@ import javafx.scene.Scene;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-//@ExtendWith(MockitoExtension.class)
 
-@Tag("GUI")
 @Tag("Active")
+@Tag("GUI")
 class DayMonthFieldTest extends ApplicationTest{
 		
 	DayMonthField dayMonthPicker = null ;
@@ -54,12 +55,22 @@ class DayMonthFieldTest extends ApplicationTest{
         stage.show();
     }
     
+
+    @Tag("Active")
 	@Test
 	@Disabled
     public void manualTest() {
     	//Wait 1 h, then continue
-
-    	sleep(3600000);
+    	while(true) {
+    		sleep(1000);
+    		try {
+    			System.out.println(dayMonthPicker.getStyleClass().contains("field-validation-error"));
+    			System.out.println(dayMonthPicker.getDate());
+    		} catch (Exception e){
+    			e.printStackTrace();
+    		}
+    	}
+    	
     }
 	
 	@Test
@@ -116,7 +127,8 @@ class DayMonthFieldTest extends ApplicationTest{
         		Arguments.of("32.11",LocalDate.of(2017,11,3))
         		);
     }
-    
+
+    @Tag("Active")
     @ParameterizedTest
     @MethodSource("insertCharsNoIntermediateValues")
     public void insertCharsNoIntermediateTest(String inv,LocalDate result) {
@@ -125,7 +137,26 @@ class DayMonthFieldTest extends ApplicationTest{
     	write(inv);
     	
 		assertFalse(dayMonthPicker.getStyleClass().contains("field-validation-error"));
-		assertEquals(result,dayMonthPicker.getDate());
+		assertEquals(result,dayMonthPicker.get());
+    }
+    
+    static Stream<Arguments> setDifferentDates() {
+        return Stream.of(
+        		Arguments.of("12.10",LocalDate.of(2017,10,12)),
+        		Arguments.of("12.01",LocalDate.of(2017,1,12)),
+        		Arguments.of("01.03",LocalDate.of(2017,3,1)),
+        		Arguments.of("12.12",LocalDate.of(2017,12,12)),
+        		Arguments.of("03.11",LocalDate.of(2017,11,3)),
+        		Arguments.of("",null)
+        		);
+    }
+    
+    @ParameterizedTest
+    @MethodSource("setDifferentDates")
+    public void checkAccept(String expText,LocalDate input) {
+    	
+    	dayMonthPicker.accept(input);
+    	assertEquals(expText,dayMonthPicker.getText());
     }
     
     @Test
@@ -142,6 +173,42 @@ class DayMonthFieldTest extends ApplicationTest{
     	
     	verify(callback,times(2)).accept(input);
     	
+    }
+    
+    static Stream<Arguments> threeYears() {
+        return Stream.of(
+        		Arguments.of(1999),
+        		Arguments.of(2000),
+        		Arguments.of(2004)
+        		);
+    }
+    
+    @ParameterizedTest
+    @MethodSource("threeYears")
+    public void checkRegularExpression(int year) {
+    	//This is done in one test, because otherwise the 
+    	//tests runtime is too long
+    	
+    	//We take a new field, because otherwise it is rendered and
+    	//the fast updates are not supported by the rendering framework.
+    	dayMonthPicker = new DayMonthField();
+    	dayMonthPicker.setYear(year);
+    	
+    	for (int i = 0; i < 99; i++) {
+    		for (int j = 0; j < 99; j++) {
+    			LocalDate expResult;
+    			try {
+    				expResult=LocalDate.of(year, j,i);
+    			} catch (DateTimeException e){
+    				//Legitimate exception
+    				expResult=null;
+    			}
+				dayMonthPicker.setText(String.format("%d.%d",i,j));
+    			assertEquals(expResult,dayMonthPicker.getDate(),String.format("Failed at %d.%d",i,j));
+    			dayMonthPicker.setText(String.format("%02d.%02d",i,j));
+    			assertEquals(expResult,dayMonthPicker.getDate(),String.format("Failed at %02d.%02d",i,j));		
+    		}			
+		}
     }
     
 }

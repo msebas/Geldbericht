@@ -30,11 +30,9 @@ import javafx.scene.input.KeyCombination.ModifierValue;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-
-@Tag("Active")
 @Tag("Table")
 @Tag("GUI")
-class ReflectionTableViewGuiTest extends ApplicationTest{
+class ReflectionTableViewGui3STest extends ApplicationTest{
 
 	ZonedDateTime mockListCreation=null;
 	List<TestTypes.Test3S> companies=null;

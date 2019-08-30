@@ -2,17 +2,17 @@
  * Copyright (C) 2019 Sebastian Müller <sebastian.mueller@mcservice.de>
  * 
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  * 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package org.mcservice.geldbericht;
 
@@ -24,6 +24,8 @@ import org.mcservice.geldbericht.data.Company;
 import org.mcservice.geldbericht.database.DbAbstractionLayer;
 import org.mcservice.javafx.control.table.ItemUpdateListener;
 import org.mcservice.javafx.control.table.ReflectionTableView;
+
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -47,8 +49,9 @@ public class CompanyManagerController {
 	private Button persistButton=null;
 	@FXML
 	private ReflectionTableView<Company> companyTableView=null;
+	private Runnable updatedNotification;
 	
-	public CompanyManagerController(DbAbstractionLayer db) throws Exception{
+	public CompanyManagerController(DbAbstractionLayer db){
 		this.db=db;
 	}
 	
@@ -107,7 +110,24 @@ public class CompanyManagerController {
 	@FXML
     private void persist() throws IOException {
 		db.manageCompanies(companyTableView.getItems(), lastUpdate);
+		if(null!=updatedNotification) {
+			Platform.runLater(updatedNotification);
+		}
 		cancel();
+	}
+
+	/**
+	 * @return the updatedNotification
+	 */
+	public Runnable getUpdatedNotification() {
+		return updatedNotification;
+	}
+
+	/**
+	 * @param updatedNotification the updatedNotification to set
+	 */
+	public void setUpdatedNotification(Runnable updatedNotification) {
+		this.updatedNotification = updatedNotification;
 	}
 	
 }

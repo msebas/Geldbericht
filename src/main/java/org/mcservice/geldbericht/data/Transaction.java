@@ -2,17 +2,17 @@
  * Copyright (C) 2019 Sebastian Müller <sebastian.mueller@mcservice.de>
  * 
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  * 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package org.mcservice.geldbericht.data;
 
@@ -94,7 +94,7 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 		
 	@TableViewColumn(colName="Inv.-Nr.")
 	@TableViewColumnOrder(70)
-	Long inventoryNumber=null;
+	String inventoryNumber=null;
 	//AmortisationType amortisationType=null;
 	//Long amortisationValue=null;
 	
@@ -123,9 +123,9 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 	 * @param amortisationValue
 	 * @param descriptionOfTransaction
 	 */
-	protected Transaction(Long uid, ZonedDateTime lastChange, int number, MonetaryAmount receipts,
+	public Transaction(Long uid, ZonedDateTime lastChange, int number, MonetaryAmount receipts,
 			MonetaryAmount spending, Integer accountingContraAccount, Integer accountingCostGroup, Integer accountingCostCenter,
-			String voucher, LocalDate transactionDate, VatType vat, Long inventoryNumber,
+			String voucher, LocalDate transactionDate, VatType vat, String inventoryNumber,
 			//AmortisationType amortisationType, Long amortisationValue, 
 			String descriptionOfTransaction) {
 		super(uid, lastChange);
@@ -161,7 +161,7 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 	 */
 	public Transaction(int number, MonetaryAmount receipts,
 			MonetaryAmount spending, Integer accountingContraAccount, Integer accountingCostGroup, Integer accountingCostCenter,
-			String voucher, LocalDate transactionDate, VatType vat, Long inventoryNumber,
+			String voucher, LocalDate transactionDate, VatType vat, String inventoryNumber,
 			//AmortisationType amortisationType, Long amortisationValue, 
 			String descriptionOfTransaction) {
 		super(null);
@@ -359,7 +359,7 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 	/**
 	 * @return the inventoryNumber
 	 */
-	public Long getInventoryNumber() {
+	public String getInventoryNumber() {
 		return inventoryNumber;
 	}
 
@@ -368,7 +368,7 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 	 * 
 	 * @param inventoryNumber the inventoryNumber to set
 	 */
-	public void setInventoryNumber(Long inventoryNumber) {
+	public void setInventoryNumber(String inventoryNumber) {
 		if(this.inventoryNumber==inventoryNumber ||
 				( this.inventoryNumber!=null && this.inventoryNumber.equals(inventoryNumber) )
 				)
@@ -401,6 +401,129 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 	@Override
 	public int compareTo(Transaction o) {
 		return number-o.number;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((accountingContraAccount == null) ? 0 : accountingContraAccount.hashCode());
+		result = prime * result + ((accountingCostCenter == null) ? 0 : accountingCostCenter.hashCode());
+		result = prime * result + ((accountingCostGroup == null) ? 0 : accountingCostGroup.hashCode());
+		result = prime * result + ((descriptionOfTransaction == null) ? 0 : descriptionOfTransaction.hashCode());
+		result = prime * result + ((inventoryNumber == null) ? 0 : inventoryNumber.hashCode());
+		result = prime * result + number;
+		result = prime * result + ((receipts == null) ? 0 : receipts.hashCode());
+		result = prime * result + ((spending == null) ? 0 : spending.hashCode());
+		result = prime * result + ((transactionDate == null) ? 0 : transactionDate.hashCode());
+		result = prime * result + ((vat == null) ? 0 : vat.hashCode());
+		result = prime * result + ((voucher == null) ? 0 : voucher.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		Transaction other = (Transaction) obj;
+
+
+		if (uid == null) {
+			if (other.uid != null) {
+				return false;
+			}
+		} else if (uid!=other.uid) {
+			return false;
+		}
+		if (accountingContraAccount == null) {
+			if (other.accountingContraAccount != null) {
+				return false;
+			}
+		} else if (!accountingContraAccount.equals(other.accountingContraAccount)) {
+			return false;
+		}
+		if (accountingCostCenter == null) {
+			if (other.accountingCostCenter != null) {
+				return false;
+			}
+		} else if (!accountingCostCenter.equals(other.accountingCostCenter)) {
+			return false;
+		}
+		if (accountingCostGroup == null) {
+			if (other.accountingCostGroup != null) {
+				return false;
+			}
+		} else if (!accountingCostGroup.equals(other.accountingCostGroup)) {
+			return false;
+		}
+		if (descriptionOfTransaction == null) {
+			if (other.descriptionOfTransaction != null) {
+				return false;
+			}
+		} else if (!descriptionOfTransaction.equals(other.descriptionOfTransaction)) {
+			return false;
+		}
+		if (inventoryNumber == null) {
+			if (other.inventoryNumber != null) {
+				return false;
+			}
+		} else if (!inventoryNumber.equals(other.inventoryNumber)) {
+			return false;
+		}
+		if (number != other.number) {
+			return false;
+		}
+		if (receipts == null || other.receipts == null) {
+			if (other.receipts != receipts) {
+				return false;
+			}
+		} else if (!receipts.isEqualTo(other.receipts)) {
+			return false;
+		}
+		if (spending == null || other.spending == null) {
+			if (other.spending != spending) {
+				return false;
+			}
+		} else if (!spending.isEqualTo(other.spending)) {
+			return false;
+		}
+		if (transactionDate == null) {
+			if (other.transactionDate != null) {
+				return false;
+			}
+		} else if (!transactionDate.equals(other.transactionDate)) {
+			return false;
+		}
+		if (vat == null) {
+			if (other.vat != null) {
+				return false;
+			}
+		} else if (!vat.equals(other.vat)) {
+			return false;
+		}
+		if (voucher == null) {
+			if (other.voucher != null) {
+				return false;
+			}
+		} else if (!voucher.equals(other.voucher)) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return String.format(
+				"Transaction [number=%s, receipts=%s, spending=%s, accountingContraAccount=%s, accountingCostGroup=%s, "
+				+ "accountingCostCenter=%s, voucher=%s, transactionDate=%s, vat=%s, inventoryNumber=%s, "
+				+ "descriptionOfTransaction=%s, uid=%s, lastChange=%s]",
+				number, receipts, spending, accountingContraAccount, accountingCostGroup, 
+				accountingCostCenter, voucher, transactionDate, vat, inventoryNumber, 
+				descriptionOfTransaction, uid, lastChange);
 	}
 	
 }

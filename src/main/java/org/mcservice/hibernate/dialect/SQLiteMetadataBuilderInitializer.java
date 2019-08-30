@@ -1,15 +1,15 @@
-package org.hibernate.dialect2;
+package org.mcservice.hibernate.dialect;
 
 import org.hibernate.boot.MetadataBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.spi.MetadataBuilderInitializer;
 import org.hibernate.dialect.Dialect;
-import org.hibernate.dialect2.SQLiteDialect;
-import org.hibernate.dialect2.SQLiteMetadataBuilderInitializer;
 import org.hibernate.engine.jdbc.dialect.internal.DialectResolverSet;
 import org.hibernate.engine.jdbc.dialect.spi.DialectResolutionInfo;
 import org.hibernate.engine.jdbc.dialect.spi.DialectResolver;
 //import org.jboss.logging.Logger;
+import org.mcservice.hibernate.dialect.SQLiteDialect;
+import org.mcservice.hibernate.dialect.SQLiteMetadataBuilderInitializer;
 
 public class SQLiteMetadataBuilderInitializer implements MetadataBuilderInitializer {
 

@@ -9,7 +9,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.geometry.Insets?>
 
-<VBox alignment="CENTER" prefHeight="279.0" prefWidth="309.0" spacing="20.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mcservice.geldbericht.SecondaryController">
+<VBox alignment="CENTER" prefHeight="279.0" prefWidth="309.0" spacing="20.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.mcservice.geldbericht.LoginController">
     <children>
       <Label text="Monat Auswählen" />
       <ComboBox prefWidth="150.0" />

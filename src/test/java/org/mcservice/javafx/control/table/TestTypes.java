@@ -1,18 +1,81 @@
 package org.mcservice.javafx.control.table;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import javax.money.MonetaryAmount;
+import javax.persistence.Convert;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
+import org.mcservice.geldbericht.data.VatType;
+import org.mcservice.geldbericht.data.converters.MonetaryAmountConverter;
+import org.mcservice.geldbericht.data.converters.VatTypeStringConverter;
 import org.mcservice.javafx.TrimStringConverter;
+import org.mcservice.javafx.control.date.DayMonthFieldColumnFactory;
 import org.mcservice.javafx.control.table.TableViewColumn;
 import org.mcservice.javafx.control.table.TableViewColumnOrder;
 import org.mcservice.javafx.control.table.TableViewConverter;
+import org.mcservice.javafx.control.table.factories.SelectorColumnFactory;
+import org.testfx.api.FxRobot;
+
+import com.sun.javafx.scene.control.LabeledText;
+
+import javafx.scene.Node;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableRow;
+import javafx.scene.control.TableView;
 
 public class TestTypes {
+	
+	public static <S> TableCell<S, ?> getCell(TableView<S> tableView, int columnIndex, int rowIndex) {
+        TableRow<S> row = null;
+        for (Node actNode : tableView.lookupAll(".table-row-cell")) {
+            @SuppressWarnings("unchecked")
+			TableRow<S> actRow = (TableRow<S>) actNode;
+            if (actRow.getIndex() == rowIndex) {
+                row = actRow;
+                break;
+            }
+        }
+        for (Node actNode : row.lookupAll(".table-cell")) {
+            @SuppressWarnings("unchecked")
+			TableCell<S, ?> cell = (TableCell<S, ?>) actNode;
+            if (tableView.getColumns().indexOf(cell.getTableColumn()) == columnIndex) {
+            	return cell;
+            }
+        }
+        return null;
+    }
+	
+	public static List<LabeledText> getComboPopupList(FxRobot node) {
+		Node t=node.lookup(".combo-box-popup").query();
+    	Set<Node> b=t.lookupAll(".text");
+    	List<LabeledText> l=new ArrayList<LabeledText>();
+    	for (Node labeledText : b) {
+			if(labeledText instanceof LabeledText && ((LabeledText) labeledText).getText().length()!=0) {
+				l.add((LabeledText) labeledText);
+			}
+		}
+		return l;
+	}
+	
+	public static List<LabeledText> getChoicePopupList(FxRobot node) {
+		Node t=node.lookup(".choice-box-popup").query();
+    	Set<Node> b=t.lookupAll(".text");
+    	List<LabeledText> l=new ArrayList<LabeledText>();
+    	for (Node labeledText : b) {
+			if(labeledText instanceof LabeledText && ((LabeledText) labeledText).getText().length()!=0) {
+				l.add((LabeledText) labeledText);
+			}
+		}
+		return l;
+	}
 
 	public static class Test3S2I{
 
@@ -167,6 +230,73 @@ public class TestTypes {
 
 		public void setFirstObject(Object firstObject) {
 			this.firstObject = firstObject;
+		}
+	}
+	
+	public static class Test2I1S1M1D1V{
+
+		@TableViewColumn(editable = false)
+		private int firstInt=0;
+		@TableViewColumn
+		private int secondInt=0;
+		@TableViewColumn
+		@TableViewConverter(converter=TrimStringConverter.class)
+		private String firstStr=null;
+		@TableViewColumn
+		@Convert(converter = MonetaryAmountConverter.class)
+		private MonetaryAmount firstMoney;
+		@TableViewColumn(colName="firstDay",fieldGenerator=DayMonthFieldColumnFactory.class)
+		private LocalDate firstDay=null;
+		@TableViewColumn(fieldGenerator=SelectorColumnFactory.class)
+		@TableViewConverter(converter=VatTypeStringConverter.class)
+		private VatType firstVat=null;
+
+		public int getFirstInt() {
+			return firstInt;
+		}
+
+		public MonetaryAmount getFirstMoney() {
+			return firstMoney;
+		}
+
+		public String getFirstStr() {
+			return firstStr;
+		}
+
+		public LocalDate getFirstDay() {
+			return firstDay;
+		}
+
+		public VatType getFirstVat() {
+			return firstVat;
+		}
+
+		public void setFirstInt(int firstInt) {
+			this.firstInt = firstInt;
+		}
+
+		public void setFirstMoney(MonetaryAmount firstMoney) {
+			this.firstMoney = firstMoney;
+		}
+
+		public void setFirstStr(String firstStr) {
+			this.firstStr = firstStr;
+		}
+
+		public void setFirstDay(LocalDate firstDay) {
+			this.firstDay = firstDay;
+		}
+
+		public void setFirstVat(VatType firstVat) {
+			this.firstVat = firstVat;
+		}
+
+		public int getSecondInt() {
+			return secondInt;
+		}
+
+		public void setSecondInt(int secondInt) {
+			this.secondInt = secondInt;
 		}
 	}
 }

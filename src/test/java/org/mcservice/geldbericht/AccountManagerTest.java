@@ -2,17 +2,13 @@ package org.mcservice.geldbericht;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.testfx.api.FxAssert.verifyThat;
-import static org.testfx.matcher.control.LabeledMatchers.hasText;
-import static java.lang.Math.pow;
+import static org.mcservice.javafx.control.table.TestTypes.getComboPopupList;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
@@ -20,11 +16,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
-
 import org.javamoney.moneta.Money;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -32,21 +25,14 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mcservice.AfterFXInitBeforeEach;
 import org.mcservice.MockedApplicationTest;
 import org.mcservice.geldbericht.App;
-import org.mcservice.geldbericht.CompanyManagerController;
 import org.mcservice.geldbericht.data.Account;
 import org.mcservice.geldbericht.data.Company;
 import org.mcservice.geldbericht.database.DbAbstractionLayer;
 import org.mockito.Mock;
 import org.mockito.quality.Strictness;
-import org.testfx.util.BoundsQueryUtils;
-
 import com.sun.javafx.scene.control.LabeledText;
 
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -54,23 +40,15 @@ import org.mockito.junit.jupiter.MockitoSettings;
 
 
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Bounds;
-import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.PopupControl;
 import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination.ModifierValue;
-import javafx.scene.input.MouseButton;
 import javafx.stage.Stage;
 
 @Tag("Active")
@@ -203,18 +181,6 @@ class AccountManagerTest extends MockedApplicationTest{
         return null;
     }
     
-	private List<LabeledText> getPopupList() {
-		Node t=lookup(".combo-box-popup").query();
-    	Set<Node> b=t.lookupAll(".text");
-    	List<LabeledText> l=new ArrayList<LabeledText>();
-    	for (Node labeledText : b) {
-			if(labeledText instanceof LabeledText && ((LabeledText) labeledText).getText().length()!=0) {
-				l.add((LabeledText) labeledText);
-			}
-		}
-		return l;
-	}
-    
     @Test
     @Disabled
     @CreateCompanies
@@ -276,7 +242,7 @@ class AccountManagerTest extends MockedApplicationTest{
     @CreateCompanies()
     public void selectACompanySelectNextCompany() {
     	clickOn(companySelector);
-    	LabeledText l = getPopupList().get(0);
+    	LabeledText l = getComboPopupList(this).get(0);
     	clickOn(l);
     	    	
     	assertTrue(companySelector.getValue()==this.companies.get(0));
@@ -284,7 +250,7 @@ class AccountManagerTest extends MockedApplicationTest{
     	assertEquals(tableView.getItems().size(),companies.get(0).getAccounts().size());
 
     	clickOn(companySelector);
-    	l = getPopupList().get(1);
+    	l = getComboPopupList(this).get(1);
     	clickOn(l);
     	
     	assertTrue(companySelector.getValue()==this.companies.get(1));
@@ -292,7 +258,7 @@ class AccountManagerTest extends MockedApplicationTest{
     	assertEquals(tableView.getItems().size(),companies.get(1).getAccounts().size());
     	
     	clickOn(companySelector);
-    	l = getPopupList().get(1);
+    	l = getComboPopupList(this).get(1);
     	clickOn(l);
     	
     	assertTrue(companySelector.getValue()==this.companies.get(1));
@@ -354,7 +320,7 @@ class AccountManagerTest extends MockedApplicationTest{
     @CreateCompanies()
     public void CheckMessageUnsavedChangesCancel() {
     	clickOn(companySelector);
-    	LabeledText l = getPopupList().get(0);
+    	LabeledText l = getComboPopupList(this).get(0);
     	clickOn(l);
     	
     	clickOn("#addButton");
@@ -364,7 +330,7 @@ class AccountManagerTest extends MockedApplicationTest{
     	Set<Node> bsMain=lookup(".button").queryAll();
     	
     	clickOn(companySelector);
-    	l = getPopupList().get(1);
+    	l = getComboPopupList(this).get(1);
     	clickOn(l);
     	
     	sleep(200);
@@ -394,7 +360,7 @@ class AccountManagerTest extends MockedApplicationTest{
     @CreateCompanies()
     public void CheckMessageUnsavedChangesOK() {
     	clickOn(companySelector);
-    	LabeledText l = getPopupList().get(0);
+    	LabeledText l = getComboPopupList(this).get(0);
     	clickOn(l);
     	
     	clickOn("#addButton");
@@ -404,7 +370,7 @@ class AccountManagerTest extends MockedApplicationTest{
     	Set<Node> bsMain=lookup(".button").queryAll();
     	
     	clickOn(companySelector);
-    	l = getPopupList().get(1);
+    	l = getComboPopupList(this).get(1);
     	clickOn(l);
     	
     	sleep(200);
@@ -427,6 +393,18 @@ class AccountManagerTest extends MockedApplicationTest{
     	clickOn(bc);
     	assertEquals(3,tableView.getItems().size());
     	assertEquals(companies.get(1),companySelector.getValue());
+    }
+    
+    @Test
+    public void CheckNoErrorAddMissued() {
+    	Node t=lookup("#addButton").query();
+    	assertTrue(t instanceof Button);
+    	((Button) t).setDisable(false);
+    	
+    	clickOn("#addButton");
+    	
+    	assertEquals(0,companies.size());
+    	assertEquals(0,tableView.getItems().size());
     }
     
     

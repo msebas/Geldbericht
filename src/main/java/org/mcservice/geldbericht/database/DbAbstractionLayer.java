@@ -2,26 +2,29 @@
  * Copyright (C) 2019 Sebastian Müller <sebastian.mueller@mcservice.de>
  * 
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  * 
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package org.mcservice.geldbericht.database;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -33,6 +36,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.cfg.Configuration;
 import org.hibernate.query.Query;
 import org.hibernate.service.ServiceRegistry;
 import org.mcservice.geldbericht.data.AbstractDataObject;
@@ -71,10 +75,23 @@ public class DbAbstractionLayer {
 		try {
 			StandardServiceRegistryBuilder builder=new StandardServiceRegistryBuilder().configure("hibernate.cfg.xml");
 			
-			//if(null!=dbPath)
-				//builder.applySetting("hibernate.connection.url", "jdbc:sqlite:"+dbPath);
+			String propertiesFile="connection.xml";
+			if(System.getenv("GELDBERICHT_CONFIGFILE") != null) {
+				propertiesFile=System.getenv("GELDBERICHT_CONFIGFILE");
+			}
 			
-            ServiceRegistry serviceRegistry = builder.build();
+			if((new File(propertiesFile)).isFile()) {
+				Properties properties = new Properties();
+				properties.load(new FileInputStream(propertiesFile));
+				
+				Configuration configuration = new Configuration();
+				configuration.configure(new File(propertiesFile));
+				
+				builder.applySettings(configuration.getProperties());
+			}
+			
+
+			ServiceRegistry serviceRegistry = builder.build();
                         
             Metadata metadata = new MetadataSources(serviceRegistry).getMetadataBuilder().build();
             factory=(SessionFactory) metadata.getSessionFactoryBuilder().build();
@@ -120,6 +137,25 @@ public class DbAbstractionLayer {
 	
 	public List<VatType> getVatTypes(){
 		return getAllData(VatType.class);
+	}
+	
+	public List<VatType> getVatTypes(boolean includeDisabled){
+		Session session=factory.openSession();
+		try {
+			CriteriaBuilder cb = session.getCriteriaBuilder();
+		    CriteriaQuery<VatType> cq = cb.createQuery(VatType.class);
+		    Root<VatType> rootEntry = cq.from(VatType.class);
+		    CriteriaQuery<VatType> criteria = cq.select(rootEntry);
+		    		
+		    if(!includeDisabled) {
+		    	criteria=criteria.where(cb.equal(rootEntry.get("disabledVatType"), Boolean.valueOf(false)));
+		    }
+	
+		    Query<VatType> allQuery = session.createQuery(criteria);
+		    return allQuery.getResultList();
+		} finally {
+			session.close();
+		}
 	}
 	
 	public Account persistAccount(Account account) {
@@ -285,12 +321,27 @@ public class DbAbstractionLayer {
 		return data;
 	}
 	
+	public void deleteData(Collection<? extends AbstractDataObject> dataList) {
+		Session session=factory.getCurrentSession();
+		org.hibernate.Transaction transaction=session.beginTransaction();
+		try {
+			for (AbstractDataObject abstractDataObject : dataList) {
+				session.delete(abstractDataObject);
+			}
+			
+			transaction.commit();
+			transaction=null;
+		} finally {
+			if(null!=transaction) {
+				transaction.rollback();
+			}
+			session.close();
+		}
+	}
 	
 	public List<List<? extends AbstractDataObject>> mergeData(List<List<? extends AbstractDataObject>> dataList) {
 		Session session=factory.getCurrentSession();
 		org.hibernate.Transaction transaction=session.beginTransaction();
-		//This has to be unchecked and use rawtypes to allow replacing the objects by the persisted ones
-		//The correct type is guaranteed by using the runtime classes of the instances to create the references 
 		try {
 			//Here we have to persist first anything to that things persisted later hold a reference.
 			//The simplest approach is to walk down the relation graph, but to do it this was is quite slow...
@@ -311,6 +362,8 @@ public class DbAbstractionLayer {
 	
 	@SuppressWarnings("unchecked")
 	protected void mergeByClass(List<List<? extends AbstractDataObject>> dataList, Session session, Class<?> type) {
+		//This has to be unchecked and use rawtypes to allow replacing the objects by the persisted ones
+		//The correct type is guaranteed by using the runtime classes of the instances to create the references 
 		for(@SuppressWarnings("rawtypes") List data:dataList) {
 			for (int i=0;i<data.size();++i) {
 				if(type == null || type.isInstance(data.get(i))) {
@@ -322,6 +375,42 @@ public class DbAbstractionLayer {
 					}
 				}
 			}
+		}
+	}
+
+	public void remove(MonthAccountTurnover monthAccountTurnover) {
+		Session session=factory.getCurrentSession();
+		org.hibernate.Transaction transaction=session.beginTransaction();
+		try {
+			for(Transaction balanceTransaction:monthAccountTurnover.getTransactions()) {
+				session.delete(balanceTransaction);
+			}
+			monthAccountTurnover.getAccount().getBalanceMonths().remove(monthAccountTurnover);
+			session.delete(monthAccountTurnover);			
+			transaction.commit();
+			transaction=null;
+		} finally {
+			if(null!=transaction) {
+				transaction.rollback();
+			}
+			session.close();
+		}
+	}
+	
+	public void remove(Transaction balanceTransaction) {
+		if(null==balanceTransaction.getUid())
+			return;
+		Session session=factory.getCurrentSession();
+		org.hibernate.Transaction transaction=session.beginTransaction();
+		try {
+			session.delete(balanceTransaction);
+			transaction.commit();
+			transaction=null;
+		} finally {
+			if(null!=transaction) {
+				transaction.rollback();
+			}
+			session.close();
 		}
 	}
 }

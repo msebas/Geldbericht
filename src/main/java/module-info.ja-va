@@ -24,6 +24,13 @@ module org.mcservice.geldbericht {
 	requires org.hibernate.orm.envers;
 	requires javafx.base;
 	requires javafx.graphics;
+	requires java.validation;
+	requires java.money;
+	requires org.hibernate.validator;
+	requires org.javamoney.moneta;
+	requires kernel;
+	requires io;
+	requires layout;
 	
 	//TODO remove these for non test builds
 	/*
@@ -43,6 +50,6 @@ module org.mcservice.geldbericht {
     //exports org.mcservice.geldbericht.database to org.mockito;
     
     
-    exports org.hibernate.dialect2;
+    exports org.mcservice.hibernate.dialect;
     exports org.mcservice.geldbericht;
 }

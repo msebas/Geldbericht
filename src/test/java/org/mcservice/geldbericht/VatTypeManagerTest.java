@@ -2,18 +2,12 @@ package org.mcservice.geldbericht;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.testfx.api.FxAssert.verifyThat;
-import static org.testfx.matcher.control.LabeledMatchers.hasText;
-import static java.lang.Math.pow;
-
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -21,22 +15,14 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
-
-import org.javamoney.moneta.Money;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mcservice.AfterFXInitBeforeEach;
 import org.mcservice.MockedApplicationTest;
 import org.mcservice.geldbericht.App;
@@ -45,8 +31,6 @@ import org.mcservice.geldbericht.data.VatType;
 import org.mcservice.geldbericht.database.DbAbstractionLayer;
 import org.mockito.Mock;
 import org.mockito.quality.Strictness;
-import org.testfx.util.BoundsQueryUtils;
-
 import com.sun.javafx.scene.control.LabeledText;
 
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -54,27 +38,19 @@ import org.mockito.junit.jupiter.MockitoSettings;
 
 
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Bounds;
-import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.PopupControl;
 import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination.ModifierValue;
-import javafx.scene.input.MouseButton;
 import javafx.stage.Stage;
 
-
+@Tag("Active")
 @Tag("GUI")
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.WARN)
@@ -184,7 +160,6 @@ class VatTypeManagerTest extends MockedApplicationTest{
 		}
 		tmpNode=lookup("#changesLabel").query();
 		if (tmpNode instanceof Label) {
-			@SuppressWarnings("unchecked")
 			Label tmpView =(Label) tmpNode;
 			changesLabel=tmpView;
 		}
@@ -282,7 +257,7 @@ class VatTypeManagerTest extends MockedApplicationTest{
     	assertFalse(((Button) t).isDisabled());
     }
     
-    @Tag("Active")
+    
     @Test
     @CreateVatTypes(value=4, disabled=4)
     public void checkAutofillAllDisabledVatTypes() {

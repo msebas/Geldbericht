@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright (C) 2019 Sebastian Müller <sebastian.mueller@mcservice.de>
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package org.mcservice.javafx.control.date;
 
 import java.time.LocalDate;
@@ -18,13 +34,14 @@ public class MonthYearField extends AbstractTimeField implements Supplier<LocalD
 
 	@Override
 	public LocalDate getDate() {
+		updateActResults();
 		if (foundValues!=null && foundValues.size()>=2) {
-			int year=foundValues.get(2);
+			int year=foundValues.get(1);
 			if(year<50)
 				year+=2000;
 			else
 				year+=1900;
-			LocalDate result=LocalDate.of(year,foundValues.get(1),getBaseDate().getDayOfMonth());
+			LocalDate result=LocalDate.of(year,foundValues.get(0),getBaseDate().getDayOfMonth());
 			return result;
 		}
 		return null;
@@ -41,6 +58,8 @@ public class MonthYearField extends AbstractTimeField implements Supplier<LocalD
 
 	@Override
 	public void accept(LocalDate t) {
+		if(null==t)
+			return;
 		this.setBaseDate(t);
 		this.setText(String.format("%2.d.%2.d",t.getMonthValue(),t.getYear()<2000?t.getYear()-1900:t.getYear()-2000));
 	}

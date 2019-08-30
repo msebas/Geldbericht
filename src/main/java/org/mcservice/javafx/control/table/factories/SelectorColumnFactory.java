@@ -1,8 +1,25 @@
+/*******************************************************************************
+ * Copyright (C) 2019 Sebastian Müller <sebastian.mueller@mcservice.de>
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package org.mcservice.javafx.control.table.factories;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
+import org.mcservice.javafx.control.table.AutoShowComboBoxTableCell;
 import org.mcservice.javafx.control.table.MemberVariable;
 import org.mcservice.javafx.control.table.TableViewColumn;
 import org.mcservice.javafx.control.table.TableViewConverter;
@@ -59,12 +76,13 @@ public class SelectorColumnFactory<S> implements ReflectionColumnFactory<S>,Colu
 		actColumn.setCellFactory(new Callback<TableColumn<S,Object>, TableCell<S,Object>>() {
 			private ObservableList<Object> list=optionList;
 			private StringConverter<?> converter=localConverter;
-
+		
 			@SuppressWarnings("unchecked")
 			@Override
 			public TableCell<S, Object> call(TableColumn<S, Object> param) {
-				ComboBoxTableCell<S,Object> cell=new ComboBoxTableCell<S,Object>(list);
+				final ComboBoxTableCell<S,Object> cell=new AutoShowComboBoxTableCell<S,Object>(list);
 				cell.setConverter((StringConverter<Object>) converter);
+				
 				return cell;
 			}
 		});

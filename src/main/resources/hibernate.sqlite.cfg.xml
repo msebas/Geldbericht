@@ -6,7 +6,7 @@
 <hibernate-configuration>
 	<session-factory>
 		<!-- SQL Dialect/Driver -->
-		<property name="hibernate.dialect">org.hibernate.dialect2.SQLiteDialect</property>
+		<property name="hibernate.dialect">org.mcservice.hibernate.dialect.SQLiteDialect</property>
 		<property name="hibernate.connection.driver_class">org.sqlite.JDBC</property>
 		
 		<!-- Integration -->

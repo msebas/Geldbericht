@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright (C) 2019 Sebastian Müller <sebastian.mueller@mcservice.de>
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package org.mcservice.geldbericht.pdf;
 
 import java.io.ByteArrayOutputStream;
@@ -6,7 +22,7 @@ import java.time.format.TextStyle;
 import java.util.Locale;
 
 import javax.money.MonetaryAmount;
-import javax.persistence.OneToOne;
+import javax.persistence.ManyToOne;
 import javax.validation.constraints.NotNull;
 
 import org.mcservice.geldbericht.data.MonthAccountTurnover;
@@ -39,7 +55,7 @@ public class MonthAccountTurnoverPDF {
 	
 	protected Long uid=null;
 	@NotNull
-	@OneToOne
+	@ManyToOne
 	protected final MonthAccountTurnover month;
 	protected final String fileName;
 	protected byte[] pdf;
@@ -387,7 +403,7 @@ public class MonthAccountTurnoverPDF {
 				new Paragraph(toString(transaction.getTransactionDate().getDayOfMonth())),
 				new Paragraph(toString(transaction.getTransactionDate().getMonthValue())),
 				new Paragraph(transaction.getVat().toString()),
-				new Paragraph(toString(transaction.getInventoryNumber())), // 10
+				new Paragraph(transaction.getInventoryNumber()), // 10
 				new Paragraph(""),
 				new Paragraph(transaction.getDescriptionOfTransaction()) //12		
 		};
@@ -430,6 +446,7 @@ public class MonthAccountTurnoverPDF {
 			return Integer.toString(i);
 	}
 	
+	@SuppressWarnings("unused")
 	private String toString(Long i) {
 		if (i==null)
 			return "";
