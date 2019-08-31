@@ -11,7 +11,31 @@
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
 	</properties>
-	<dependencies>
+	<dependencies>	
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-graphics</artifactId>
+			<version>11.0.2</version>
+      		<classifier>win</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-base</artifactId>
+			<version>11.0.2</version>
+      		<classifier>win</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-controls</artifactId>
+			<version>11.0.2</version>
+      		<classifier>win</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-fxml</artifactId>
+			<version>11.0.2</version>
+      		<classifier>win</classifier>
+		</dependency>
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-controls</artifactId>
@@ -150,12 +174,76 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
-							<mainClass>org.mcservice.geldbericht.App</mainClass>
+							<mainClass>org.mcservice.geldbericht.FatJarLauncher</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
 			</plugin>
+			<!-- plugin> <groupId>org.codehaus.mojo</groupId> <artifactId>exec-maven-plugin</artifactId> 
+				<version>1.2.1</version> <executions> <execution> <id>unpack-dependencies</id> 
+				<phase>package</phase> <goals> <goal>exec</goal> </goals> <configuration> 
+				<executable>/bin/true</executable> <arguments> <argument>-createjar</argument> 
+				<argument>-nocss2bin</argument> <argument>-appclass</argument> <argument>${mainClass}</argument> 
+				<argument>-srcdir</argument> <argument>${project.build.directory}/classes</argument> 
+				<argument>-outdir</argument> <argument>${project.build.directory}</argument> 
+				<argument>-outfile</argument> <argument>${project.build.finalName}.jar</argument> 
+				</arguments> </configuration> </execution> </executions> </plugin -->
+			<!-- plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+							<descriptorRefs>
+								<descriptorRef>jar-with-dependencies</descriptorRef>
+							</descriptorRefs>
+							<descriptors>
+								<descriptor>assembly.xml</descriptor>
+							</descriptors>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin-->
 			<plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <executions>
+                <execution>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>shade</goal>
+                    </goals>
+                    <configuration>
+                        <filters>
+					        <filter>
+					            <artifact>*:*</artifact>
+					            <excludes>
+					                <exclude>META-INF/*.SF</exclude>
+					                <exclude>META-INF/*.DSA</exclude>
+					                <exclude>META-INF/*.RSA</exclude>
+					            </excludes>
+					        </filter>
+					    </filters>
+					    <minimizeJar>false</minimizeJar>
+                        <createDependencyReducedPom>false</createDependencyReducedPom>
+                        <dependencyReducedPomLocation>
+                            ${java.io.tmpdir}/dependency-reduced-pom.xml
+                        </dependencyReducedPomLocation>
+                        <relocations>
+                            <relocation>
+                                <pattern>com.acme.coyote</pattern>
+                                <shadedPattern>hidden.coyote</shadedPattern>
+                            </relocation>
+                        </relocations>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+        <plugin>
 				<groupId>com.akathist.maven.plugins.launch4j</groupId>
 				<artifactId>launch4j-maven-plugin</artifactId>
 				<executions>
@@ -177,23 +265,25 @@
 							<goal>launch4j</goal>
 						</goals>
 						<configuration>
+						<dontWrapJar>true</dontWrapJar>
+  							<chdir>.</chdir>
 							<headerType>gui</headerType>
 							<outfile>target/${artifactId}-${version}.exe</outfile>
 							<jar>${artifactId}-${version}.jar</jar>
 							<errTitle>Geldbericht</errTitle>
 							<classPath>
-								<mainClass>org.mcservice.hibernateTest.App</mainClass>
+								<mainClass>org.mcservice.geldbericht.FatJarLauncher</mainClass>
 							</classPath>
 							<dontWrapJar>true</dontWrapJar>
-							<downloadUrl>http://java.com/download</downloadUrl>
-							<jre>
-								<path>jre</path>
-								<bundledJre64Bit>true</bundledJre64Bit>
-								<bundledJreAsFallback>false</bundledJreAsFallback>
-								<jdkPreference>preferJre</jdkPreference>
-								<runtimeBits>64</runtimeBits>
-								<minVersion>11</minVersion>
-							</jre>
+							<downloadUrl>https://adoptopenjdk.net/</downloadUrl>
+							  <jre>
+							    <path>jre</path>
+							    <bundledJre64Bit>true</bundledJre64Bit>
+							    <bundledJreAsFallback>false</bundledJreAsFallback>
+							    <minVersion>11</minVersion>
+							    <jdkPreference>preferJre</jdkPreference>
+							    <runtimeBits>64/32</runtimeBits>
+							  </jre>
 							<versionInfo>
 								<fileVersion>${version}</fileVersion>
 								<txtFileVersion>Alpha</txtFileVersion>
@@ -205,52 +295,6 @@
 								<internalName>Geldbericht</internalName>
 								<originalFilename>geldbericht.exe</originalFilename>
 							</versionInfo>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.2.1</version>
-        <executions>
-          <execution>
-            <id>unpack-dependencies</id>
-            <phase>package</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>${java.home}/../bin/javafxpackager</executable>
-              <arguments>
-                <argument>-createjar</argument>
-                <argument>-nocss2bin</argument>
-                <argument>-appclass</argument>
-                <argument>${mainClass}</argument>
-                <argument>-srcdir</argument>
-                <argument>${project.build.directory}/classes</argument>
-                <argument>-outdir</argument>
-                <argument>${project.build.directory}</argument>
-                <argument>-outfile</argument>
-                <argument>${project.build.finalName}.jar</argument>
-              </arguments>
-            </configuration>
-          </execution>
-        </executions>  
-      </plugin>
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>assembly</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-						<configuration>
-							<descriptors>
-								<descriptor>assembly.xml</descriptor>
-							</descriptors>
 						</configuration>
 					</execution>
 				</executions>

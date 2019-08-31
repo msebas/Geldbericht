@@ -8,7 +8,7 @@
 		<!-- Integration -->
 		<property name="hibernate.archive.autodetection">class</property>
 		<property name="hibernate.cache.provider_class">org.hibernate.cache.NoCacheProvider</property>
-        <property name="hibernate.hbm2ddl.auto">update</property>
+        <property name="hibernate.hbm2ddl.auto">verify</property>
         <property name="hibernate.current_session_context_class">org.hibernate.context.internal.ThreadLocalSessionContext</property>    
             
         <!-- Database Connection Settings -->    

@@ -17,8 +17,6 @@
 package org.mcservice.javafx.control.table;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -33,46 +31,31 @@ import javafx.scene.control.TableColumn.CellEditEvent;
 
 
 public class MemberVariable<S,T> implements EventHandler<CellEditEvent<S,T>>{
-	public final Field field;
-	public final Method setter;
-	public final Method getter;
+	private ReflectedField<T> field;
 	private TableColumn<S,T> tableColumn = null;
 	private ObjectProperty<? extends Collection<S>> itemsWithErrors=null;
 	private List<ItemUpdateListener> listeners;
 	
 	private static Validator validator=Validation.buildDefaultValidatorFactory().getValidator();
 	
-	private MemberVariable(Field field, Method setter, Method getter){
-		this.field=field;
-		this.setter=setter;
-		this.getter=getter;
+	private MemberVariable(String fieldName, Class<S> clazz){
+		field=new ReflectedField<T>(fieldName,clazz);				
+		listeners=new ArrayList<ItemUpdateListener>();
+	}
+	
+	private MemberVariable(Field field, Class<S> clazz){
+		this.field=new ReflectedField<T>(field,clazz);				
 		this.listeners=new ArrayList<ItemUpdateListener>();
 	}
 	
 	public static <S,T> MemberVariable<S,T> fromName(String fieldName, Class<S> owningClass) throws SecurityException {
-		Field field;
-		try {
-			field=owningClass.getDeclaredField(fieldName);
-		} catch (NoSuchFieldException e) {
-			throw new RuntimeException(String.format("Missing field %s in class %s"
-					,fieldName,owningClass.getName()));
-		}
-		return fromField(field); 
+		return new MemberVariable<S,T>(fieldName,owningClass);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static <S,T> MemberVariable<S,T> fromField(Field field) throws SecurityException {
-		Class<?> owningClass = field.getDeclaringClass(); 
-		String fieldName=field.getName();
-		String upperFieldName=fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-		
-		try {
-			return new MemberVariable<S,T>(field,
-					owningClass.getMethod("set"+upperFieldName,field.getType()),
-					owningClass.getMethod("get"+upperFieldName));
-		} catch (NoSuchMethodException e) {
-			throw new RuntimeException(String.format("Missing getter or setter for field %s in class %s.",
-					field.getName(),owningClass.getName()));
-		}
+		Class<S> owningClass = (Class<S>) field.getDeclaringClass(); 
+		return new MemberVariable<S,T>(field,owningClass);
 		
 	}
 
@@ -103,9 +86,9 @@ public class MemberVariable<S,T> implements EventHandler<CellEditEvent<S,T>>{
 		S actItem=editEvent.getRowValue();
 		boolean trueChange=false;
 		try {
-			trueChange=!nullEquals(this.getter.invoke(actItem),editEvent.getNewValue());
-			this.setter.invoke(actItem, editEvent.getNewValue());
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			trueChange=!nullEquals(field.get(actItem),editEvent.getNewValue());
+			field.set(actItem, editEvent.getNewValue());
+		} catch (IllegalArgumentException e) {
 			//We cannot handle here any exception, but setters should not throw exceptions and all access or
 			//argument violations should fit by getter and setter definition. So just add a new level.
 			throw new RuntimeException(e);
@@ -115,7 +98,7 @@ public class MemberVariable<S,T> implements EventHandler<CellEditEvent<S,T>>{
 			if (this.itemsWithErrors!=null && !this.itemsWithErrors.get().contains(actItem)) {
 				this.itemsWithErrors.get().add(actItem);
 			}
-			if(validator.validateProperty(actItem,this.field.getName()).isEmpty()) {
+			if(validator.validateProperty(actItem,field.getName()).isEmpty()) {
 				tableColumn.getTableView().getSelectionModel().selectNext();
 			}
 		} else {
@@ -147,5 +130,9 @@ public class MemberVariable<S,T> implements EventHandler<CellEditEvent<S,T>>{
     
     public Class<?> getType(){
     	return field.getType();
+    }
+    
+    public Field getField() {
+        return field.getField();
     }
 }

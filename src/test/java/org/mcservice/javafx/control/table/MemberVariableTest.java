@@ -67,7 +67,7 @@ class MemberVariableTest{
     @Test
     public void constructorTests() throws Exception {
     	assertEquals(allFine.class.getDeclaredField("myMember"),
-    			MemberVariable.fromName("myMember",allFine.class).field);
+    			MemberVariable.fromName("myMember",allFine.class).getField());
     	assertThrows(RuntimeException.class, () -> MemberVariable.fromName("notMyMember",allFine.class));
     	assertThrows(RuntimeException.class, () -> MemberVariable.fromField(
     			noGetter.class.getDeclaredField("myMember")));

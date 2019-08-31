@@ -75,7 +75,7 @@ public class DbAbstractionLayer {
 		try {
 			StandardServiceRegistryBuilder builder=new StandardServiceRegistryBuilder().configure("hibernate.cfg.xml");
 			
-			String propertiesFile="connection.xml";
+			String propertiesFile="connection.cfg.xml";
 			if(System.getenv("GELDBERICHT_CONFIGFILE") != null) {
 				propertiesFile=System.getenv("GELDBERICHT_CONFIGFILE");
 			}
@@ -88,6 +88,8 @@ public class DbAbstractionLayer {
 				configuration.configure(new File(propertiesFile));
 				
 				builder.applySettings(configuration.getProperties());
+			} else {
+				throw new RuntimeException("Unable to find database connection configuration file");
 			}
 			
 
@@ -146,7 +148,6 @@ public class DbAbstractionLayer {
 		    CriteriaQuery<VatType> cq = cb.createQuery(VatType.class);
 		    Root<VatType> rootEntry = cq.from(VatType.class);
 		    CriteriaQuery<VatType> criteria = cq.select(rootEntry);
-		    		
 		    if(!includeDisabled) {
 		    	criteria=criteria.where(cb.equal(rootEntry.get("disabledVatType"), Boolean.valueOf(false)));
 		    }

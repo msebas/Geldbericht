@@ -28,11 +28,12 @@ import javax.money.MonetaryAmount;
 import org.javamoney.moneta.Money;
 import org.mcservice.javafx.AnnotationBasedFormatter;
 import org.mcservice.javafx.control.table.MemberVariable;
+import org.mcservice.javafx.control.table.ReflectedField;
 import org.mcservice.javafx.control.table.TableViewColumn;
 import org.mcservice.javafx.control.table.TableViewColumnOrder;
 import org.mcservice.javafx.control.table.ValidatingTextFieldTableCell;
 
-import com.sun.javafx.property.PropertyReference;
+//import com.sun.javafx.property.PropertyReference;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -124,7 +125,7 @@ public class DefaultReflectionColumnFactory<S> implements ReflectionColumnFactor
 			}
 			
 			private TableView<S> localTable=table;
-			private PropertyReference<Boolean> propertyMethod=new PropertyReference<Boolean>(referenceClass,field.getName());
+			private ReflectedField<Boolean> propertyMethod=new ReflectedField<Boolean>(field,referenceClass);
 								
 			@Override
 			public ObservableValue<Boolean> call(Integer param) {
