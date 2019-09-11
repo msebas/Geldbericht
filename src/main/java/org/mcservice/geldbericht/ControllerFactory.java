@@ -39,6 +39,8 @@ public class ControllerFactory implements Callback<Class<?>, Object>{
 			return new AccountManagerController(db);
 		if (CompanyManagerController.class.equals(clazz))
 			return new CompanyManagerController(db);
+		if (PdfGeneratorPaneController.class.equals(clazz))
+			return new PdfGeneratorPaneController(db);
 		if (PrimaryController.class.equals(clazz))
 			return new PrimaryController(db);
 		if (TransactionInputPaneController.class.equals(clazz))

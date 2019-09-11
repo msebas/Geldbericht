@@ -173,11 +173,26 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 		this.accountingCostCenter = accountingCostCenter;
 		this.voucher = voucher;
 		this.transactionDate = transactionDate;
-		this.vat = vat;
+		this.vat = new VatType(vat);
 		this.inventoryNumber = inventoryNumber;
 		//this.amortisationType = amortisationType;
 		//this.amortisationValue = amortisationValue;
 		this.descriptionOfTransaction = descriptionOfTransaction;
+	}
+
+	public Transaction(Transaction otherTransaction) {
+		super(otherTransaction.uid, otherTransaction.lastChange);
+		this.number=otherTransaction.number;
+		this.receipts = otherTransaction.receipts;
+		this.spending = otherTransaction.spending;
+		this.accountingContraAccount = otherTransaction.accountingContraAccount;
+		this.accountingCostGroup = otherTransaction.accountingCostGroup;
+		this.accountingCostCenter = otherTransaction.accountingCostCenter;
+		this.voucher = otherTransaction.voucher;
+		this.transactionDate = otherTransaction.transactionDate;
+		this.vat = otherTransaction.vat;
+		this.inventoryNumber = otherTransaction.inventoryNumber;
+		this.descriptionOfTransaction = otherTransaction.descriptionOfTransaction;
 	}
 
 	/**
@@ -426,17 +441,16 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 		if (this == obj) {
 			return true;
 		}
+		if(obj==null) {
+			return false;
+		}
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
 		Transaction other = (Transaction) obj;
 
 
-		if (uid == null) {
-			if (other.uid != null) {
-				return false;
-			}
-		} else if (uid!=other.uid) {
+		if (uid!=other.uid) {
 			return false;
 		}
 		if (accountingContraAccount == null) {

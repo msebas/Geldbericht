@@ -67,6 +67,7 @@ public class ReflectedField<T> {
      * @return the field
      */
     public Field getField() {
+    	reflectField();
         return field;
     }
     
@@ -156,7 +157,7 @@ public class ReflectedField<T> {
     		}
     		
     		try {
-    			setter=clazz.getMethod("set"+upperFieldName,field.getType());
+    			setter=clazz.getDeclaredMethod("set"+upperFieldName,field.getType());
     			if(!Modifier.isPublic(setter.getModifiers())) {
     				setter=null;
     			}
@@ -166,7 +167,7 @@ public class ReflectedField<T> {
     		
     		
     		try {
-    			getter=clazz.getMethod("get"+upperFieldName);
+    			getter=clazz.getDeclaredMethod("get"+upperFieldName);
     			if(!Modifier.isPublic(getter.getModifiers()) || 
     					!getter.getReturnType().equals(field.getType())) {
     				getter=null;
@@ -177,7 +178,7 @@ public class ReflectedField<T> {
     		
     		if(null==getter) {
         		try {
-        			getter=clazz.getMethod("is"+upperFieldName);
+        			getter=clazz.getDeclaredMethod("is"+upperFieldName);
         			if(!Modifier.isPublic(getter.getModifiers()) || 
         					!getter.getReturnType().equals(field.getType())) {
         				getter=null;

@@ -11,6 +11,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doAnswer;
 import static org.mcservice.javafx.control.table.TestTypes.getComboPopupList;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +59,9 @@ import org.mcservice.javafx.control.table.MemberVariable;
 import org.mcservice.javafx.control.table.ReflectionTableView;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.quality.Strictness;
+import org.mockito.stubbing.Answer;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 
@@ -71,10 +75,10 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
-
 
 @Tag("GUI")
 @ExtendWith(MockitoExtension.class)
@@ -200,7 +204,7 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
 		}
 		return result;
 	}
-	
+		
 	@BeforeEach 
 	public void initMock(TestInfo testInfo) {
 		ArrayList<Company> act=new ArrayList<Company>();
@@ -323,7 +327,8 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	assertTrue(dataTableView.getItems().isEmpty());
     	assertTrue(accountSelector.isDisabled());
     	assertTrue(monthSelector.isDisabled());
-    	assertTrue(savePane.isDisabled());
+    	assertTrue(deleteActualMonthButton.isDisabled());
+    	assertTrue(insertLineButton.isDisabled());
     	assertTrue(insertPane.isDisabled());
     	assertTrue(dataTableView.isDisabled());    	
     }
@@ -339,7 +344,8 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	assertEquals(companies.get(0).getAccounts(),accountSelector.getItems());
     	assertNull(accountSelector.getValue());
     	assertTrue(monthSelector.isDisabled());
-    	assertTrue(savePane.isDisabled());
+    	assertTrue(deleteActualMonthButton.isDisabled());
+    	assertTrue(insertLineButton.isDisabled());
     	assertTrue(insertPane.isDisabled());
     	assertTrue(dataTableView.isDisabled());
     }
@@ -351,7 +357,8 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	assertEquals(companies.get(0).getAccounts(),accountSelector.getItems());
     	assertNull(accountSelector.getValue());
     	assertTrue(monthSelector.isDisabled());
-    	assertTrue(savePane.isDisabled());
+    	assertTrue(deleteActualMonthButton.isDisabled());
+    	assertTrue(insertLineButton.isDisabled());
     	assertTrue(insertPane.isDisabled());
     	assertTrue(dataTableView.isDisabled());
     }
@@ -363,7 +370,8 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	assertEquals(companies.get(0).getAccounts(),accountSelector.getItems());
     	assertEquals(companies.get(0).getAccounts().get(0),accountSelector.getValue());
     	assertNull(monthSelector.getValue());
-    	assertTrue(savePane.isDisabled());
+    	assertTrue(deleteActualMonthButton.isDisabled());
+    	assertTrue(insertLineButton.isDisabled());
     	assertTrue(insertPane.isDisabled());
     	assertTrue(dataTableView.isDisabled());
     }
@@ -466,8 +474,25 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	
     	assertNull(monthSelector.getValue());
     	assertTrue(monthSelector.getItems().isEmpty());
-    	verify(db).remove(month);
     	assertTrue(insertPane.isDisabled());
+    	
+    	List<Object> res=new ArrayList<Object>();
+    	doAnswer(new Answer<Void>() {
+			@SuppressWarnings("unchecked")
+			public Void answer(InvocationOnMock invocation) {
+    	        Object[] args = invocation.getArguments();
+    	        if(args[0] instanceof Collection) {
+    	        	res.addAll((Collection<? extends Object>) args[0]);
+    	        }
+    	        return null;
+    	      }}).when(db).deleteData(any());
+    	
+    	verify(db,times(0)).deleteData(any());
+    	clickOn(saveChangesButton);
+    	verify(db).deleteData(any());
+    	
+    	assertTrue(res.contains(month));
+    	assertEquals(1,res.size());
     }
 
     @Test
@@ -516,16 +541,33 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	
     	assertNull(monthSelector.getValue());
     	assertTrue(monthSelector.getItems().isEmpty());
-    	verify(db).remove(month);
     	verify(spyAccount,atLeast(1)).updateBalance();
     	assertTrue(insertPane.isDisabled());
+    	
+    	List<Object> res=new ArrayList<Object>();
+    	doAnswer(new Answer<Void>() {
+			@SuppressWarnings("unchecked")
+			public Void answer(InvocationOnMock invocation) {
+    	        Object[] args = invocation.getArguments();
+    	        if(args[0] instanceof Collection) {
+    	        	res.addAll((Collection<? extends Object>) args[0]);
+    	        }
+    	        return null;
+    	      }}).when(db).deleteData(any());
+    	
+    	verify(db,times(0)).deleteData(any());
+    	clickOn(saveChangesButton);
+    	verify(db).deleteData(any());
+    	
+    	assertTrue(res.contains(month));
+    	assertTrue(res.containsAll(month.getTransactions()));
+    	assertEquals(1+month.getTransactions().size(),res.size());
     }
     
     @Test
     @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 7)
     public void CheckDeleteFilledMonthCancel() {
     	assertEquals(accountSelector.getItems().get(0).getBalanceMonths().get(0).getMonth(),monthSelector.getValue());
-    	MonthAccountTurnover month=accountSelector.getItems().get(0).getBalanceMonths().get(0);
     	Set<Node> bsMain=lookup(".button").queryAll();
     	
     	clickOn(deleteActualMonthButton);
@@ -541,7 +583,23 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
 		}
     	
     	clickOn(bc);
-    	verify(db,times(0)).remove(month);
+    	
+    	List<Object> res=new ArrayList<Object>();
+    	doAnswer(new Answer<Void>() {
+			@SuppressWarnings("unchecked")
+			public Void answer(InvocationOnMock invocation) {
+    	        Object[] args = invocation.getArguments();
+    	        if(args[0] instanceof Collection) {
+    	        	res.addAll((Collection<? extends Object>) args[0]);
+    	        }
+    	        return null;
+    	      }}).when(db).deleteData(any());
+    	
+    	verify(db,times(0)).deleteData(any());
+    	clickOn(saveChangesButton);
+    	verify(db).deleteData(any());
+    	
+    	assertTrue(res.isEmpty());    	
     	assertEquals(accountSelector.getItems().get(0).getBalanceMonths().get(0).getMonth(),monthSelector.getValue());
     }
     
@@ -549,6 +607,7 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     @CreateCompanies(value=1,accountNumber = 1,monthNumber = 2,transactionNumber = 2)
     public void CheckDeleteMonthNoSelection() {
     	savePane.setDisable(false);
+    	deleteActualMonthButton.setDisable(false);
     	assertEquals(null,monthSelector.getValue());
     	sleep(10);
     	clickOn(deleteActualMonthButton);
@@ -557,7 +616,7 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	assertEquals(2,accountSelector.getValue().getBalanceMonths().size());
     }
     
-    
+    @Tag("Active")
     @Test
     @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 0)
     public void CheckInsertOnEnterInLastField() throws Exception {
@@ -572,14 +631,29 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	assertEquals(receiptsInput,scene.focusOwnerProperty().get());
     	assertEquals(null,receiptsInput.getText());
     	assertEquals(null,spendingInput.getText());
-    	assertEquals(null,accountingContraAccountInput.getText());
-    	assertEquals(null,accountingCostGroupInput.getText());
-    	assertEquals(null,accountingCostCenterInput.getText());
+    	assertEquals("",accountingContraAccountInput.getText());
+    	assertEquals("",accountingCostGroupInput.getText());
+    	assertEquals("",accountingCostCenterInput.getText());
     	assertEquals("",voucherInput.getText());
     	assertEquals("",transactionDateInput.getText());
     	assertEquals("",inventoryNumberInput.getText());
     	assertEquals("",descriptionOfTransactionInput.getText());
     	assertEquals(vats.get(1),vatInput.getValue());
+    }
+    
+    @Tag("Active")
+    @Test
+    @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 0)
+    public void CheckDoubleInsertOnEnterInLastField() throws Exception {
+    	assertTrue(dataTableView.getItems().size()==0);
+    	type(KeyCode.TAB,3);
+    	for(int j=0;j<2;++j) {
+	    	for(int i=0;i<dataTableView.getColumns().size()-2;++i) {
+	    		type(KeyCode.TAB);    		
+	    	}
+	    	type(KeyCode.ENTER);
+    	}
+    	assertEquals(2,dataTableView.getItems().size());
     }
     
     @Test
@@ -643,8 +717,7 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	assertEquals(actCompany,companySelector.getValue());
     	assertEquals(actCompany.getAccounts().get(0),accountSelector.getValue());
     	assertEquals(actCompany.getAccounts().get(0).
-    			getBalanceMonths().get(0).getMonth(),monthSelector.getValue());
-    	
+    			getBalanceMonths().get(0).getMonth(),monthSelector.getValue());	
     }
     
     @Test
@@ -667,9 +740,266 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	assertEquals(actCompany,companySelector.getValue());
     	assertEquals(actAccount,accountSelector.getValue());
     	assertEquals(actMonth,monthSelector.getValue());
-    	
-    } 
+    }
     
+    @Test
+    @CreateCompanies(value=3,accountNumber = 3,monthNumber = 3,transactionNumber = 3)
+    public void CheckUpdateDataDeleteActCompany() {
+    	type(KeyCode.DOWN,KeyCode.DOWN,KeyCode.TAB);
+		type(KeyCode.DOWN,3).type(KeyCode.TAB).write("704").type(KeyCode.ENTER);
+    	Company actCompany=companySelector.getValue();
+    	List<Company> locCompanies = new ArrayList<Company>();
+    	for (Company company : companies) {
+    		if(company==actCompany)
+    			continue;
+			locCompanies.add(new Company(company));
+		}
+    	reset(db);
+    	when(db.getCompanies()).thenReturn(locCompanies);
+    	    	
+    	type(KeyCode.F5);
+    	sleep(10);
+    	verify(db,times(1)).getCompanies();
+    	assertTrue(companySelector.getItems().containsAll(locCompanies));
+    	assertEquals(locCompanies.size(),companySelector.getItems().size());
+    	assertEquals(null,companySelector.getValue());
+    	assertEquals(null,accountSelector.getValue());
+    	assertEquals(null,monthSelector.getValue());
+    }
+    
+    @Test
+    @CreateCompanies(value=3,accountNumber = 3,monthNumber = 3,transactionNumber = 3)
+    public void CheckUpdateDataDeleteActAccount() {
+    	type(KeyCode.DOWN,KeyCode.DOWN,KeyCode.TAB);
+		type(KeyCode.DOWN,3).type(KeyCode.TAB).write("704").type(KeyCode.ENTER);
+    	Company actCompany=companySelector.getValue();
+    	Account actAccount=accountSelector.getValue();
+    	List<Company> locCompanies = new ArrayList<Company>();
+    	for (Company company : companies) {
+    		Company tmp = new Company(company);
+    		if(company==actCompany)
+    			tmp.getAccounts().remove(actAccount);    			
+			locCompanies.add(tmp);
+		}
+    	reset(db);
+    	when(db.getCompanies()).thenReturn(locCompanies);
+    	    	
+    	type(KeyCode.F5);
+    	sleep(10);
+    	verify(db,times(1)).getCompanies();
+    	assertTrue(companySelector.getItems().containsAll(locCompanies));
+    	assertEquals(locCompanies.size(),companySelector.getItems().size());
+    	assertEquals(actCompany.getUid(),companySelector.getValue().getUid());
+    	assertEquals(null,accountSelector.getValue());
+    	assertEquals(null,monthSelector.getValue());
+    }
+	
+    @Test
+    @CreateCompanies(value=3,accountNumber = 3,monthNumber = 3,transactionNumber = 3)
+    public void CheckUpdateDataDeleteActMonth() {
+    	type(KeyCode.DOWN,KeyCode.DOWN,KeyCode.TAB);
+		type(KeyCode.DOWN,3).type(KeyCode.TAB).write("619").type(KeyCode.ENTER);
+    	Company actCompany=companySelector.getValue();
+    	Account actAccount=accountSelector.getValue();
+    	LocalDate actMonth=monthSelector.getValue();
+    	List<Company> locCompanies = new ArrayList<Company>();
+    	for (Company company : companies) {
+    		for(Account account:company.getAccounts()){
+    			account.updateBalance();
+    		}
+    		Company tmp = new Company(company);
+			for(Account account:tmp.getAccounts()){
+				MonthAccountTurnover balanceMonth=null;
+				for(MonthAccountTurnover month:account.getBalanceMonths()) {
+					if(month.isInMonth(actMonth)) {
+						balanceMonth=month;
+						break;
+					}
+				}
+				account.getBalanceMonths().remove(balanceMonth);
+				account.setAccountName(account.getAccountName()+"a");
+				account.updateBalance();
+			}
+			locCompanies.add(tmp);
+		}
+    	type(KeyCode.F5);
+    	reset(db);
+    	when(db.getCompanies()).thenReturn(locCompanies);
+    	    	
+    	type(KeyCode.F5);
+    	sleep(10);
+    	verify(db,times(1)).getCompanies();
+    	assertTrue(companySelector.getItems().containsAll(locCompanies));
+    	assertEquals(locCompanies.size(),companySelector.getItems().size());
+    	assertEquals(actCompany.getUid(),companySelector.getValue().getUid());
+    	assertEquals(actAccount.getUid(),accountSelector.getValue().getUid());
+    	assertEquals(null,monthSelector.getValue());
+    }
+    
+    @Test
+    @CreateCompanies(value=1,accountNumber = 1,monthNumber = 3,transactionNumber = 3)
+    public void CheckKeepAddedMonth() {
+    	List<Company> locCompanies = new ArrayList<Company>();
+    	for (Company company : companies) {
+			locCompanies.add(new Company(company));
+		}
+    	type(KeyCode.TAB,2).write("604").type(KeyCode.ENTER);
+    	reset(db);
+    	when(db.getCompanies()).thenReturn(locCompanies);
+    	    	
+    	type(KeyCode.F5);
+    	sleep(10);
+    	assertEquals(4,accountSelector.getValue().getBalanceMonths().size());
+    	assertNotNull(monthSelector.getValue());
+    }
+    
+    public Transaction getDummyTransaction(Long uid, int number) {
+    	return new Transaction(Long.valueOf(uid), ZonedDateTime.now(), number, 
+    					Money.of(0, "EUR"),Money.of(0, "EUR"),
+    							null,null,null,null,LocalDate.of(2019, 6, 6),null,null,null);
+    }
+    
+    @Test
+    @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 3)
+    public void CheckUpdateDataAddToActMonthDatabase() {
+    	type(KeyCode.F5);
+    	    	
+    	List<Company> locCompanies = new ArrayList<Company>(List.of(new Company(companies.get(0))));
+    	locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).insertTranaction(1, getDummyTransaction(7L, 0));
+    	List<Transaction> transactions=locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).getTransactions();
     	
+    	reset(db);
+    	when(db.getCompanies()).thenReturn(locCompanies);
+    	    	
+    	type(KeyCode.F5);
+    	sleep(10);
+    	verify(db,times(1)).getCompanies();
+    	assertEquals(4,transactions.size());
+    }
+    
+    @Test
+    @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 3)
+    public void CheckUpdateDataAddToActMonthBoth() {
+    	type(KeyCode.F5);
+    	
+    	List<Company> locCompanies = new ArrayList<Company>(List.of(new Company(companies.get(0))));
+    	locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).insertTranaction(1, getDummyTransaction(7L, 0));
+    	List<Transaction> transactions=locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).getTransactions();
+    	List<Transaction> transactionsRef=new ArrayList<Transaction>();
+    	for (Transaction transaction : transactions) {
+			transactionsRef.add(new Transaction(transaction));
+		}
+    	
+    	type(KeyCode.TAB,16);
+    	type(KeyCode.ENTER);
+    	transactionsRef.add(new Transaction(companies.get(0).getAccounts().get(0).
+    			getBalanceMonths().get(0).getTransactions().get(3)));
+    	transactionsRef.get(4).setNumber(5);
+    	    	
+    	reset(db);
+    	when(db.getCompanies()).thenReturn(locCompanies);
+    	    	
+    	type(KeyCode.F5);
+    	sleep(10);
+    	verify(db,times(1)).getCompanies();
+    	assertTrue(transactions.containsAll(transactionsRef));
+    }
+
+    @Test
+    @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 3)
+    public void CheckUpdateDataAddToActMonthForm() {
+    	type(KeyCode.F5);
+    	    	
+    	List<Company> locCompanies = new ArrayList<Company>(List.of(new Company(companies.get(0))));
+    	List<Transaction> transactions=locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).getTransactions();
+
+    	type(KeyCode.TAB,16);
+    	type(KeyCode.ENTER);
+    	
+    	reset(db);
+    	when(db.getCompanies()).thenReturn(locCompanies);
+    	    	
+    	type(KeyCode.F5);
+    	sleep(10);
+    	verify(db,times(1)).getCompanies();
+    	assertEquals(4,transactions.size());
+    }
+    
+    @Test
+    @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 3)
+    public void CheckMergeMonthTRansactionsChanged() {
+    	type(KeyCode.F5);
+    	    	
+    	List<Company> locCompanies = new ArrayList<Company>(List.of(new Company(companies.get(0))));
+    	MonthAccountTurnover month=locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0);
+    	
+    	month.getTransactions().get(1).setReceipts(Money.of(12345.56, "EUR"));
+    	
+    	doubleClickOn(getCell(1,1)).write("23").type(KeyCode.ENTER);
+    	doubleClickOn(getCell(1,2)).write("13").type(KeyCode.ENTER);
+    	
+    	month.getTransactions().get(2).setReceipts(Money.of(12345.56, "EUR"));
+    	    	    	
+    	reset(db);
+    	when(db.getCompanies()).thenReturn(locCompanies);
+    	    	
+    	type(KeyCode.F5);
+    	sleep(10);
+    	verify(db,times(1)).getCompanies();
+    	
+    	month=accountSelector.getValue().getBalanceMonths().get(0);
+    	
+    	assertEquals(Money.of(23, "EUR"),month.getTransactions().get(1).getReceipts());
+    	assertEquals(Money.of(12345.56, "EUR"),month.getTransactions().get(2).getReceipts());
+    }
+    
+    @Test
+    @CreateCompanies(value=1,accountNumber = 1,monthNumber = 3,transactionNumber = 3)
+    public void CheckMergeMonths() {
+    	type(KeyCode.F5);
+    	    	
+    	List<Company> locCompanies = new ArrayList<Company>(List.of(new Company(companies.get(0))));
+    	List<MonthAccountTurnover> months=locCompanies.get(0).getAccounts().get(0).getBalanceMonths();
+    			
+    	type(KeyCode.TAB,2);
+    	write("520").type(KeyCode.ENTER).type(KeyCode.DELETE,5);
+    	months.add(MonthAccountTurnover.getEmptyMonthAccountTurnover(LocalDate.of(2020,4,1), locCompanies.get(0).getAccounts().get(0)));
+    	write("720").type(KeyCode.ENTER);
+    	months.add(MonthAccountTurnover.getEmptyMonthAccountTurnover(LocalDate.of(2020,6,1), locCompanies.get(0).getAccounts().get(0)));
+    	
+    	    	
+    	reset(db);
+    	when(db.getCompanies()).thenReturn(locCompanies);
+    	    	
+    	type(KeyCode.F5);
+    	sleep(10);
+    	verify(db,times(1)).getCompanies();
+    	for (MonthAccountTurnover month:locCompanies.get(0).getAccounts().get(0).getBalanceMonths()) {
+			System.out.println(month.getMonth().toString());
+		}
+    	assertEquals(7,locCompanies.get(0).getAccounts().get(0).getBalanceMonths().size());
+    	assertEquals(7,monthSelector.getItems().size());
+    }
+    
+    
+    @Test
+    @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 3)
+    public void CheckDeleteTransaction() {
+    	MonthAccountTurnover oldMonth = 
+    			new MonthAccountTurnover(companies.get(0).getAccounts().get(0).getBalanceMonths().get(0));
+    	
+    	clickOn(getCell(0,1), MouseButton.SECONDARY);
+    	sleep(10);
+    	clickOn((Node) lookup("#DeleteOptionButton").query());
+    	
+    	MonthAccountTurnover actMonth = 
+    			new MonthAccountTurnover(companies.get(0).getAccounts().get(0).getBalanceMonths().get(0));
+    	oldMonth.getTransactions().get(2).setNumber(2);
+    	
+    	assertEquals(2,actMonth.getTransactions().size());
+    	assertTrue(actMonth.getTransactions().contains(oldMonth.getTransactions().get(0)));
+    	assertFalse(actMonth.getTransactions().contains(oldMonth.getTransactions().get(1)));
+    	assertTrue(actMonth.getTransactions().contains(oldMonth.getTransactions().get(2)));
+    }
     
 }

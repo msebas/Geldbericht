@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+
+<VBox alignment="CENTER" prefHeight="636.0" prefWidth="967.0"
+	xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+	fx:controller="org.mcservice.geldbericht.PdfGeneratorPaneController">
+	<children>
+		<AnchorPane fx:id="mainPane" minHeight="0.0" minWidth="0.0"
+			prefHeight="180.0" prefWidth="200.0">
+			<children>
+				<VBox prefHeight="324.0" prefWidth="748.0">
+					<children>
+						<Label text="Bitte Monat auswählen" />
+						<ComboBox fx:id="companySelector"
+							onAction="#companyChanged" prefWidth="150.0" />
+						<ComboBox fx:id="accountSelector"
+							onAction="#accountChanged" prefWidth="150.0" />
+						<ComboBox fx:id="monthSelector"
+							onAction="#monthChanged" />
+						<Button fx:id="createButton" onAction="#createPDF"
+							text="PDF Bericht erstellen" />
+					</children>
+				</VBox>
+			</children>
+		</AnchorPane>
+	</children>
+</VBox>

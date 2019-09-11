@@ -404,7 +404,7 @@ class AccountManagerTest extends MockedApplicationTest{
     	clickOn("#addButton");
     	
     	assertEquals(0,companies.size());
-    	assertEquals(0,tableView.getItems().size());
+    	assertTrue(tableView.getItems()==null || 0==tableView.getItems().size());
     }
     
     

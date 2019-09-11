@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mcservice.javafx.control.table.MemberVariable;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javafx.beans.property.ObjectProperty;
@@ -52,27 +53,12 @@ class MemberVariableTest{
 		public int getMyMember() {return myMember;}
 		public void setMyMember(int myMember) {this.myMember = myMember;}
 	}
-	
-	public class noGetter{
-		@SuppressWarnings("unused")
-		private int myMember;
-		public void setMyMember(int myMember) {this.myMember = myMember;}
-	}
-	
-	public class noSetter{
-		private int myMember;
-		public int getMyMember() {return myMember;}
-	}
         
-    @Test
+	@Tag("Active")
+	@Test
     public void constructorTests() throws Exception {
-    	assertEquals(allFine.class.getDeclaredField("myMember"),
+		assertEquals(allFine.class.getDeclaredField("myMember"),
     			MemberVariable.fromName("myMember",allFine.class).getField());
-    	assertThrows(RuntimeException.class, () -> MemberVariable.fromName("notMyMember",allFine.class));
-    	assertThrows(RuntimeException.class, () -> MemberVariable.fromField(
-    			noGetter.class.getDeclaredField("myMember")));
-    	assertThrows(RuntimeException.class, () -> MemberVariable.fromField(
-    			noSetter.class.getDeclaredField("myMember")));
     }
     
     @Test
@@ -106,7 +92,6 @@ class MemberVariableTest{
     }
     
     @SuppressWarnings("unchecked")
-	@Tag("Active")
     @Test
     public void handleError() throws Exception {
     	MemberVariable<allFine, Integer> act = MemberVariable.fromName("myMember",allFine.class);

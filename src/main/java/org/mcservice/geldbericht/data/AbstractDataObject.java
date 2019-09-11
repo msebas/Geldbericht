@@ -68,7 +68,6 @@ public abstract class AbstractDataObject {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((lastChange == null) ? 0 : lastChange.hashCode());
 		result = prime * result + ((uid == null) ? 0 : uid.hashCode());
 		return result;
 	}

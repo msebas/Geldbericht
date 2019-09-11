@@ -18,6 +18,7 @@ package org.mcservice.geldbericht.data;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.money.MonetaryAmount;
@@ -48,7 +49,7 @@ import javax.persistence.OrderBy;
 @Entity
 @Table(name = "Accounts")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-public class Account extends AbstractDataObject {
+public class Account extends AbstractDataObject{
 	
 	
 	@Pattern(regexp = "[A-Za-z0-9]{5}")
@@ -104,6 +105,21 @@ public class Account extends AbstractDataObject {
 		this.company=company;
 	}
 	
+	
+	public Account(Account otherAccount) {
+		super(otherAccount.uid,otherAccount.lastChange);
+		this.accountNumber = otherAccount.accountNumber;
+		this.accountName = otherAccount.accountName;
+		this.initialBalance=otherAccount.initialBalance;
+		this.balance=otherAccount.balance;
+		this.company=otherAccount.company;
+		for (MonthAccountTurnover month : otherAccount.balanceMonths) {
+			MonthAccountTurnover tmp = new MonthAccountTurnover(month);
+			tmp.account=this;
+			balanceMonths.add(tmp);
+		}
+	}
+	
 	/**
 	 * @param uid
 	 * @param lastChange
@@ -120,6 +136,8 @@ public class Account extends AbstractDataObject {
 		this.company=company;
 	}
 
+	
+	
 	/**
 	 * @param accountNumber the accountNumber to set
 	 */
@@ -228,21 +246,24 @@ public class Account extends AbstractDataObject {
 	 * @param balanceMonths the balanceMonths to set
 	 */
 	public void setBalanceMonths(List<MonthAccountTurnover> balanceMonths) {
-		if(!this.balanceMonths.containsAll(balanceMonths) || this.balanceMonths.size()!=balanceMonths.size()) {
-			this.lastChange = ZonedDateTime.now();
+		if(null==balanceMonths) {
 			this.balanceMonths = balanceMonths;
-			checkMonths=true;
+			return;
+		}
+		if(null==this.balanceMonths || !this.balanceMonths.containsAll(balanceMonths) || this.balanceMonths.size()!=balanceMonths.size()) {
+			this.balanceMonths = balanceMonths;
 			updateBalance();
 		} else {
 			this.balanceMonths = balanceMonths;
-			checkMonths=true;
-		}		
+		}
+		checkMonths=true;
 	}
 	
 	public void addBalanceMonth(MonthAccountTurnover turnover) {
 		checkMonths=true;
 		balanceMonths.add(turnover);
 		updateBalance();
+		this.lastChange = ZonedDateTime.now();
 	}
 	
 	/**
@@ -256,6 +277,9 @@ public class Account extends AbstractDataObject {
 	 *         add it to your actual balance to update it.
 	 */	
 	public MonetaryAmount updateBalance() {
+		if(null==balanceMonths) {
+			return null;
+		}
 		if(!checkMonths) {
 			return null;
 		}
@@ -290,14 +314,56 @@ public class Account extends AbstractDataObject {
 	}
 
 	@Override
+	public int hashCode() {
+		return (int) (uid==null ? 0 : uid);
+	}
+
+	/**
+     * Indicates whether some other object is "identical to" this one.
+     * <p>
+     * The {@code equals} method implements an equivalence relation
+     * similar to the equals method of {@code Object} implementation,
+     * taking only identical object instances and the {@code uid} into 
+     * account. Use {@code equals(Object obj,boolean rec)} with 
+     * {@code rec} set to {@code true} to make a deep comparison.
+     *
+     * @param   obj   the reference object with which to compare.
+     * @return  {@code true} if this object is the same as the obj
+     *          argument; {@code false} otherwise.
+     * @see     #hashCode()
+     * @see     java.util.HashMap
+     */
+	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
+		if(obj==null)
 			return false;
+		
 		if (getClass() != obj.getClass())
 			return false;
 		Account other = (Account) obj;
+				
+		if (uid==other.uid) {
+			return true;
+		}
+		
+		return false;
+	}
+			
+	public boolean equals(Object obj,boolean rec) {
+		if (this == obj)
+			return true;
+		if(obj==null)
+			return false;
+		
+		if (getClass() != obj.getClass())
+			return false;
+		Account other = (Account) obj;
+				
+		if (uid!=other.uid) {
+			return false;
+		}
 		if (accountName == null) {
 			if (other.accountName != null)
 				return false;
@@ -313,15 +379,25 @@ public class Account extends AbstractDataObject {
 				return false;
 		} else if (!balance.equals(other.balance))
 			return false;
-		if (balanceMonths == null) {
-			if (other.balanceMonths != null)
+		if (balanceMonths == null || other.balanceMonths==null) {
+			if (other.balanceMonths != balanceMonths)
 				return false;
-		} else if (!balanceMonths.equals(other.balanceMonths))
-			return false;
+		} else {
+			//This has to be done manual, because otherwise we run into 
+			//infinite recursive call problems because of backreferences
+			if (balanceMonths.size()!=other.balanceMonths.size()) {
+				return false;
+			}
+			Iterator<MonthAccountTurnover> otherIterator = other.balanceMonths.iterator();
+			for (Iterator<MonthAccountTurnover> iterator = balanceMonths.iterator(); iterator.hasNext();) {
+				iterator.next().equals(otherIterator.next(), false);
+				
+			}
+		}
 		if (company == null) {
 			if (other.company != null)
 				return false;
-		} else if (!company.equals(other.company))
+		} else if (rec && !company.equals(other.company))
 			return false;
 		if (initialBalance == null) {
 			if (other.initialBalance != null)
@@ -330,11 +406,5 @@ public class Account extends AbstractDataObject {
 			return false;
 		return true;
 	}
-
-	@Override
-	public int hashCode() {
-		if(this.getUid()==null)
-			return -1; 
-		return this.getUid().intValue();
-	}
+	
 }

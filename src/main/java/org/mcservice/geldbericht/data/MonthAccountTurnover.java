@@ -62,6 +62,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	@Convert(converter = MonetaryAmountConverter.class)
 	MonetaryAmount finalDebt;
 	
+	boolean monthBlocked=false;
 	@Transient
 	protected boolean transactionsLoaded=false;
 	
@@ -80,6 +81,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 		result.initialDebt=balance.isNegative()?factory.setAmount(balance).create():factory.setNumber(0).create();
 		result.initialDebt=result.initialDebt.multiply(-1);
 		result.finalDebt=factory.setAmount(result.initialDebt).create();
+		result.monthBlocked=false;
 		
 		return result;
 	}
@@ -115,6 +117,24 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 		this.monthBalanceDebt = monthBalanceDebt;
 		this.initialDebt = initialDebt;
 		this.finalDebt = finalDebt;
+		this.monthBlocked = false;
+	}
+
+	public MonthAccountTurnover(MonthAccountTurnover otherMonthAccountTurnover) {
+		super(otherMonthAccountTurnover.uid,otherMonthAccountTurnover.lastChange);
+		this.month = otherMonthAccountTurnover.month;
+		this.account = otherMonthAccountTurnover.account;
+		this.monthBalanceAssets = otherMonthAccountTurnover.monthBalanceAssets;
+		this.initialAssets = otherMonthAccountTurnover.initialAssets;
+		this.finalAssets = otherMonthAccountTurnover.finalAssets;
+		this.monthBalanceDebt = otherMonthAccountTurnover.monthBalanceDebt;
+		this.initialDebt = otherMonthAccountTurnover.initialDebt;
+		this.finalDebt = otherMonthAccountTurnover.finalDebt;
+		this.monthBlocked = otherMonthAccountTurnover.monthBlocked;
+		for (Transaction transaction : otherMonthAccountTurnover.transactions) {
+			Transaction tmp = new Transaction(transaction);
+			this.transactions.add(tmp);
+		}		
 	}
 
 	/**
@@ -127,7 +147,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 		transactionsLoaded=true;
 		transaction.setNumber(number);
 		this.transactions.set(number,transaction);
-		this.lastChange=ZonedDateTime.now();
+		updateBalance();
 	}
 	
 	/**
@@ -137,7 +157,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 		transactionsLoaded=true;
 		transaction.setNumber(this.transactions.size());
 		this.transactions.add(transaction);
-		this.lastChange=ZonedDateTime.now();
+		updateBalance();
 	}
 	
 	/**
@@ -147,10 +167,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	public void insertTranaction(int number, Transaction transaction) {
 		transactionsLoaded=true;
 		this.transactions.add(number,transaction);
-		this.lastChange=ZonedDateTime.now();
-		for(int i=number;i<this.transactions.size();++i) {
-			this.transactions.get(i).setNumber(i);
-		}
+		updateBalance();
 	}
 
 	/**
@@ -159,10 +176,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	public void removeTranaction(int number) {
 		transactionsLoaded=true;
 		this.transactions.remove(number);
-		this.lastChange=ZonedDateTime.now();
-		for(int i=number;i<this.transactions.size();++i) {
-			this.transactions.get(i).setNumber(i);
-		}
+		updateBalance();
 	}
 	
 	/**
@@ -274,17 +288,18 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	 * is not reflected in the calculated balance. If transactions are skipped only a possible 
 	 * change in the values of initial assets and debts is assumed.
 	 *  
-	 * @return newMonthBalance-oldMonthBalance (zero if no change did happen/cancel out), 
-	 *         add it to your actual balance to update it.
+	 * @return true if any relevant change did occur
 	 */
-	public MonetaryAmount updateBalance() {
+	public boolean updateBalance() {
 		MonetaryAmount initialBalance=this.getInitialAssets().subtract(this.getInitialDebt());
 		
 		MonetaryAmount change=this.getMonthBalanceAssets().subtract(this.getMonthBalanceDebt());
+		boolean changed=false;
 		MonetaryAmountFactory<? extends MonetaryAmount> factory = 
 				initialAssets.getFactory().setCurrency(initialAssets.getCurrency());
 		if(transactionsLoaded) {
 			transactions.sort(null);
+			
 			MonetaryAmount nBalanceAssets = factory.setNumber(0).create();
 			MonetaryAmount nBalanceDebt = factory.setNumber(0).create();
 			int i=0;
@@ -293,13 +308,15 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 				nBalanceDebt=nBalanceDebt.add(transaction.getSpending());
 				if(transaction.getLastChange().isAfter(this.getLastChange())) {
 					this.lastChange=transaction.getLastChange();
+					changed=true;
 				}
 				++i;
 				transaction.setNumber(i);
 			}
 			monthBalanceAssets=nBalanceAssets;
 			monthBalanceDebt=nBalanceDebt;
-			//We cannot set checkTransactions to false here,
+			
+			//We cannot set transactionsLoaded to false here,
 			//because a reference to a transaction might still
 			//exist outside.
 		}
@@ -313,11 +330,110 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 			finalDebt=finalBalance.multiply(-1);
 		}
 		
-		return monthBalanceAssets.subtract(monthBalanceDebt).subtract(change);
+		return monthBalanceAssets.subtract(monthBalanceDebt).subtract(change).isZero() && changed;
 	}
 
 	@Override
 	public int compareTo(MonthAccountTurnover o) {
 		return -o.getMonth().compareTo(month);
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = (int) (prime * result + ((account == null) ? 0 : account.getUid()));
+		result = prime * result + ((finalAssets == null) ? 0 : finalAssets.hashCode());
+		result = prime * result + ((finalDebt == null) ? 0 : finalDebt.hashCode());
+		result = prime * result + ((initialAssets == null) ? 0 : initialAssets.hashCode());
+		result = prime * result + ((initialDebt == null) ? 0 : initialDebt.hashCode());
+		result = prime * result + ((month == null) ? 0 : month.hashCode());
+		result = prime * result + ((monthBalanceAssets == null) ? 0 : monthBalanceAssets.hashCode());
+		result = prime * result + ((monthBalanceDebt == null) ? 0 : monthBalanceDebt.hashCode());
+		result = prime * result + (monthBlocked ? 1231 : 1237);
+		result = prime * result + ((transactions == null) ? 0 : transactions.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return equals(obj, true);
+	}
+		
+	boolean equals(Object obj,boolean rec) {
+		if (this == obj)
+			return true;
+		if (obj==null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		MonthAccountTurnover other = (MonthAccountTurnover) obj;
+		if (this.uid!=other.uid)
+			return false;
+		if (account == null) {
+			if (other.account != null)
+				return false;
+		} else if (rec && !account.equals(other.account))
+			return false;
+		if (finalAssets == null) {
+			if (other.finalAssets != null)
+				return false;
+		} else if (!finalAssets.equals(other.finalAssets))
+			return false;
+		if (finalDebt == null) {
+			if (other.finalDebt != null)
+				return false;
+		} else if (!finalDebt.equals(other.finalDebt))
+			return false;
+		if (initialAssets == null) {
+			if (other.initialAssets != null)
+				return false;
+		} else if (!initialAssets.equals(other.initialAssets))
+			return false;
+		if (initialDebt == null) {
+			if (other.initialDebt != null)
+				return false;
+		} else if (!initialDebt.equals(other.initialDebt))
+			return false;
+		if (month == null) {
+			if (other.month != null)
+				return false;
+		} else if (!month.equals(other.month))
+			return false;
+		if (monthBalanceAssets == null) {
+			if (other.monthBalanceAssets != null)
+				return false;
+		} else if (!monthBalanceAssets.equals(other.monthBalanceAssets))
+			return false;
+		if (monthBalanceDebt == null) {
+			if (other.monthBalanceDebt != null)
+				return false;
+		} else if (!monthBalanceDebt.equals(other.monthBalanceDebt))
+			return false;
+		if (monthBlocked != other.monthBlocked)
+			return false;
+		if (transactions == null) {
+			if (other.transactions != null)
+				return false;
+		} else if (!transactions.equals(other.transactions))
+			return false;
+		return true;
+	}
+
+	/**
+	 * @return the monthBlocked
+	 */
+	public boolean isMonthBlocked() {
+		return monthBlocked;
+	}
+
+	/**
+	 * @param monthBlocked the monthBlocked to set
+	 */
+	public void setMonthBlocked(boolean monthBlocked) {
+		if(this.monthBlocked == monthBlocked)
+			return;
+		this.monthBlocked = monthBlocked;
+		this.lastChange=ZonedDateTime.now();
 	}
 }

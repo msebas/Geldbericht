@@ -84,6 +84,15 @@ public class VatType  extends AbstractDataObject {
 		this.disabledVatType=disabledVatType;
 	}
 	
+	public VatType(VatType otherVatType) {
+		super(otherVatType.uid, otherVatType.lastChange);
+		this.name = otherVatType.name;
+		this.shortName = otherVatType.shortName;
+		this.value = otherVatType.value;
+		this.defaultVatType = otherVatType.defaultVatType;
+		this.disabledVatType = otherVatType.disabledVatType;
+	}
+	
 	/**
 	 * @return the defaultVatType
 	 */
@@ -168,9 +177,13 @@ public class VatType  extends AbstractDataObject {
 	 * @param value the value to set
 	 */
 	public void setValue(BigDecimal value) {
+		if (this.value==value || (this.value!=null && this.value.equals(value))) {
+			return;
+		}
 		if(getUid()!=null)
 			throw new RuntimeException("Cannot change value of VatType with UID.");
 		this.value = value;
+		this.lastChange = ZonedDateTime.now();
 	}
 
 	@Override

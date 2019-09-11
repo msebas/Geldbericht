@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
@@ -171,7 +171,7 @@ class DayMonthFieldTest extends ApplicationTest{
     	clickOn(dayMonthPicker);
     	write(input);
     	
-    	verify(callback,times(2)).accept(input);
+    	verify(callback,atLeast(1)).accept(input);
     	
     }
     

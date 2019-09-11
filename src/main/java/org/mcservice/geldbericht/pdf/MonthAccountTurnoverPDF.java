@@ -18,11 +18,13 @@ package org.mcservice.geldbericht.pdf;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.time.format.TextStyle;
 import java.util.Locale;
 
 import javax.money.MonetaryAmount;
 import javax.persistence.ManyToOne;
+import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 
 import org.mcservice.geldbericht.data.MonthAccountTurnover;
@@ -54,6 +56,7 @@ import com.itextpdf.layout.property.VerticalAlignment;
 public class MonthAccountTurnoverPDF {
 	
 	protected Long uid=null;
+	protected ZonedDateTime lastChange=null;
 	@NotNull
 	@ManyToOne
 	protected final MonthAccountTurnover month;
@@ -61,10 +64,17 @@ public class MonthAccountTurnoverPDF {
 	protected byte[] pdf;
 	protected boolean printed=false;
 	
+	@Transient
 	protected static final Style headline=new Style();
+	@Transient
 	protected static final Style headerbolt=new Style();
+	@Transient
 	protected static final Style header=new Style();
-	protected static final Style text=new Style();
+	@Transient
+	protected static final Style text =new Style();
+	@Transient
+	protected static final Style small=new Style();
+	@Transient
 	protected static DefaultTableMonetaryAmountConverter moneyFormatter = new DefaultTableMonetaryAmountConverter();
 	
 	static {
@@ -79,6 +89,7 @@ public class MonthAccountTurnoverPDF {
 		headerbolt.setFont(bolt).setFontSize(8f/14*14);
 		header.setFont(bolt).setFontSize(8f/14*18);
 		text.setFont(font).setFontSize(8f/14*14).setMargin(0).setPadding(0);
+		small.setFont(font).setFontSize(8f/14*12).setMargin(0).setPadding(0);
 	}
 	
 
@@ -89,8 +100,9 @@ public class MonthAccountTurnoverPDF {
 	}
 
 
-	private void createPdf() throws IOException {
+	public void createPdf() throws IOException {
 		ByteArrayOutputStream stream=new ByteArrayOutputStream();
+		lastChange=ZonedDateTime.now();
 		
 		PdfWriter writer = new PdfWriter(stream);
 		PdfDocument pdf = new PdfDocument(writer);
@@ -99,10 +111,10 @@ public class MonthAccountTurnoverPDF {
 		
 		document.setMargins(6.f*2.7f, 3.75f*2.7f, 5.5f*2.7f, 13f*2.7f);
 		
-		//This is for debugging. put the form in the background and you see if you reproduced
-		PageSize pageSize = new PageSize(PageSize.A4);
-		PdfCanvas canvas = new PdfCanvas(pdf.addNewPage());
-        canvas.addImage(ImageDataFactory.create("/home/Sebastian/workspace/Geldbericht/example/[Unbenannt]_9F23.png"), pageSize, false);
+		//This is for debugging. put the form in the background and you see if you reproduced it
+//		PageSize pageSize = new PageSize(PageSize.A4);
+//		PdfCanvas canvas = new PdfCanvas(pdf.addNewPage());
+//      canvas.addImage(ImageDataFactory.create("/home/Sebastian/workspace/Geldbericht/example/[Unbenannt]_9F23.png"), pageSize, false);
         
         MonetaryAmount initialAssets=month.getInitialAssets();
         MonetaryAmount initialDebt=month.getInitialDebt();
@@ -114,9 +126,10 @@ public class MonthAccountTurnoverPDF {
 			addPageHeader(document,j);
 			
 			Table table = new Table(UnitValue.createPercentArray(
-					new float[] {0.121f, 0.121f, 0.06f, 0.03f, 0.05f, 0.07f, 0.03f, 0.03f, 0.04f, 0.06f, 0.08f, 0.29f}));
+					new float[] {0.12f, 0.12f, 0.05f, 0.03f, 0.035f, 0.09f, 0.032f, 0.032f, 0.05f, 0.07f, 0.06f, 0.29f}));
 			table.setWidth(UnitValue.createPercentValue(100));
 			table.setMarginTop(-5);
+			table.setFixedLayout();
 			
 			addTableHeader(table);
 			addBalanceRow(table,initialAssets,initialDebt);
@@ -136,6 +149,7 @@ public class MonthAccountTurnoverPDF {
 			} while(i%30!=0);
 			document.add(table);
 			
+			
 			MonetaryAmount smallerAmountAssets,smallerAmountDebt;
 			if(pagesumAssets.isGreaterThan(pagesumDebt)) {
 				smallerAmountAssets=pagesumAssets.subtract(pagesumDebt);
@@ -154,7 +168,7 @@ public class MonthAccountTurnoverPDF {
 			}
 			
 			
-			addPageFooter(document, initialAssets,initialDebt,pagesumAssets,pagesumDebt, smallerAmountAssets,smallerAmountDebt);
+			addPageFooter(document, table, initialAssets,initialDebt,pagesumAssets,pagesumDebt, smallerAmountAssets,smallerAmountDebt);
 			j++;
 		}
 		document.close();
@@ -259,12 +273,21 @@ public class MonthAccountTurnoverPDF {
 		document.add(act);
 	}
 	
-	protected void addPageFooter(Document document, MonetaryAmount initialAssets, 
+	protected void addPageFooter(Document document, Table mainTable, MonetaryAmount initialAssets, 
 			MonetaryAmount initialDebt, MonetaryAmount pagesumAssets, MonetaryAmount pagesumDebt, 
 			MonetaryAmount smallerAmountAssets, MonetaryAmount smallerAmountDebt) {
-		Table table = new Table(UnitValue.createPercentArray(
-				new float[] {0.2665f, 0.2665f, 0.4625f}));
-		table.setWidth(UnitValue.createPercentValue(45.45f));
+				
+		float sum=0;
+		for(int i=0;i<6;++i) {
+			sum+=mainTable.getColumnWidth(i).getValue();
+		}
+		UnitValue firstCol = mainTable.getColumnWidth(0);
+		UnitValue secCol   = mainTable.getColumnWidth(1);
+		UnitValue thirdCol = new UnitValue(mainTable.getColumnWidth(0).getUnitType(),sum-firstCol.getValue()-secCol.getValue());;
+		UnitValue tableWidth = new UnitValue(mainTable.getColumnWidth(0).getUnitType(),sum);
+		
+		Table table = new Table(new UnitValue[] {firstCol,secCol,thirdCol});
+		table.setWidth(tableWidth);
 		table.setMarginTop(-4.5f);
 		
 		//Pagesum
@@ -344,27 +367,46 @@ public class MonthAccountTurnoverPDF {
 	}
 	
 	protected void addTableHeader(Table table) {
-		Paragraph paragraphs[]= {
-				new Paragraph("(Einnahme, +\nmein Guthaben)"),
-				new Paragraph("(Ausgabe, -\nmeine Schuld)"),
-				new Paragraph("Gegen-\nkonto"),
-				new Paragraph("KG"),
-				new Paragraph("KST"),
-				new Paragraph("Beleg"),
-				new Paragraph("Tag"),
-				new Paragraph("Mon."),
-				new Paragraph("USt"),
-				new Paragraph("Inv.-Nr.\nStück"),
-				new Paragraph("Afa %"),
-				new Paragraph("Gegenstand der Buchung")				
+		String paragraphs[]= {
+				"","","KONTIERUNG","","Datum","","","","",
+				"Einnahme, +\nmein Guthaben",
+				"Ausgabe, -\nmeine Schuld",
+				"Gegen-\nkonto",
+				"KG",
+				"KST",
+				"Beleg",
+				"Tag/Mon.",
+				"USt",
+				"Inv.-Nr.\nStück",
+				"Afa %",
+				"Gegenstand der Buchung"				
+		};
+		int lens[]= {
+				1,1,3,1,2,1,1,1,1,
+				1,1,1,1,1,1,2,1,1,1,1
+		};
+		Style styles[]= {
+				text,text,headerbolt,text,headerbolt,text,text,text,text,
+				text,text,small,small,small,text,small,text,text,text,text
 		};
 		
-		for (Paragraph paragraph : paragraphs) {
-			Cell cell = new Cell();
-	        cell.setMinHeight(38f);
+		for (int i=0;i<paragraphs.length;++i) {
+			Paragraph paragraph = new Paragraph(paragraphs[i]);
+			int len = lens[i];
+			Cell cell = new Cell(1,len);
+			if(i<9) {
+				cell.setMinHeight(38f*0.4f);
+				cell.setMarginBottom(0);
+				cell.setBorderBottom(Border.NO_BORDER);
+			} else {
+				cell.setMinHeight(38f*0.5f);
+				cell.setMarginTop(0);
+				cell.setBorderTop(Border.NO_BORDER);
+			}
+	        
 	        cell.setVerticalAlignment(VerticalAlignment.BOTTOM);
 	        cell.setTextAlignment(TextAlignment.CENTER);
-	        cell.add(paragraph.addStyle(text).setMultipliedLeading(1));
+        	cell.add(paragraph.addStyle(styles[i]).setMultipliedLeading(1));
 			table.addCell(cell);
 		}   
 	}

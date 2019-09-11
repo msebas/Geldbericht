@@ -18,6 +18,7 @@ package org.mcservice.geldbericht.data;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.persistence.Entity;
@@ -62,6 +63,18 @@ public class Company extends AbstractDataObject{
 	
 	private Company() {
 		super(null,ZonedDateTime.now());
+	}
+	
+	public Company(Company otherCompany) {
+		super(otherCompany.uid,otherCompany.lastChange);
+		this.companyName=otherCompany.companyName;
+		this.companyNumber=otherCompany.companyNumber;
+		this.companyBookkeepingAppointment=otherCompany.companyBookkeepingAppointment;
+		for (Account account : otherCompany.accounts) {
+			Account tmp=new Account(account);
+			tmp.company=this;
+			accounts.add(tmp);
+		}
 	}
 
 	/**
@@ -183,16 +196,29 @@ public class Company extends AbstractDataObject{
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
+		if(obj==null)
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
 		Company other = (Company) obj;
+		if (uid!=other.uid) {
+			return false;
+		}
 		if (accounts == null) {
 			if (other.accounts != null)
 				return false;
-		} else if (!accounts.equals(other.accounts))
-			return false;
+		} else {
+			//This has to be done manual, because otherwise we run into 
+			//call problems because of backreferences
+			if (accounts.size()!=other.accounts.size()) {
+				return false;
+			}
+			Iterator<Account> otherIterator = other.accounts.iterator();
+			for (Iterator<Account> iterator = accounts.iterator(); iterator.hasNext();) {
+				iterator.next().equals(otherIterator.next(), false);
+				
+			}
+		}
 		if (companyBookkeepingAppointment == null) {
 			if (other.companyBookkeepingAppointment != null)
 				return false;

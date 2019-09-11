@@ -203,6 +203,7 @@ public class TransactionInputPaneController {
 		//Create context menu for simple deleting of transactions 
 		ContextMenu cm = new ContextMenu();
 		MenuItem mi1 = new MenuItem("");
+		mi1.setId("DeleteOptionButton");
 		cm.getItems().add(mi1);
 		mi1.setOnAction(event -> {
 			Transaction actTransaction=dataTableView.getSelectionModel().getSelectedItem();
@@ -304,19 +305,20 @@ public class TransactionInputPaneController {
 				receiptsInput.requestFocus();
 			}
 		});
+		clearInputFields();
 	}
 	
 	protected void clearInputFields() {
 		receiptsInput.setText(null);
 		spendingInput.setText(null);
-		accountingContraAccountInput.setText(null);
-		accountingCostGroupInput.setText(null);
-		accountingCostCenterInput.setText(null);
-		voucherInput.setText("");
-		transactionDateInput.setText("");
+		accountingContraAccountInput.clear();
+		accountingCostGroupInput.clear();
+		accountingCostCenterInput.clear();
+		voucherInput.clear();
+		transactionDateInput.clear();
 		vatInput.setValue(defaultVat);
-		inventoryNumberInput.setText("");
-		descriptionOfTransactionInput.setText("");
+		inventoryNumberInput.clear();
+		descriptionOfTransactionInput.clear();
 	}
 
 	protected void updateAccountingLabels() {
@@ -356,8 +358,8 @@ public class TransactionInputPaneController {
     protected void addRowByFields() {
 		int counter=dataTableView.getItems().size()+1;
 		DefaultTableMonetaryAmountConverter moneyFormatter = new DefaultTableMonetaryAmountConverter();
-		MonetaryAmount receipts=moneyFormatter.fromString(receiptsInput.getText());
-		MonetaryAmount spending=moneyFormatter.fromString(spendingInput.getText());
+		MonetaryAmount receipts=moneyFormatter.fromString(receiptsInput.getText()==null?"":receiptsInput.getText());
+		MonetaryAmount spending=moneyFormatter.fromString(spendingInput.getText()==null?"":spendingInput.getText());
 		
 		String contraAccount=accountingContraAccountInput.getText().strip();
 		String costGroup=accountingCostGroupInput.getText().strip();
@@ -404,12 +406,13 @@ public class TransactionInputPaneController {
 	protected void accountChanged() {
 		Account actAccount=accountSelector.getValue();
 		
-		if(actAccount!=null && actAccount.equals(this.actAccount)) {
+		if(actAccount!=null && actAccount.equals(this.actAccount,true)) {
 			return;
 		} else {
 			disableNoAccount();
 			this.actAccount=actAccount;
 		}
+		this.equals(null);
 
 		if(actAccount!=null) {
 			if(!turnoverList.containsKey(actAccount)) {
@@ -460,7 +463,8 @@ public class TransactionInputPaneController {
 			dataTableView.setItems(transactionList);
 			
 			insertPane.setDisable(false);
-			savePane.setDisable(false);
+			deleteActualMonthButton.setDisable(false);
+			insertLineButton.setDisable(false);
 			dataTableView.setDisable(false);
 			transactionDateInput.setYear(actMonth.getYear());
 			int actAccountingYear=actMonth.getYear();
@@ -562,12 +566,14 @@ public class TransactionInputPaneController {
 	}
 	
 	private void disableNoMonth() {
+		clearInputFields();
 		actTurnover=null;
 		actAccountingYearLabel.setText(null);
 		dataTableView.getItems().removeListener(transactionUpdateListener);
 		dataTableView.setItems(FXCollections.emptyObservableList());
 		insertPane.setDisable(true);
-		savePane.setDisable(true);
+		deleteActualMonthButton.setDisable(true);
+		insertLineButton.setDisable(true);
 		dataTableView.setDisable(true);
 	}
 	
@@ -579,11 +585,12 @@ public class TransactionInputPaneController {
 		Company locActCompany=actCompany;
 		Account locActAccount=actAccount;
 		MonthAccountTurnover locActTurnover = actTurnover;
-		disableNoCompany();
-
+		
 		setCompanies();
 		setVatTypes();
 		mergeTurnoverList();
+		lastUpdate=ZonedDateTime.now();
+		disableNoCompany();
 				
 		if(null!=locActCompany) {
 			Company tmpCompany=null;
@@ -671,7 +678,8 @@ public class TransactionInputPaneController {
 		List<MonthAccountTurnover> oldMonthList=oldAccount.getBalanceMonths();
 		newMonthList.sort(null);
 		oldMonthList.sort(null);
-		for(int i=0,j=0;i<newMonthList.size() || j<oldMonthList.size();) {
+		int i,j;
+		for(i=0,j=0;i<newMonthList.size() && j<oldMonthList.size();) {
 			if(newMonthList.get(i).isInMonth(oldMonthList.get(j).getMonth())) {
 				if (oldMonthList.get(j).isTransactionsLoaded()) {
 					oldMonthList.get(j).updateBalance();
@@ -680,18 +688,20 @@ public class TransactionInputPaneController {
 						for(Transaction actTransaction : oldMonthList.get(j).getTransactions()) {
 							if(actTransaction.getUid()==null) {
 								newMonthList.get(i).appendTranaction(actTransaction);
-							} else if(actTransaction.getLastChange().isAfter(newMonthList.get(i).getLastChange())) {
+							} else {
 								//TODO Changes on transaction field level are dropped silently by newer write operations
 								//     This could be fixed by adding a field level time stamp for transaction changes, but
 								//     this increases the complexity of the actual code by adding a time-stamp to any field
 								//     of the data objects.
 								List<Transaction> newTransactionList = newMonthList.get(i).getTransactions();
 								for(int k=0;k<newTransactionList.size();++k) {
-									if(newTransactionList.get(i).getUid()==actTransaction.getUid()) {
-										newTransactionList.set(i,actTransaction);
+									if(newTransactionList.get(k).getUid()==actTransaction.getUid()) {
+										if(actTransaction.getLastChange().isAfter(newTransactionList.get(k).getLastChange())) {
+											newTransactionList.set(k,actTransaction);
+										}										
 										break;
 									}
-								}
+								}								
 							}
 						}
 					}
@@ -700,17 +710,16 @@ public class TransactionInputPaneController {
 			} else if (newMonthList.get(i).getMonth().isBefore(oldMonthList.get(j).getMonth())) {
 				i++;
 			} else {
-				newMonthList.add(i, oldMonthList.get(j));
-				i++;j++;
+				if(oldMonthList.get(j).getLastChange().isAfter(lastUpdate)) {
+					newMonthList.add(i, oldMonthList.get(j));
+					i++;j++;
+				} else {
+					j++;
+				}
 			}
-		}		
+		}
+		for(;j<oldMonthList.size();++j) {
+			newMonthList.add(oldMonthList.get(j));
+		}
 	}
-	
-	
-//	protected class TransactionComparator implements Comparator<Transaction>{
-//		@Override
-//		public int compare(Transaction o1, Transaction o2) {
-//			return o1.getNumber()-o2.getNumber();
-//		}
-//	}
 }

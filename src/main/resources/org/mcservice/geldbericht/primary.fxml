@@ -13,21 +13,11 @@
    <children>
       <MenuBar VBox.vgrow="NEVER">
         <menus>
-          <Menu mnemonicParsing="false" text="File">
+          <Menu fx:id="menuManager" mnemonicParsing="false" text="Stammdaten">
             <items>
-              <MenuItem mnemonicParsing="false" text="Close" />
-            </items>
-          </Menu>
-          <Menu mnemonicParsing="false" text="Edit">
-            <items>
-              <MenuItem mnemonicParsing="false" onAction="#startCompanyManager" text="Betriebsmanager" />
-              <MenuItem mnemonicParsing="false" onAction="#startVatTypeManager" text="Steuermanager" />
-              <MenuItem mnemonicParsing="false" onAction="#startAccountManager" text="Kontenmanager" />
-            </items>
-          </Menu>
-          <Menu mnemonicParsing="false" text="Help">
-            <items>
-              <MenuItem mnemonicParsing="false" text="About" />
+              <MenuItem fx:id="menuCompanyManager" mnemonicParsing="false" onAction="#startCompanyManager" text="Betriebsmanager" />
+              <MenuItem fx:id="menuVatTypeManager" mnemonicParsing="false" onAction="#startVatTypeManager" text="Steuermanager" />
+              <MenuItem fx:id="menuAccountManager" mnemonicParsing="false" onAction="#startAccountManager" text="Kontenmanager" />
             </items>
           </Menu>
         </menus>
@@ -36,24 +26,12 @@
         <tabs>
           <Tab text="Buchungen">
             <content>
-                   <fx:include fx:id="transactionTab" source="TransactionInputPane.fxml"/>
+            	<fx:include fx:id="transactionTab" source="TransactionInputPane.fxml"/>
             </content>
           </Tab>
           <Tab text="PDF Erstellen">
             <content>
-              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-                     <children>
-                        <VBox prefHeight="324.0" prefWidth="748.0">
-                           <children>
-						      <Label text="Bitte Monat auswählen" />
-						      <ChoiceBox fx:id="pdfCompanySelector" onAction="#pdfCompanyChanged" prefWidth="150.0" />
-                              <ChoiceBox fx:id="pdfAccountSelector" onAction="#pdfAccountChanged" prefWidth="150.0" />
-                              <ComboBox fx:id="pdfMonthSelector" onAction="#pdfMonthChanged" />
-						      <Button fx:id="pdfCreateButton" onAction="#createPDF" text="PDF Bericht erstellen" />
-						    </children>
-                        </VBox>
-                     </children>
-                  </AnchorPane>
+              	<fx:include fx:id="pdfGeneratorTab" source="PdfGeneratorPane.fxml"/>
             </content>
           </Tab>
         </tabs>
