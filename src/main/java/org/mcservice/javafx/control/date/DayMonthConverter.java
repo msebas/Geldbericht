@@ -24,7 +24,7 @@ import javafx.util.StringConverter;
 
 public class DayMonthConverter extends StringConverter<LocalDate>{
 	
-	private LocalDate baseDate=LocalDate.of(2000, 1, 1);
+	private LocalDate baseDate=LocalDate.of(2004, 1, 1);
 	private final Matcher matcher=Pattern.compile("([0-2]{0,1}[0-9]|3[0-1])\\.(1[0-2]|[0]{0,1}[0-9])").matcher("");
 	
 	@Override
@@ -40,7 +40,7 @@ public class DayMonthConverter extends StringConverter<LocalDate>{
 			return null;
 		matcher.reset(string);
 		if(!matcher.matches() || matcher.groupCount()!=2)
-			throw new RuntimeException("Format exception, %s does nto fit to the format DD.MM");
+			throw new RuntimeException("Format exception, %s does not fit to the format DD.MM");
 		return LocalDate.of(baseDate.getYear(), Integer.valueOf(matcher.group(2)), Integer.valueOf(matcher.group(1)));
 	}
 

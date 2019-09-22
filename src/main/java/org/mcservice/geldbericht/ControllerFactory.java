@@ -24,8 +24,6 @@ public class ControllerFactory implements Callback<Class<?>, Object>{
 	
 	private DbAbstractionLayer db=null;
 	
-	
-	
 	public ControllerFactory() {
 		this(null);
 	}
@@ -35,7 +33,9 @@ public class ControllerFactory implements Callback<Class<?>, Object>{
 	}
 	
 	public Object call(Class<?> clazz) {
-		createDb();
+		if (LoginController.class.equals(clazz))
+			return new LoginController(this);
+		createDB();
 		if (AccountManagerController.class.equals(clazz))
 			return new AccountManagerController(db);
 		if (CompanyManagerController.class.equals(clazz))
@@ -51,11 +51,15 @@ public class ControllerFactory implements Callback<Class<?>, Object>{
 		throw new RuntimeException("Not implemented yet");	
 	}
 	
-	private void createDb() {
+	public void createDB() {
 		if(null!=db) {
 			return;
 		}
 		db=new DbAbstractionLayer();		
+	}
+	
+	public DbAbstractionLayer getDB() {
+		return this.db;
 	}
 	
 	public void setDb(DbAbstractionLayer db) {

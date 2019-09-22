@@ -34,7 +34,7 @@ import de.mkammerer.argon2.Argon2Helper;
 public class User extends AbstractDataObject {
 	
 	/**
-	 * The requested compute time in milliseconds for a password verify call. Defaults to 500. milliseconds. 
+	 * The requested compute time in milliseconds for a password verify call. Defaults to 500 milliseconds. 
 	 */
 	public static int passwordCpuUsageTime;
 	/**
@@ -50,6 +50,22 @@ public class User extends AbstractDataObject {
 	 */
 	public static long passwordMemory;
 	
+	/**
+	 * Using this variable the number of iterations for password hashing could be forced.
+	 * It is set after the first call to {@code User.setPassword} to the found number of iterations.
+	 * Setting it to 0 forces a recalculation of the number of iterations.
+	 */
+	public static int passwordForcedIterations;
+	
+	/**
+	 * Used to scale down memory requirements.
+	 * On machines with a huge amount of memory the supplied memory might be too much 
+	 * to get below the configured time in a single iteration. As the time is the main 
+	 * criteria to decide about the ability of a password to tackle brute force attacks 
+	 * reduce the memory overhead to get a meaningful iteration number.
+	 */
+	private static int passwordScaledMemory;
+	
 	static {
 		passwordCpuThreads=Runtime.getRuntime().availableProcessors();
 		if(passwordCpuThreads<1)
@@ -61,6 +77,8 @@ public class User extends AbstractDataObject {
 		if(passwordMemory>Integer.MAX_VALUE)
 			passwordMemory=Integer.MAX_VALUE;
 		passwordCpuUsageTime=500;
+		passwordForcedIterations=0;
+		passwordScaledMemory=1;
 	}
 		
 	String userName=null;
@@ -100,13 +118,18 @@ public class User extends AbstractDataObject {
 	 */
 	public void setPassword(char[] password) {
 		Argon2 argon2 = Argon2Factory.create();
-		int iterations = 0, memoryScale=1; 
-		//On machines with a huge amount of memory the supplied memory might be too much to get below the configured 
-		//time in a single iteration. As the time is the main criteria to decide about the ability of a password to 
-		//tackle brute force attacks reduce the memory overhead to get a meaningful iteration number...
-		while(iterations<1) {
-			iterations=Argon2Helper.findIterations(argon2, passwordCpuUsageTime, (int) passwordMemory/memoryScale, passwordCpuThreads);
-			memoryScale*=2;
+		int iterations = User.passwordForcedIterations, memoryScale=User.passwordScaledMemory; 
+		if(iterations<1) {
+			memoryScale=1;
+			//On machines with a huge amount of memory the supplied memory might be too much to get below the configured 
+			//time in a single iteration. As the time is the main criteria to decide about the ability of a password to 
+			//tackle brute force attacks reduce the memory overhead to get a meaningful iteration number...
+			while(iterations<1) {
+				iterations=Argon2Helper.findIterations(argon2, passwordCpuUsageTime, (int) passwordMemory/memoryScale, passwordCpuThreads);
+				memoryScale*=2;
+			}
+			User.passwordForcedIterations=iterations;
+			User.passwordScaledMemory=memoryScale;
 		}
 		argon2 = Argon2Factory.create();
 		this.passwordHash = argon2.hash(iterations, (int) passwordMemory, passwordCpuThreads, password);;

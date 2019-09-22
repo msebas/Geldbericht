@@ -45,6 +45,7 @@ public class App extends Application {
     private static Parent loadFXML(String fxml) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader();
         fxmlLoader.setLocation(App.class.getResource(fxml + ".fxml"));
+        fxmlLoader.setControllerFactory(new ControllerFactory());
         return fxmlLoader.load();
     }
 
