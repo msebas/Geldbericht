@@ -1,5 +1,6 @@
 package org.mcservice.javafx.control.table;
 
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,11 +22,14 @@ import org.mcservice.javafx.control.date.DayMonthFieldColumnFactory;
 import org.mcservice.javafx.control.table.TableViewColumn;
 import org.mcservice.javafx.control.table.TableViewColumnOrder;
 import org.mcservice.javafx.control.table.TableViewConverter;
+import org.mcservice.javafx.control.table.factories.ReflectionColumnFactory;
 import org.mcservice.javafx.control.table.factories.SelectorColumnFactory;
+import org.mockito.Mockito;
 import org.testfx.api.FxRobot;
 
 import com.sun.javafx.scene.control.LabeledText;
 
+import javafx.beans.property.ObjectProperty;
 import javafx.scene.Node;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableRow;
@@ -133,6 +137,39 @@ public class TestTypes {
 		public void setThirdString(String thirdString) {
 			this.thirdString = thirdString;
 		}
+	}
+	
+	/**
+	 * Fake factory, set the public static mock and define behavior using it.
+	 * The factory is only a wrapper for the mock.
+	 */
+	public static class FakeFactory implements ReflectionColumnFactory<Test1S>{
+		
+		public static FakeFactory mock=null;
+		
+		FakeFactory(){
+			if(mock==null) {
+				mock=Mockito.mock(FakeFactory.class);
+			}
+		}
+
+		@Override
+		public boolean checkConstructable(Field field) {
+			return mock.checkConstructable(field);
+		}
+
+		@Override
+		public MemberVariable<Test1S, ?> addTableColumn(Field field, Class<Test1S> referenceClass,
+				TableView<Test1S> table, ObjectProperty<String> memoryKeyCode) {
+			return mock.addTableColumn(field, referenceClass, table, memoryKeyCode);
+		}
+		
+	}
+	
+	public static class Test1SF{
+		@TableViewColumn(colName="col2",fieldGenerator=FakeFactory.class)
+		@TableViewConverter(converter=TrimStringConverter.class)
+    	public String secondString="";
 	}
 	
 	public static class Test3S{

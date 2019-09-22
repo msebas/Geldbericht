@@ -204,8 +204,8 @@ public class Company extends AbstractDataObject{
 		if (uid!=other.uid) {
 			return false;
 		}
-		if (accounts == null) {
-			if (other.accounts != null)
+		if (accounts == null || other.accounts == null) {
+			if(accounts != other.accounts)
 				return false;
 		} else {
 			//This has to be done manual, because otherwise we run into 

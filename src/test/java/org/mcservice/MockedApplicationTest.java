@@ -1,7 +1,9 @@
 package org.mcservice;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import java.lang.reflect.Field;
+import java.util.Collections;
+import java.util.Map;
+
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testfx.api.FxRobot;
 import org.testfx.api.FxToolkit;
@@ -61,4 +63,46 @@ public abstract class MockedApplicationTest extends FxRobot implements Applicati
     public final void notifyPreloader(PreloaderNotification notification) {
         throw new UnsupportedOperationException();
     }
+    
+    /**
+     * This is a test case only hack to overwrite the system environment in unit tests.
+     * 
+     * !!!DO NEVER USE THIS IN PRODUCTION CODE!!!
+     * 
+     * Does create illegal reflective access operation errors.
+     * This method changes the JVM internal map to the environment one needs for a unit test.
+     * Credit goes to Edward Campbell and pushy (stackoverflow). 
+     * See {@link https://stackoverflow.com/questions/318239/how-do-i-set-environment-variables-from-java}
+     * 
+     * @param newenv The environment map to overwrite the system side one
+     * @throws Exception
+     */    
+    @SuppressWarnings("unchecked")
+	public static void setEnv(Map<String, String> newenv) throws Exception {
+		try {
+			Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
+			for(String envFieldName: new String []{"theEnvironment","theCaseInsensitiveEnvironment"}) {
+				Field envField = processEnvironmentClass.getDeclaredField(envFieldName);
+				envField.setAccessible(true);
+				Map<String, String> env = (Map<String, String>) envField.get(null);
+				env.clear();
+				env.putAll(newenv);
+				envField.setAccessible(false);
+			}
+		} catch (NoSuchFieldException e) {
+			Class<?>[] classes = Collections.class.getDeclaredClasses();
+			Map<String, String> env = System.getenv();
+			for (Class<?> cl : classes) {
+				if ("java.util.Collections$UnmodifiableMap".equals(cl.getName())) {
+					Field field = cl.getDeclaredField("m");
+					field.setAccessible(true);
+					Object obj = field.get(env);
+					Map<String, String> map = (Map<String, String>) obj;
+					map.clear();
+					map.putAll(newenv);
+					field.setAccessible(false);
+				}
+			}
+		}
+	}
 }

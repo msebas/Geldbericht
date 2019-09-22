@@ -1,12 +1,15 @@
 package org.mcservice.geldbericht.data;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.reset;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
@@ -17,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mockito;
 
 class MonthAccountTurnoverTest {
 	
@@ -114,7 +118,6 @@ class MonthAccountTurnoverTest {
     	ZonedDateTime act=ZonedDateTime.now();
     	MonthAccountTurnover tstObj1=new MonthAccountTurnover(null, act, null,null,null,null, null, null, null, null, null);
     	MonthAccountTurnover tstObj2=new MonthAccountTurnover(null, act, null,null,null,null, null, null, null, null, null);
-    	//Transactions should be equals even if there last reported change is different
     	assertTrue(tstObj1.equals(tstObj2));
     	assertEquals(tstObj2.hashCode(),tstObj1.hashCode());
     	
@@ -171,6 +174,21 @@ class MonthAccountTurnoverTest {
 		}
     	
 	}
+    
+    @Test
+    public void checkEqualsTransactions() throws Exception {
+    	ZonedDateTime act=ZonedDateTime.now();
+    	MonthAccountTurnover tstObj1=new MonthAccountTurnover(null, act, null,null,null,null, null, null, null, null, null);
+    	MonthAccountTurnover tstObj2=new MonthAccountTurnover(null, act, null,null,null,null, null, null, null, null, null);
+    	
+    	Field field=MonthAccountTurnover.class.getDeclaredField("transactions");
+    	field.setAccessible(true);
+    	field.set(tstObj1, List.of(getTransaction(LocalDate.now(), -4.2)));
+    	
+    	assertFalse(tstObj1.equals(tstObj2));
+    	assertFalse(tstObj2.equals(tstObj1));    	
+    	field.setAccessible(false);
+    }
 
     @Test
     public void checkCompareTo() throws Exception {
@@ -211,5 +229,50 @@ class MonthAccountTurnoverTest {
     	assertEquals(Money.of(4.2, "EUR"),tstObj.getMonthBalanceDebt());
     	assertEquals(Money.of(2.7, "EUR"),tstObj.getMonthBalanceAssets());
     }
+        
+    @Test
+    public void checkRemoveTransaction() throws Exception {
+    	LocalDate date = LocalDate.of(2019, 1, 1);
+    	Account acc=new Account(2L,  ZonedDateTime.now(), "Name 1", "Name 2", Money.of(2, "EUR"),null);
+    	MonthAccountTurnover tstObj=Mockito.spy(MonthAccountTurnover.getEmptyMonthAccountTurnover(date,acc));
+    	Transaction actTransaction = getTransaction(date.plusDays(2), 2.2);
+    	tstObj.appendTranaction(getTransaction(date.plusDays(1), -4.2));
+    	tstObj.appendTranaction(actTransaction);
+    	Field field=MonthAccountTurnover.class.getDeclaredField("transactionsLoaded");
+    	field.setAccessible(true);
+    	field.set(tstObj,false);
+    	field.setAccessible(false);
+    	reset(tstObj);
+    	    	
+    	tstObj.removeTranaction(0);
+    	
+    	verify(tstObj).updateBalance();
+    	assertTrue(tstObj.getTransactions().get(0).equals(actTransaction));
+    	assertTrue(tstObj.getTransactions().size()==1);
+    	assertTrue(tstObj.isTransactionsLoaded());
+    }
+    
+    @Test
+    public void checkRemoveAllTransactions() throws Exception {
+    	LocalDate date = LocalDate.of(2019, 1, 1);
+    	Account acc=new Account(2L,  ZonedDateTime.now(), "Name 1", "Name 2", Money.of(2, "EUR"),null);
+    	MonthAccountTurnover tstObj=Mockito.spy(MonthAccountTurnover.getEmptyMonthAccountTurnover(date,acc));
+    	Transaction actTransaction = getTransaction(date.plusDays(2), 2.2);
+    	tstObj.appendTranaction(getTransaction(date.plusDays(1), -4.2));
+    	tstObj.appendTranaction(actTransaction);
+    	Field field=MonthAccountTurnover.class.getDeclaredField("transactionsLoaded");
+    	field.setAccessible(true);
+    	field.set(tstObj,false);
+    	field.setAccessible(false);
+    	reset(tstObj);
+    	    	
+    	tstObj.removeAllTranactions();
+    	
+    	verify(tstObj).updateBalance();
+    	assertTrue(tstObj.getTransactions().isEmpty());
+    	assertTrue(tstObj.isTransactionsLoaded());
+    }
+    
+    
 
 }

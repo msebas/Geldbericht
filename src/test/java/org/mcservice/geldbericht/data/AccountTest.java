@@ -95,6 +95,45 @@ class AccountTest {
     }
     
     @Test
+    public void checkEqualsBalance() throws Exception {
+    	ZonedDateTime act=ZonedDateTime.now();
+    	Account tstObj1=new Account(null, act, null, null, Money.of(0,"EUR"), null);
+    	Account tstObj2=new Account(null, act, null, null, Money.of(0,"EUR"), null);
+    	
+    	Field field = Account.class.getDeclaredField("balance");
+    	field.setAccessible(true);
+    	
+    	assertTrue(tstObj1.equals(tstObj2, false));
+    	field.set(tstObj1, Money.of(1, "EUR"));
+    	assertFalse(tstObj1.equals(tstObj2, false));
+    	field.set(tstObj2, null);
+    	assertFalse(tstObj1.equals(tstObj2, false));
+    	assertFalse(tstObj2.equals(tstObj1, false));
+    	field.set(tstObj1, null);
+    	assertTrue(tstObj1.equals(tstObj2, false));
+    }
+    
+    @Test
+    public void checkEqualsInitialBalance() throws Exception {
+    	ZonedDateTime act=ZonedDateTime.now();
+    	Account tstObj1=new Account(null, act, null, null, Money.of(0,"EUR"), null);
+    	Account tstObj2=new Account(null, act, null, null, Money.of(0,"EUR"), null);
+    	
+    	//To prevent the setter from changing the value of the balance field
+    	Field field = Account.class.getDeclaredField("initialBalance");
+    	field.setAccessible(true);
+    	
+    	assertTrue(tstObj1.equals(tstObj2, false));
+    	field.set(tstObj1, Money.of(1, "EUR"));
+    	assertFalse(tstObj1.equals(tstObj2, false));
+    	field.set(tstObj2, null);
+    	assertFalse(tstObj1.equals(tstObj2, false));
+    	assertFalse(tstObj2.equals(tstObj1, false));
+    	field.set(tstObj1, null);
+    	assertTrue(tstObj1.equals(tstObj2, false));
+    }
+        
+    @Test
     public void checkEqualsUid() throws Exception {
     	ZonedDateTime act=ZonedDateTime.now();
     	Account tstObj1=new Account(1L, act, null,null,null,null);
@@ -206,4 +245,18 @@ class AccountTest {
     	verify(monthMock1).updateBalance();
     	assertTrue(tstObj.getLastChange().isAfter(act1));
     }
+    
+    @SuppressWarnings("unlikely-arg-type")
+	@Test
+    public void checkBaseEquals(){
+    	Account tstObj1=new Account(1L, null, null,null,null,null);
+    	Account tstObj2=new Account(2L, null, null,null,null,null);
+    	Account tstObj3=new Account(1L, null, null,null,null,null);
+    	
+    	assertTrue(tstObj1.equals(tstObj1));
+    	assertTrue(tstObj1.equals(tstObj3));
+    	assertFalse(tstObj1.equals(tstObj2));
+    	assertFalse(tstObj1.equals(Integer.valueOf(0)));
+    }
+    
 }

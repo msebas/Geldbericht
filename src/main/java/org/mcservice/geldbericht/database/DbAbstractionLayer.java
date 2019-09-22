@@ -18,8 +18,7 @@ package org.mcservice.geldbericht.database;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.io.FileNotFoundException;
 import java.sql.Connection;
 import java.time.ZonedDateTime;
 import java.util.Collection;
@@ -44,41 +43,32 @@ import org.mcservice.geldbericht.data.Account;
 import org.mcservice.geldbericht.data.Company;
 import org.mcservice.geldbericht.data.MonthAccountTurnover;
 import org.mcservice.geldbericht.data.Transaction;
+import org.mcservice.geldbericht.data.User;
 import org.mcservice.geldbericht.data.VatType;
 
 public class DbAbstractionLayer {
 	
-	protected String userName;
-	protected String computer;
 	protected Connection connection;
 	protected ServiceRegistry serviceRegistry;
 	protected SessionFactory factory;
 	boolean connectionAutocommitWithoutTransaction=false;
 	boolean runningTransaction=false;
 	
-	public DbAbstractionLayer(String dbPath) {
-		this.userName=System.getProperty("user.name");
-		if(System.getenv().containsKey("COMPUTERNAME"))
-			this.computer=System.getenv().get("COMPUTERNAME");
-		else if(System.getenv().containsKey("HOSTNAME"))
-			this.computer=System.getenv().get("HOSTNAME");
-		else {
-			try	{
-			    InetAddress addr;
-			    addr = InetAddress.getLocalHost();
-			    this.computer = addr.getHostName();
-			} catch (UnknownHostException ex) {
-			    this.computer="Unknown";
-			}
+	public DbAbstractionLayer() {
+		String propertiesFile="connection.cfg.xml";
+		if(System.getenv("GELDBERICHT_CONFIGFILE") != null) {
+			propertiesFile=System.getenv("GELDBERICHT_CONFIGFILE");
 		}
-		
+		init(propertiesFile);
+	}
+	
+	public DbAbstractionLayer(String propertiesFile) {
+		init(propertiesFile);
+	}
+	
+	private void init(String propertiesFile) {
 		try {
 			StandardServiceRegistryBuilder builder=new StandardServiceRegistryBuilder().configure("hibernate.cfg.xml");
-			
-			String propertiesFile="connection.cfg.xml";
-			if(System.getenv("GELDBERICHT_CONFIGFILE") != null) {
-				propertiesFile=System.getenv("GELDBERICHT_CONFIGFILE");
-			}
 			
 			if((new File(propertiesFile)).isFile()) {
 				Properties properties = new Properties();
@@ -89,7 +79,8 @@ public class DbAbstractionLayer {
 				
 				builder.applySettings(configuration.getProperties());
 			} else {
-				throw new RuntimeException("Unable to find database connection configuration file");
+				throw new FileNotFoundException(
+						String.format("Unable to find database connection configuration file \"%s\"",propertiesFile));
 			}
 			
 
@@ -103,6 +94,12 @@ public class DbAbstractionLayer {
         }
 	}
 	
+	
+
+	public List<User> manageUsers(List<User> users, ZonedDateTime lastUpdate) {
+		return mergeAll(users,User.class);
+	}
+	
 	public List<VatType> manageVatTypes(List<VatType> vatTypes, ZonedDateTime lastUpdate) {
 		return mergeAll(vatTypes,VatType.class);
 	}
@@ -113,13 +110,7 @@ public class DbAbstractionLayer {
 	
 	public List<Company> manageCompanies(List<Company> companies, ZonedDateTime lastUpdate) {
 		return mergeAll(companies,Company.class);
-	}
-	
-
-	public Company mergeCompany(Company company) {
-		return merge(company,Company.class);
-	}
-	
+	}	
 
 	public List<Account> getAccounts(){
 		return getAllData(Account.class);
@@ -127,6 +118,10 @@ public class DbAbstractionLayer {
 
 	public List<Company> getCompanies(){
 		return getAllData(Company.class);
+	}	
+
+	public List<User> getUsers(){
+		return getAllData(User.class);
 	}	
 
 	public List<MonthAccountTurnover> getMonthAccountTurnovers(){
@@ -159,6 +154,10 @@ public class DbAbstractionLayer {
 		}
 	}
 	
+	public User persistUser(User user) {
+		return persist(user, User.class);
+	}
+	
 	public Account persistAccount(Account account) {
 		return persist(account, Account.class);
 	}
@@ -177,6 +176,10 @@ public class DbAbstractionLayer {
 	
 	public VatType persistVatType(VatType vatType) {
 		return persist(vatType, VatType.class);
+	}
+	
+	public User updateUser(User user) {
+		return merge(user, User.class);
 	}
 	
 	public Account updateAccount(Account account) {
@@ -344,7 +347,7 @@ public class DbAbstractionLayer {
 		Session session=factory.getCurrentSession();
 		org.hibernate.Transaction transaction=session.beginTransaction();
 		try {
-			//Here we have to persist first anything to that things persisted later hold a reference.
+			//Here we have to persist first anything to that things persisted later hold a reference to.
 			//The simplest approach is to walk down the relation graph, but to do it this was is quite slow...
 			mergeByClass(dataList, session, Transaction.class);
 			mergeByClass(dataList, session, MonthAccountTurnover.class);
@@ -380,6 +383,11 @@ public class DbAbstractionLayer {
 	}
 
 	public void remove(MonthAccountTurnover monthAccountTurnover) {
+		if(null==monthAccountTurnover.getUid()) {
+			monthAccountTurnover.getAccount().getBalanceMonths().remove(monthAccountTurnover);
+			monthAccountTurnover.getAccount().updateBalance();
+			return;
+		}
 		Session session=factory.getCurrentSession();
 		org.hibernate.Transaction transaction=session.beginTransaction();
 		try {
@@ -387,7 +395,9 @@ public class DbAbstractionLayer {
 				session.delete(balanceTransaction);
 			}
 			monthAccountTurnover.getAccount().getBalanceMonths().remove(monthAccountTurnover);
-			session.delete(monthAccountTurnover);			
+			monthAccountTurnover.getAccount().updateBalance();
+			session.delete(monthAccountTurnover);
+			session.save(monthAccountTurnover.getAccount());
 			transaction.commit();
 			transaction=null;
 		} finally {
@@ -411,6 +421,22 @@ public class DbAbstractionLayer {
 			if(null!=transaction) {
 				transaction.rollback();
 			}
+			session.close();
+		}
+	}
+
+	public List<User> getUserByName(String userName) {
+		Session session=factory.openSession();
+		try {
+			CriteriaBuilder cb = session.getCriteriaBuilder();
+		    CriteriaQuery<User> cq = cb.createQuery(User.class);
+		    Root<User> rootEntry = cq.from(User.class);
+		    CriteriaQuery<User> criteria = cq.select(rootEntry);
+	    	criteria=criteria.where(cb.equal(rootEntry.get("userName"), userName));
+		    
+		    Query<User> allQuery = session.createQuery(criteria);
+		    return allQuery.getResultList();
+		} finally {
 			session.close();
 		}
 	}

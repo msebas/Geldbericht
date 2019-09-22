@@ -30,13 +30,18 @@ public class MonetaryAmountConverter implements AttributeConverter<MonetaryAmoun
 
     @Override
     public BigDecimal convertToDatabaseColumn(MonetaryAmount attribute) {
+    	if(null==attribute) {
+    		return null;
+    	}
     	NumberValue num = attribute.getNumber();
 		return num.numberValue(BigDecimal.class);    	
     }
 
     @Override
     public MonetaryAmount convertToEntityAttribute(BigDecimal dbData) {
+    	if(null==dbData) {
+    		return null;
+    	}
 		return Money.of(dbData,"EUR");
-    	
     }
 }

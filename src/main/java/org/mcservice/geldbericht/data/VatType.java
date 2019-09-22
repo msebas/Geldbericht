@@ -202,9 +202,9 @@ public class VatType  extends AbstractDataObject {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
+		if (obj==null || getClass() != obj.getClass())
 			return false;
-		if (getClass() != obj.getClass())
+		if (!super.equals(obj))
 			return false;
 		VatType other = (VatType) obj;
 		if (defaultVatType == null) {

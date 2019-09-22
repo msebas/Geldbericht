@@ -45,13 +45,13 @@ public class ReflectionTableView<S> extends TableView<S> {
 
 	public ReflectionTableView(Class<S> tableClass) {
 		super();
-		referenceClass=tableClass;
+		referenceClass = tableClass;
 		init();
 	}
 
 	public ReflectionTableView(ObservableList<S> items, Class<S> tableClass) {
 		super(items);
-		referenceClass=tableClass;
+		referenceClass = tableClass;
 		init();
 	}
 	
@@ -70,7 +70,6 @@ public class ReflectionTableView<S> extends TableView<S> {
 				@SuppressWarnings("unchecked")
 				ReflectionColumnFactory<S> factory = field.getAnnotation(TableViewColumn.class).
 							fieldGenerator().getDeclaredConstructor().newInstance();
-				
 				
 				if(!factory.checkConstructable(field)) {
 					throw new RuntimeException(String.format("Type %s is not supported by factory class"

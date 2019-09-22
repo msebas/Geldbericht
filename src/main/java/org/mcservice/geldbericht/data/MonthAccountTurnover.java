@@ -136,19 +136,6 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 			this.transactions.add(tmp);
 		}		
 	}
-
-	/**
-	 * @param number The number of the runningTransaction to update
-	 * @param runningTransaction The runningTransaction to update
-	 */
-	public void updateTranaction(int number, Transaction transaction) {
-		if(this.transactions.get(number).equals(transaction))
-			return;
-		transactionsLoaded=true;
-		transaction.setNumber(number);
-		this.transactions.set(number,transaction);
-		updateBalance();
-	}
 	
 	/**
 	 * @param runningTransaction The runningTransaction to append
@@ -160,16 +147,6 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 		updateBalance();
 	}
 	
-	/**
-	 * @param number The number at that the runningTransaction should be inserted
-	 * @param runningTransaction The runningTransaction to insert
-	 */
-	public void insertTranaction(int number, Transaction transaction) {
-		transactionsLoaded=true;
-		this.transactions.add(number,transaction);
-		updateBalance();
-	}
-
 	/**
 	 * @param number The number of the runningTransaction the should be removed
 	 */
@@ -185,6 +162,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 		transactionsLoaded=true;
 		this.transactions.clear();
 		this.lastChange=ZonedDateTime.now();
+		updateBalance();
 	}
 	
 	/**
@@ -412,10 +390,11 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 			return false;
 		if (monthBlocked != other.monthBlocked)
 			return false;
-		if (transactions == null) {
-			if (other.transactions != null)
+		if (transactions == null || other.transactions == null) {
+			if (other.transactions != transactions)
 				return false;
-		} else if (!transactions.equals(other.transactions))
+		} else if (transactions.size()!=other.transactions.size() || 
+				!transactions.containsAll(other.transactions))
 			return false;
 		return true;
 	}

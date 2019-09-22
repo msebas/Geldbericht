@@ -24,6 +24,8 @@ public class ControllerFactory implements Callback<Class<?>, Object>{
 	
 	private DbAbstractionLayer db=null;
 	
+	
+	
 	public ControllerFactory() {
 		this(null);
 	}
@@ -31,7 +33,6 @@ public class ControllerFactory implements Callback<Class<?>, Object>{
 	public ControllerFactory(DbAbstractionLayer db) {
 		this.db=db;
 	}
-	
 	
 	public Object call(Class<?> clazz) {
 		createDb();
@@ -54,7 +55,7 @@ public class ControllerFactory implements Callback<Class<?>, Object>{
 		if(null!=db) {
 			return;
 		}
-		db=new DbAbstractionLayer("/tmp/geldberichtTestDB.sqlite");		
+		db=new DbAbstractionLayer();		
 	}
 	
 	public void setDb(DbAbstractionLayer db) {

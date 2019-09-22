@@ -8,7 +8,7 @@
 		<!-- Integration -->
 		<property name="hibernate.archive.autodetection">class</property>
 		<property name="hibernate.cache.provider_class">org.hibernate.cache.NoCacheProvider</property>
-        <property name="hibernate.hbm2ddl.auto">verify</property>
+        <property name="hibernate.hbm2ddl.auto">validate</property>
         <property name="hibernate.current_session_context_class">org.hibernate.context.internal.ThreadLocalSessionContext</property>    
             
         <!-- Database Connection Settings -->    
@@ -23,5 +23,6 @@
         <mapping class="org.mcservice.geldbericht.data.MonthAccountTurnover" />
         <mapping class="org.mcservice.geldbericht.data.Transaction" />
         <mapping class="org.mcservice.geldbericht.data.VatType" />
+        <mapping class="org.mcservice.geldbericht.data.User" />
 	</session-factory>
 </hibernate-configuration>

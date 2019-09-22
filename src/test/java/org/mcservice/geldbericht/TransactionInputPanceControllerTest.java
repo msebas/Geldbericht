@@ -865,7 +865,7 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	type(KeyCode.F5);
     	    	
     	List<Company> locCompanies = new ArrayList<Company>(List.of(new Company(companies.get(0))));
-    	locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).insertTranaction(1, getDummyTransaction(7L, 0));
+    	locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).appendTranaction(getDummyTransaction(7L, 0));
     	List<Transaction> transactions=locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).getTransactions();
     	
     	reset(db);
@@ -883,7 +883,7 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	type(KeyCode.F5);
     	
     	List<Company> locCompanies = new ArrayList<Company>(List.of(new Company(companies.get(0))));
-    	locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).insertTranaction(1, getDummyTransaction(7L, 0));
+    	locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).appendTranaction(getDummyTransaction(7L, 0));
     	List<Transaction> transactions=locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).getTransactions();
     	List<Transaction> transactionsRef=new ArrayList<Transaction>();
     	for (Transaction transaction : transactions) {

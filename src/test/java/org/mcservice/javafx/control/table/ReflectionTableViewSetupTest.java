@@ -1,15 +1,24 @@
 package org.mcservice.javafx.control.table;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
+
+import java.lang.reflect.Field;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mcservice.javafx.control.table.MemberVariable;
 import org.mcservice.javafx.control.table.ReflectionTableView;
+import org.mcservice.javafx.control.table.TestTypes.FakeFactory;
+import org.mockito.Mockito;
 
 import javafx.embed.swing.JFXPanel;
+import javafx.scene.control.TableColumn;
 
 @Tag("Table")
 @Tag("GUI")
@@ -55,6 +64,26 @@ class ReflectionTableViewSetupTest{
     }
     
     @Test
+    public void checkThrowNotConstructable() throws Exception{
+    	@SuppressWarnings("unused")
+		TestTypes.FakeFactory factory=new TestTypes.FakeFactory();
+    	Field field=TestTypes.Test1SF.class.getField("secondString");
+    	when(FakeFactory.mock.checkConstructable(field)).thenReturn(false);    	    	
+    	assertThrows(RuntimeException.class,
+    			()->{new ReflectionTableView<TestTypes.Test1SF>(TestTypes.Test1SF.class);});    	
+    }
+    
+    @Test
+    public void checkThrowChangesExceptionType() throws Exception{
+    	@SuppressWarnings("unused")
+		TestTypes.FakeFactory factory=new TestTypes.FakeFactory();
+    	Field field=TestTypes.Test1SF.class.getField("secondString");
+    	when(FakeFactory.mock.checkConstructable(field)).thenThrow(SecurityException.class);    	    	
+    	assertThrows(RuntimeException.class,
+    			()->{new ReflectionTableView<TestTypes.Test1SF>(TestTypes.Test1SF.class);}); 	
+    }
+    
+    @Test
     public void checkStructure1S1M() throws Exception {
     	
 		tableView = new ReflectionTableView<TestTypes.Test1S1M>(TestTypes.Test1S1M.class);
@@ -73,6 +102,53 @@ class ReflectionTableViewSetupTest{
 		
     }
     
+    @Test
+    public void checkAddListener() throws Exception {
+    	
+		tableView = new ReflectionTableView<TestTypes.Test1S1M>(TestTypes.Test1S1M.class);
+		
+		ItemUpdateListener actListener = Mockito.mock(ItemUpdateListener.class);
+		
+		tableView.addEditCommitListener(actListener);
+		
+		Field field=MemberVariable.class.getDeclaredField("listeners");
+		field.setAccessible(true);
+		for(TableColumn<?, ?> act:tableView.getColumns()) {
+			Object member=act.getOnEditCommit();
+			assertTrue(member instanceof MemberVariable);
+			@SuppressWarnings("rawtypes")
+			List listeners=(List) field.get(member);
+			assertTrue(listeners.contains(actListener));
+		}
+		field.setAccessible(false);
+    }
+    
+    @Test
+    public void checkDeleteListener() throws Exception {
+    	
+		tableView = new ReflectionTableView<TestTypes.Test1S1M>(null,TestTypes.Test1S1M.class);
+		
+		ItemUpdateListener actListener1 = Mockito.mock(ItemUpdateListener.class);
+		ItemUpdateListener actListener2 = Mockito.mock(ItemUpdateListener.class);
+		
+		tableView.addEditCommitListener(actListener1);
+		tableView.addEditCommitListener(actListener2);
+		
+		tableView.removeEditCommitListener(actListener1);
+		
+		Field field=MemberVariable.class.getDeclaredField("listeners");
+		field.setAccessible(true);
+		for(TableColumn<?, ?> act:tableView.getColumns()) {
+			Object member=act.getOnEditCommit();
+			assertTrue(member instanceof MemberVariable);
+			@SuppressWarnings("rawtypes")
+			List listeners=(List) field.get(member);
+			assertEquals(1,listeners.size());
+			assertTrue(listeners.contains(actListener2));
+			assertFalse(listeners.contains(actListener1));
+		}
+		field.setAccessible(false);
+    }    
     
     
 }
