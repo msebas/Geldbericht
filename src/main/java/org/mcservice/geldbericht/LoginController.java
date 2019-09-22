@@ -21,7 +21,9 @@ import java.util.List;
 import org.mcservice.geldbericht.data.User;
 import org.mcservice.geldbericht.database.DbAbstractionLayer;
 
+import javafx.application.Platform;
 import javafx.concurrent.Task;
+import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -30,10 +32,14 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
 public class LoginController {
 
+	private int dbWaitTime = 100;
+	
+	protected ControllerFactory factory;
 	protected Thread dbCreationThread;
 	protected Thread uiUpdateThread;
 	protected DbAbstractionLayer db = null;
@@ -48,11 +54,14 @@ public class LoginController {
 	@FXML
 	protected Button loginButton;
 
-	public LoginController() {
+	public LoginController(ControllerFactory factory) {
+		this.factory=factory;
 		dbCreationThread = new Thread(() -> {
-			this.db = new DbAbstractionLayer();
+			factory.createDB();
+			this.db = factory.getDB();
 		});
-		dbCreationThread.run();
+		dbCreationThread.setDaemon(true);
+		dbCreationThread.start();
 	}
 	
 	@FXML
@@ -60,21 +69,41 @@ public class LoginController {
 		progressbarLabel.setText(String.format("Datenbankverbindung aufbauen..."));
 		
 		final Task<Void> task = new Task<Void>() {
+			
             @Override
             protected Void call() throws Exception {
-            	int i = 100, j = 1;
+            	int i = 1000, j = 1;
                 while(true) {
                     updateProgress(3*j,4*i);
+                    if(dbCreationThread.isAlive()) {
+                    	Thread.sleep(dbWaitTime);
+                    	if(j>i*0.6) {
+                    		j+=(i-j)/30;
+                    	} else {
+                    		j+=i/100;
+                    	}
+                		continue;
+                    }
                     try {
-                    	dbCreationThread.join(100);
+                    	dbCreationThread.join();
                     } catch (InterruptedException e) {
-                    	j=(i-j)*9/10;
                     	continue;
                     }
                     updateProgress(3,4);
                     break;
                 }
-                progressbarLabel.setText(String.format("Verbunden."));
+                Thread.sleep(100);
+                Platform.runLater( () -> {
+                	if(!progressbarLabel.getText().equals("Datenbankverbindung aufbauen...")) {
+                		//We are already behind trying this stuff...
+                		return;
+                	}
+	                if(db!=null) {
+	                	progressbarLabel.setText("Verbunden.");
+	                } else {
+	                	progressbarLabel.setText("Verbindungsaufbau fehlgeschlagen.");
+	                }
+                });
     			dbCreationThread=null;
                 return null;
             }
@@ -84,22 +113,38 @@ public class LoginController {
         uiUpdateThread = new Thread(task, "task-thread");
         uiUpdateThread.setDaemon(true);
         uiUpdateThread.start();
+        
+        passwordInputField.addEventHandler(KeyEvent.KEY_RELEASED, event -> {
+        	try {
+				login();
+				event.consume();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+        });
 	}
 
 	@FXML
 	protected void login() throws Exception {
-		waitForDbConnection();		
+		if(!waitForDbConnection())
+			return;
+		
 
 		String userName = usernameInputField.getText();
 		List<User> users=db.getUserByName(userName);
-
-		char[] password = passwordInputField.getText().toCharArray();
+		
 
 		try {
 			// Verify password
 			boolean loginSuccessfull=false;
 			for(User user:users) {
 				progressbarLabel.setText(String.format("Prüfe Benutzer %d",user.getUid()));
+				char[] password;
+				if(passwordInputField.getText()!=null) {
+					password = passwordInputField.getText().toCharArray();
+				} else {
+					password = new char[] {};
+				}
 				if (user.verifyPassword(password)) {
 					loginSuccessfull=true;
 					break;
@@ -126,27 +171,21 @@ public class LoginController {
 
 	}
 
-	protected void waitForDbConnection() throws InterruptedException {
-		if(null!=dbCreationThread) {
-			//Wait for db connection creation
-			dbCreationThread.join();
-			progressbarLabel.setText(String.format("Verbunden."));
-			progressBar.setProgress(0.5);
-			dbCreationThread=null;
-		}
-	}
-	
-	protected void waitForUiUpdateThread() throws InterruptedException {
+	protected boolean waitForDbConnection() throws InterruptedException {
 		if(null!=uiUpdateThread) {
+			//Wait for db connection creation and ui update
 			uiUpdateThread.join();
 			uiUpdateThread=null;
+			progressBar.progressProperty().unbind();
+			Thread.sleep(100);
 		}
+		return null!=db;
 	}
 	
 	@FXML
 	private void startMainApp() throws Exception {
 		FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("primary.fxml"));
-		fxmlLoader.setControllerFactory(new ControllerFactory(db));
+		fxmlLoader.setControllerFactory(this.factory);
 		Scene scene = new Scene(fxmlLoader.load());
         
 		// New window (Stage)

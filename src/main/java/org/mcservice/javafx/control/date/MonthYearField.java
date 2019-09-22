@@ -29,7 +29,7 @@ public class MonthYearField extends AbstractTimeField implements Supplier<LocalD
 		super(new SimpleObjectProperty<LocalDate>(LocalDate.now()),MonthYearConverter.pattern);
 		this.setPromptText("MM.YY (1950-2049)");
 		this.filter.setCompletions(List.of("0","1","2","3","4","5","6","7","8","9","."));
-		setBaseDate(LocalDate.of(2000, 01, 01));
+		setBaseDate(LocalDate.of(2004, 01, 01));
 	}
 
 	@Override
@@ -48,7 +48,7 @@ public class MonthYearField extends AbstractTimeField implements Supplier<LocalD
 	}
 	
 	public void setDay(int day) {
-		setBaseDate(LocalDate.of(2000,1,day));
+		setBaseDate(LocalDate.of(2004,1,day));
 	}
 	
 	@Override
@@ -61,6 +61,6 @@ public class MonthYearField extends AbstractTimeField implements Supplier<LocalD
 		if(null==t)
 			return;
 		this.setBaseDate(t);
-		this.setText(String.format("%2.d.%2.d",t.getMonthValue(),t.getYear()<2000?t.getYear()-1900:t.getYear()-2000));
+		this.setText(String.format("%tm.%ty",t,t));
 	}
 }

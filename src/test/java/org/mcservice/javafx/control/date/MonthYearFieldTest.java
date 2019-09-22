@@ -2,6 +2,7 @@ package org.mcservice.javafx.control.date;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -19,6 +20,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.testfx.framework.junit5.ApplicationTest;
 
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -28,7 +30,7 @@ import javafx.stage.Stage;
 //@ExtendWith(MockitoExtension.class)
 
 @Tag("GUI")
-@Tag("Active")
+//@Tag("Active")
 class MonthYearFieldTest extends ApplicationTest{
 		
 	MonthYearField monthYearPicker = null ;
@@ -94,7 +96,7 @@ class MonthYearFieldTest extends ApplicationTest{
     	
     	if(valid) {
     		assertFalse(monthYearPicker.getStyleClass().contains("field-validation-error"));
-    		assertEquals(result,monthYearPicker.getDate());
+    		assertEquals(result,monthYearPicker.get());
     	}
     	
     }
@@ -134,6 +136,23 @@ class MonthYearFieldTest extends ApplicationTest{
     	
     	verify(callback,atLeast(1)).accept(input);
     	
+    }
+    
+    @Tag("Active")
+    @Test
+    public void setDateNull() {
+    	Platform.runLater( () -> monthYearPicker.accept(null));
+    	sleep(100);
+    	assertNotNull(monthYearPicker.getBaseDate());
+    }
+    
+    @Tag("Active")
+    @Test
+    public void setDate() {
+    	Platform.runLater( () -> monthYearPicker.accept(LocalDate.of(1920, 4, 1)));
+    	sleep(100);
+    	assertEquals("04.20",monthYearPicker.getText());
+    	assertEquals(LocalDate.of(1920, 4, 1),monthYearPicker.getBaseDate());
     }
     
 }
