@@ -5,6 +5,7 @@
 *.sqlite
 *.pdf
 *.png
+*.log
 tmp/
 vendor/
 bin/

@@ -39,6 +39,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -632,7 +633,6 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	assertEquals(2,accountSelector.getValue().getBalanceMonths().size());
     }
     
-    @Tag("Active")
     @Test
     @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 0)
     public void CheckInsertOnEnterInLastField() throws Exception {
@@ -657,7 +657,6 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	assertEquals(vats.get(1),vatInput.getValue());
     }
     
-    @Tag("Active")
     @Test
     @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 0)
     public void CheckDoubleInsertOnEnterInLastField() throws Exception {
@@ -709,11 +708,11 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	clickOn(insertLineButton);
     	reset(spyAccount);
     	clickOn(saveChangesButton);
-    	ArrayList<List<? extends AbstractDataObject>> dataList = new ArrayList<List<? extends AbstractDataObject>>();
-    	dataList.add(actAccount.getBalanceMonths());
-    	dataList.add(new ArrayList<Account>(List.of(spyAccount)));
+    	LinkedList<AbstractDataObject> dataList = new LinkedList<AbstractDataObject>();
+    	dataList.addAll(actAccount.getBalanceMonths());
+    	dataList.addAll(new ArrayList<Account>(List.of(spyAccount)));
     	
-    	verify(spyAccount,times(2)).updateBalance();
+    	verify(spyAccount,atLeast(1)).updateBalance();
     	verify(db).mergeData(dataList);    	
     }
     
@@ -942,15 +941,16 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     }
     
     @Test
+    @Tag("Active")
     @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 3)
-    public void CheckMergeMonthTRansactionsChanged() {
+    public void CheckMergeMonthTransactionsChanged() {
     	type(KeyCode.F5);
     	    	
     	List<Company> locCompanies = new ArrayList<Company>(List.of(new Company(companies.get(0))));
     	MonthAccountTurnover month=locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0);
     	
     	month.getTransactions().get(1).setReceipts(Money.of(12345.56, "EUR"));
-    	
+    	    	
     	doubleClickOn(getCell(1,1)).write("23").type(KeyCode.ENTER);
     	doubleClickOn(getCell(1,2)).write("13").type(KeyCode.ENTER);
     	

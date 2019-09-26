@@ -66,7 +66,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 
-@Tag("Active")
+
 @Tag("GUI")
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.WARN)
@@ -261,6 +261,21 @@ class VatTypeManagerTest extends MockedApplicationTest{
     	
     	verify(db).manageVatTypes(eq(tableView.getItems()),any());
     	assertFalse(tableView.getScene().getWindow().isShowing());
+    }
+    
+    @Test
+    @Tag("Active")
+    @CreateVatTypes(value = 3, manyDefault=true)
+    public void checkChangeOnlyVisible() {
+    	sleep(3000);
+    	Node t=lookup("#persistButton").query();
+    	assertTrue(t instanceof Button);
+    	assertTrue(((Button) t).isDisabled());
+    	
+    	clickOn(getCell(3,2));
+    	
+    	assertTrue(vatTypes.get(2).isDisabledVatType());
+    	assertFalse(((Button) t).isDisabled());    	
     }
     
     @Test

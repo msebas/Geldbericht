@@ -24,12 +24,16 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
+import org.apache.log4j.Appender;
+import org.apache.log4j.Logger;
+
 /**
  * JavaFX App
  */
 public class App extends Application {
 
     private static Scene scene;
+    public static Logger logger;
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -48,8 +52,22 @@ public class App extends Application {
         fxmlLoader.setControllerFactory(new ControllerFactory());
         return fxmlLoader.load();
     }
+    
+    @Override
+    public void init() throws Exception {
+      Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+        	logger.error("Exception in thread \"" + t.getName() + "\"", e);
+        }
+      });
+      super.init();
+    }
 
     public static void main(String[] args) {
+    	if(null != System.getProperty("GELDBERICHT_LOGFILE"))
+    		System.setProperty("GELDBERICHT_LOGFILE", "geldbericht.log");
+    	logger=Logger.getLogger(App.class);
         launch();
     }
 

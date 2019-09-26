@@ -17,6 +17,7 @@
 package org.mcservice.javafx.control.table;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
+import org.javamoney.moneta.Money;
 import org.mcservice.geldbericht.data.VatType;
 import org.mcservice.geldbericht.data.converters.MonetaryAmountConverter;
 import org.mcservice.geldbericht.data.converters.VatTypeStringConverter;
@@ -284,6 +286,110 @@ public class TestTypes {
 		public void setFirstObject(Object firstObject) {
 			this.firstObject = firstObject;
 		}
+	}
+	
+	public static class Test1T1S1S1I1L1M1B1B{
+		
+		@TableViewColumn
+		private Test2O var1;
+		@TableViewColumn
+		private String var2;
+		@TableViewColumn
+		private Short var3;
+		@TableViewColumn
+		private short var4;
+		@TableViewColumn
+		private Integer var5;
+		@TableViewColumn
+		private int var6;
+		@TableViewColumn(editable=false)
+		private Long var7;
+		@TableViewColumn
+		private long var8;
+		@TableViewColumn
+		private Money var9;
+		@TableViewColumn
+		private BigDecimal var10;
+		@TableViewColumn(editable=false)
+		private Boolean var11;
+		@TableViewColumn(editable=true)
+		private boolean var12;
+		
+		public Test2O getVar1() {
+			return var1;
+		}
+		public String getVar2() {
+			return var2;
+		}
+		public Short getVar3() {
+			return var3;
+		}
+		public short getVar4() {
+			return var4;
+		}
+		public Integer getVar5() {
+			return var5;
+		}
+		public int getVar6() {
+			return var6;
+		}
+		public Long getVar7() {
+			return var7;
+		}
+		public long getVar8() {
+			return var8;
+		}
+		public Money getVar9() {
+			return var9;
+		}
+		public BigDecimal getVar10() {
+			return var10;
+		}
+		public Boolean getVar11() {
+			return var11;
+		}
+		public boolean isVar12() {
+			return var12;
+		}
+		public void setVar1(Test2O var1) {
+			this.var1 = var1;
+		}
+		public void setVar2(String var2) {
+			this.var2 = var2;
+		}
+		public void setVar3(Short var3) {
+			this.var3 = var3;
+		}
+		public void setVar4(short var4) {
+			this.var4 = var4;
+		}
+		public void setVar5(Integer var5) {
+			this.var5 = var5;
+		}
+		public void setVar6(int var6) {
+			this.var6 = var6;
+		}
+		public void setVar7(Long var7) {
+			this.var7 = var7;
+		}
+		public void setVar8(long var8) {
+			this.var8 = var8;
+		}
+		public void setVar9(Money var9) {
+			this.var9 = var9;
+		}
+		public void setVar10(BigDecimal var10) {
+			this.var10 = var10;
+		}
+		public void setVar11(Boolean var11) {
+			this.var11 = var11;
+		}
+		public void setVar12(boolean var12) {
+			this.var12 = var12;
+		}
+		
+		
+		
 	}
 	
 	public static class Test2I1S1M1D1V{

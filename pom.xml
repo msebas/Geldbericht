@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.mcservice</groupId>
 	<artifactId>Geldbericht</artifactId>
-	<version>0.0.0.2</version>
+	<version>0.0.0.4</version>
 	<packaging>jar</packaging>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -244,8 +244,8 @@
 				<artifactId>launch4j-maven-plugin</artifactId>
 				<executions>
 					<!-- execution> <id>l4j-clui</id> <phase>package</phase> <goals> <goal>launch4j</goal> 
-						</goals> <configuration> <headerType>console</headerType> <outfile>target/${artifactId}-${version}.exe</outfile> 
-						<jar>${project.build.directory}/${artifactId}-${version}.jar</jar> <errTitle>encc</errTitle> 
+						</goals> <configuration> <headerType>console</headerType> <outfile>target/${project.artifactId}-${project.version}.exe</outfile> 
+						<jar>${project.build.directory}/${project.artifactId}-${project.version}.jar</jar> <errTitle>encc</errTitle> 
 						<classPath> <mainClass>com.akathist.encc.Clui</mainClass> <addDependencies>false</addDependencies> 
 						<preCp>anything</preCp> </classPath> <jre> <minVersion>11</minVersion> </jre> 
 						<versionInfo> <fileVersion>1.2.3.4</fileVersion> <txtFileVersion>txt file 
@@ -264,8 +264,8 @@
 							<dontWrapJar>true</dontWrapJar>
 							<chdir>.</chdir>
 							<headerType>gui</headerType>
-							<outfile>target/${artifactId}-${version}.exe</outfile>
-							<jar>${artifactId}-${version}.jar</jar>
+							<outfile>target/${project.artifactId}-${project.version}.exe</outfile>
+							<jar>${project.artifactId}-${project.version}.jar</jar>
 							<errTitle>Geldbericht</errTitle>
 							<classPath>
 								<mainClass>org.mcservice.geldbericht.FatJarLauncher</mainClass>
@@ -281,11 +281,11 @@
 								<runtimeBits>64/32</runtimeBits>
 							</jre>
 							<versionInfo>
-								<fileVersion>${version}</fileVersion>
+								<fileVersion>${project.version}</fileVersion>
 								<txtFileVersion>Alpha</txtFileVersion>
 								<fileDescription>Geldbericht</fileDescription>
 								<copyright>GNU General Public License</copyright>
-								<productVersion>${version}</productVersion>
+								<productVersion>${project.version}</productVersion>
 								<txtProductVersion>Alpha</txtProductVersion>
 								<productName>Geldbericht</productName>
 								<internalName>Geldbericht</internalName>

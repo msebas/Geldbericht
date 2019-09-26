@@ -27,8 +27,9 @@ import javax.money.MonetaryAmount;
 
 import org.javamoney.moneta.Money;
 import org.mcservice.javafx.AnnotationBasedFormatter;
+import org.mcservice.javafx.control.table.ItemUpdateProvider;
 import org.mcservice.javafx.control.table.MemberVariable;
-import org.mcservice.javafx.control.table.ReflectedField;
+import org.mcservice.javafx.control.table.TableBooleanPropertyFactory;
 import org.mcservice.javafx.control.table.TableViewColumn;
 import org.mcservice.javafx.control.table.TableViewColumnOrder;
 import org.mcservice.javafx.control.table.ValidatingTextFieldTableCell;
@@ -36,17 +37,13 @@ import org.mcservice.javafx.control.table.ValidatingTextFieldTableCell;
 //import com.sun.javafx.property.PropertyReference;
 
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ObservableBooleanValue;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.util.Callback;
 
 public class DefaultReflectionColumnFactory<S> implements ReflectionColumnFactory<S>{
-	
+
 	protected static final List<Class<?>>implementedFields = Collections.unmodifiableList(
 			Arrays.asList(String.class,Short.class,Short.TYPE,Integer.class,Integer.TYPE,
 					Long.class,Long.TYPE,MonetaryAmount.class, Money.class,
@@ -59,7 +56,7 @@ public class DefaultReflectionColumnFactory<S> implements ReflectionColumnFactor
 	}
 	
 	@Override
-	public MemberVariable<S,?> addTableColumn(Field field, Class<S> referenceClass, TableView<S> table, 
+	public ItemUpdateProvider addTableColumn(Field field, Class<S> referenceClass, TableView<S> table, 
 			ObjectProperty<String> memoryKeyCode){
 		this.table=table;
 		this.referenceClass=referenceClass;
@@ -68,33 +65,27 @@ public class DefaultReflectionColumnFactory<S> implements ReflectionColumnFactor
 			throw new RuntimeException(String.format("Type %s not yet implemented.",field.getType().getName()));
 		}
 		
-		MemberVariable<S, ?> result=null;
+		ItemUpdateProvider result=null;
 		
 		if(field.getType()==String.class) {
 			result=this.<String>createAnnotationBasedValidatingTextField(field,"",false);
-		}
-		else if(field.getType()==Short.class || field.getType()==Short.TYPE) {
+		} else if(field.getType()==Short.class || field.getType()==Short.TYPE) {
 			result=this.<Short>createAnnotationBasedValidatingTextField(field,(short) 0,false);
-		}
-		else if(field.getType()==Integer.class || field.getType()==Integer.TYPE) {
+		} else if(field.getType()==Integer.class || field.getType()==Integer.TYPE) {
 			result=this.<Integer>createAnnotationBasedValidatingTextField(field,(int) 0,false);
-		}
-		else if(field.getType()==Long.class || field.getType()==Long.TYPE) {
+		} else if(field.getType()==Long.class || field.getType()==Long.TYPE) {
 			result=this.<Long>createAnnotationBasedValidatingTextField(field,(long) 0,false);
-		}
-		else if(field.getType()==MonetaryAmount.class || field.getType()==Money.class) {
+		} else if(field.getType()==MonetaryAmount.class || field.getType()==Money.class) {
 			result=this.<Money>createAnnotationBasedValidatingTextField(field,Money.of(0,"EUR"),true);
-		}	
-		else if(field.getType()==BigDecimal.class) {
+		} else if(field.getType()==BigDecimal.class) {
 			result=this.<BigDecimal>createAnnotationBasedValidatingTextField(field,new BigDecimal(0),true);
-		}
-		else if(field.getType()==Boolean.class || field.getType()==Boolean.TYPE) {
-			createCheckboxField(field);
+		} else if(field.getType()==Boolean.class || field.getType()==Boolean.TYPE) {
+			result=createCheckboxField(field);
 		}
 		return result;
 	}
 
-	private void createCheckboxField(Field field) {
+	private TableBooleanPropertyFactory<S> createCheckboxField(Field field) {
 		//Sets a simple checkbox for booleans, this might ignore more complicated checks and so on...
 		TableColumn<S,Boolean> actColumn = new TableColumn<S,Boolean>(getColumnName(field));
 						
@@ -104,39 +95,15 @@ public class DefaultReflectionColumnFactory<S> implements ReflectionColumnFactor
 		//actColumn.setCellFactory(CheckBoxTableCell.forTableColumn(actColumn));
 		
 		//FIXME There should be a more elegant solution.
-		actColumn.setCellFactory( CheckBoxTableCell.forTableColumn(new Callback<Integer, ObservableValue<Boolean>>() {
-			
-			class InternalBooleanProperty<K> extends SimpleBooleanProperty {
-				private final K item;
-				
-				public InternalBooleanProperty(K referenceItem){
-					this.item=referenceItem;
-					this.set(propertyMethod.get(item));
-				}
-				
-			    /**
-			     * {@inheritDoc}
-			     */
-			    @Override
-			    public void set(boolean newValue) {
-			    	super.set(newValue);
-			    	propertyMethod.set(item, newValue);
-			    }
-			}
-			
-			private TableView<S> localTable=table;
-			private ReflectedField<Boolean> propertyMethod=new ReflectedField<Boolean>(field,referenceClass);
-								
-			@Override
-			public ObservableValue<Boolean> call(Integer param) {
-				ObservableBooleanValue newObs=new InternalBooleanProperty<S>(localTable.getItems().get(param));
-				return newObs;
-			}
-		}));
+		TableBooleanPropertyFactory<S> factory = new TableBooleanPropertyFactory<S>(field,table,referenceClass);
+		
+		actColumn.setCellFactory( CheckBoxTableCell.forTableColumn(factory));
 		
 		table.getColumns().add(actColumn);
 		//FIXME Add correct keyboard behavior.
 		//FIXME Add correct treating of editable
+		
+		return factory;
 	}
 	
 	private <K> MemberVariable<S, ?> createAnnotationBasedValidatingTextField(

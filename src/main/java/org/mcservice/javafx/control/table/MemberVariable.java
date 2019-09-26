@@ -30,7 +30,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableColumn.CellEditEvent;
 
 
-public class MemberVariable<S,T> implements EventHandler<CellEditEvent<S,T>>{
+public class MemberVariable<S,T> implements EventHandler<CellEditEvent<S,T>>, ItemUpdateProvider{
 	private ReflectedField<T> field;
 	private TableColumn<S,T> tableColumn = null;
 	private ObjectProperty<? extends Collection<S>> itemsWithErrors=null;

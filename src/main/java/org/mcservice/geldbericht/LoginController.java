@@ -32,6 +32,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
@@ -115,12 +116,14 @@ public class LoginController {
         uiUpdateThread.start();
         
         passwordInputField.addEventHandler(KeyEvent.KEY_RELEASED, event -> {
-        	try {
-				login();
-				event.consume();
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
+        	if(event.getCode()==KeyCode.ENTER) {
+	        	try {
+					login();
+					event.consume();
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+        	}
         });
 	}
 
@@ -168,7 +171,6 @@ public class LoginController {
 			// string pool. Implement a secure password input field using only char[] and 
 			// make a pull request
 		}
-
 	}
 
 	protected boolean waitForDbConnection() throws InterruptedException {

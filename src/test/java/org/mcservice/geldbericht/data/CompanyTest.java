@@ -72,7 +72,7 @@ class CompanyTest {
     	Company tstObj1=new Company(null, ZonedDateTime.now(), null,null,null,null);
     	Company tstObj2=new Company(null, ZonedDateTime.now().minusMinutes(4), null,null,null,null);
     	//Companys should be equals even if there last reported change is different
-    	assertTrue(tstObj1.equals(tstObj2));
+    	assertTrue(tstObj1.equals(tstObj2,false));
     	//but there hash codes should not match
     	assertEquals(tstObj1.hashCode(),tstObj2.hashCode());
     	
@@ -90,15 +90,15 @@ class CompanyTest {
     	setter.invoke(tstObj1, val1);
     	assertTrue(val1.equals(getter.invoke(tstObj1)));
     	assertEquals(act,tstObj1.getLastChange());
-    	assertFalse(tstObj2.equals(tstObj1));
-    	assertFalse(tstObj1.equals(tstObj2));
+    	assertFalse(tstObj2.equals(tstObj1,false));
+    	assertFalse(tstObj1.equals(tstObj2,false));
     	setter.invoke(tstObj2, val1);
-    	assertTrue(tstObj2.equals(tstObj1));
-    	assertTrue(tstObj1.equals(tstObj2));
+    	assertTrue(tstObj2.equals(tstObj1,false));
+    	assertTrue(tstObj1.equals(tstObj2,false));
     	assertEquals(tstObj1.hashCode(),tstObj2.hashCode());
     	setter.invoke(tstObj1, val2);
-    	assertFalse(tstObj2.equals(tstObj1));
-    	assertFalse(tstObj1.equals(tstObj2));
+    	assertFalse(tstObj2.equals(tstObj1,false));
+    	assertFalse(tstObj1.equals(tstObj2,false));
     }
     
     @SuppressWarnings("unlikely-arg-type")

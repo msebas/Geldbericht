@@ -534,13 +534,9 @@ public class TransactionInputPaneController {
 	
 	@FXML
     protected void persistChanges() throws IOException {
-		ArrayList<List<? extends AbstractDataObject>> dataList = new ArrayList<List<? extends AbstractDataObject>>();
+		ArrayList<Account> dataList = new ArrayList<Account>();
 		
-		for(Entry<Account, ObservableList<MonthAccountTurnover>> act : turnoverList.entrySet()) {
-			act.getKey().updateBalance();
-			dataList.add(act.getValue());
-		}
-		dataList.add(new ArrayList<Account>(turnoverList.keySet()));
+		dataList.addAll(turnoverList.keySet());
 		db.mergeData(dataList);
 		db.deleteData(deletedItems);
 		lastUpdate=ZonedDateTime.now();
@@ -612,6 +608,7 @@ public class TransactionInputPaneController {
 						}
 					}
 					if(null!=tmpAccount) {
+						db.loadMonthsToAccount(tmpAccount);
 						accountSelector.setValue(tmpAccount);
 						accountChanged();
 						if(null!=locActTurnover) {
@@ -683,26 +680,24 @@ public class TransactionInputPaneController {
 			if(newMonthList.get(i).isInMonth(oldMonthList.get(j).getMonth())) {
 				if (oldMonthList.get(j).isTransactionsLoaded()) {
 					oldMonthList.get(j).updateBalance();
-					if(oldMonthList.get(j).getLastChange().isAfter(newMonthList.get(i).getLastChange())) {
-						db.loadTransactionsToMonth(newMonthList.get(i));
-						for(Transaction actTransaction : oldMonthList.get(j).getTransactions()) {
-							if(actTransaction.getUid()==null) {
-								newMonthList.get(i).appendTranaction(actTransaction);
-							} else {
-								//TODO Changes on transaction field level are dropped silently by newer write operations
-								//     This could be fixed by adding a field level time stamp for transaction changes, but
-								//     this increases the complexity of the actual code by adding a time-stamp to any field
-								//     of the data objects.
-								List<Transaction> newTransactionList = newMonthList.get(i).getTransactions();
-								for(int k=0;k<newTransactionList.size();++k) {
-									if(newTransactionList.get(k).getUid()==actTransaction.getUid()) {
-										if(actTransaction.getLastChange().isAfter(newTransactionList.get(k).getLastChange())) {
-											newTransactionList.set(k,actTransaction);
-										}										
-										break;
-									}
-								}								
-							}
+					db.loadTransactionsToMonth(newMonthList.get(i));
+					for(Transaction actTransaction : oldMonthList.get(j).getTransactions()) {
+						if(actTransaction.getUid()==null) {
+							newMonthList.get(i).appendTranaction(actTransaction);
+						} else {
+							//TODO Changes on transaction field level are dropped silently by newer write operations
+							//     This could be fixed by adding a field level time stamp for transaction changes, but
+							//     this increases the complexity of the actual code by adding a time-stamp to any field
+							//     of the data objects.
+							List<Transaction> newTransactionList = newMonthList.get(i).getTransactions();
+							for(int k=0;k<newTransactionList.size();++k) {
+								if(newTransactionList.get(k).getUid()==actTransaction.getUid()) {
+									if(actTransaction.getLastChange().isAfter(newTransactionList.get(k).getLastChange())) {
+										newTransactionList.set(k,actTransaction);
+									}										
+									break;
+								}
+							}						
 						}
 					}
 				}

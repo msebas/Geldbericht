@@ -18,6 +18,7 @@ package org.mcservice.javafx;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -34,6 +35,7 @@ import org.mcservice.javafx.control.table.TableViewFinalIfNotNull;
 import javafx.scene.control.TextFormatter;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
+import javafx.util.converter.BigDecimalStringConverter;
 import javafx.util.converter.DefaultStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 import javafx.util.converter.LongStringConverter;
@@ -101,7 +103,9 @@ public class AnnotationBasedFormatter<S,V> extends TextFormatter<V> {
 			return (StringConverter<V>) new LongStringConverter();
 		} else if(field.getType()==MonetaryAmount.class || field.getType()==Money.class) {
 			return (StringConverter<V>) new DefaultTableMonetaryAmountConverter();
-		}			
+		} else if(field.getType()==BigDecimal.class) {
+			return (StringConverter<V>) new BigDecimalStringConverter();
+		}		
 		throw new RuntimeException("No converter for this class yet implemented.");
 	}
 	

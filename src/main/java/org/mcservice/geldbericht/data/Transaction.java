@@ -173,7 +173,7 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 		this.accountingCostCenter = accountingCostCenter;
 		this.voucher = voucher;
 		this.transactionDate = transactionDate;
-		this.vat = new VatType(vat);
+		this.vat = vat;
 		this.inventoryNumber = inventoryNumber;
 		//this.amortisationType = amortisationType;
 		//this.amortisationValue = amortisationValue;

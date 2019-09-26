@@ -41,6 +41,7 @@ public class ReflectionTableView<S> extends TableView<S> {
 	private ObjectProperty<String> memoryKeyCode = new SimpleObjectProperty<String>(this,"lastInputMemory");
 	private ObjectProperty<Collection<S>> itemsWithErrors = new SimpleObjectProperty<Collection<S>>(this, "itemsWithErrors");
 	private List<MemberVariable<S,?>> members = new ArrayList<MemberVariable<S,?>>();
+	private List<ItemUpdateProvider> updateProviders = new ArrayList<ItemUpdateProvider>();
 	private Map<Field,ObservableList<Object>> columnInternalLists = new HashMap<Field,ObservableList<Object>>();
 
 	public ReflectionTableView(Class<S> tableClass) {
@@ -76,9 +77,15 @@ public class ReflectionTableView<S> extends TableView<S> {
 							+ " %s.",field.getType().getName(),factory.getClass().getName()));
 				}
 				
-				MemberVariable<S, ?> member=factory.addTableColumn(field, referenceClass, this, memoryKeyCode);
-				if(member!=null)
-					members.add(member);
+				ItemUpdateProvider listenerStore=factory.addTableColumn(field, referenceClass, this, memoryKeyCode);
+				if(listenerStore!=null) {
+					if(listenerStore instanceof MemberVariable) {
+						@SuppressWarnings("unchecked")
+						MemberVariable<S, ?> member = (MemberVariable<S, ?>) listenerStore;
+						members.add(member);
+					}
+					updateProviders.add(listenerStore);
+				}
 				
 				if(factory instanceof ColumnFactoryWithInternalList) {
 					columnInternalLists.put(field,((ColumnFactoryWithInternalList) factory).getList());
@@ -132,12 +139,12 @@ public class ReflectionTableView<S> extends TableView<S> {
     }
     
     public void addEditCommitListener(ItemUpdateListener listener) {
-    	for(MemberVariable<S, ?> m:this.members)
+    	for(ItemUpdateProvider m:this.updateProviders)
     		m.addListener(listener);
 	}
 
     public void removeEditCommitListener(ItemUpdateListener listener) {
-    	for(MemberVariable<S, ?> m:this.members)
+    	for(ItemUpdateProvider m:this.updateProviders)
     		m.removeListener(listener);
 	}
 

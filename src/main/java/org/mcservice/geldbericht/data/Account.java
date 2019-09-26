@@ -177,7 +177,7 @@ public class Account extends AbstractDataObject{
 	 */
 	public void setCompany(Company company) {
 		if(this.company==company ||
-				( this.company!=null && this.company.equals(company) )
+				( this.company!=null && this.company.equals(company,false) )
 				)
 			return;
 		this.company = company; 
@@ -391,13 +391,12 @@ public class Account extends AbstractDataObject{
 			Iterator<MonthAccountTurnover> otherIterator = other.balanceMonths.iterator();
 			for (Iterator<MonthAccountTurnover> iterator = balanceMonths.iterator(); iterator.hasNext();) {
 				iterator.next().equals(otherIterator.next(), false);
-				
 			}
 		}
 		if (company == null) {
 			if (other.company != null)
 				return false;
-		} else if (rec && !company.equals(other.company))
+		} else if (rec && !company.equals(other.company,false))
 			return false;
 		if (initialBalance == null) {
 			if (other.initialBalance != null)

@@ -204,6 +204,23 @@ public class Company extends AbstractDataObject{
 		if (uid!=other.uid) {
 			return false;
 		}
+		if (lastChange.equals(other.lastChange)) {
+			return false;
+		}
+		return true;			
+	}
+	
+	public boolean equals(Object obj, boolean rec) {
+		if (this == obj)
+			return true;
+		if(obj==null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Company other = (Company) obj;
+		if (uid!=other.uid) {
+			return false;
+		}
 		if (accounts == null || other.accounts == null) {
 			if(accounts != other.accounts)
 				return false;
@@ -216,7 +233,6 @@ public class Company extends AbstractDataObject{
 			Iterator<Account> otherIterator = other.accounts.iterator();
 			for (Iterator<Account> iterator = accounts.iterator(); iterator.hasNext();) {
 				iterator.next().equals(otherIterator.next(), false);
-				
 			}
 		}
 		if (companyBookkeepingAppointment == null) {

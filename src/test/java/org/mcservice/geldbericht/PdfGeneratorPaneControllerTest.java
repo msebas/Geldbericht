@@ -317,7 +317,7 @@ class PdfGeneratorPaneControllerTest extends MockedApplicationTest{
     	assertFalse(companies.get(0)==companySelector.getValue());
     	assertFalse(companies.get(0).getAccounts().get(0)==accountSelector.getValue());
     	assertFalse(companies.get(0).getAccounts().get(0).getBalanceMonths().get(0)==field.get(controller));
-    	assertEquals(companies.get(0),companySelector.getValue());
+    	assertTrue(companies.get(0).equals(companySelector.getValue(),true));
     	assertEquals(companies.get(0).getAccounts().get(0),accountSelector.getValue());
     	assertEquals(companies.get(0).getAccounts().get(0).getBalanceMonths().get(0).getMonth(),monthSelector.getValue());
     	assertEquals(companies.get(0).getAccounts().get(0).getBalanceMonths().get(0),field.get(controller));

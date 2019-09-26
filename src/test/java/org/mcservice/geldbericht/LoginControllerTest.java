@@ -20,6 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
@@ -27,6 +29,7 @@ import java.net.URL;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
@@ -120,10 +123,14 @@ class LoginControllerTest extends MockedApplicationTest{
 	
 	protected DbFactory factory;
 	protected LoginController controller;
+	protected ByteArrayOutputStream stdOutMock;
 	
 		
 	@BeforeEach 
 	public void initMock(TestInfo testInfo) throws Exception {
+		stdOutMock = new ByteArrayOutputStream();
+		System.setOut(new PrintStream(stdOutMock));
+		
 		factory=Mockito.spy(new DbFactory());
 		boolean returnDb=true;
 		
@@ -132,7 +139,7 @@ class LoginControllerTest extends MockedApplicationTest{
 			factory.wait=annotations[0].waitMockDBCreation();
 			returnDb=annotations[0].returnDatabase();
 		}
-				
+		
 		if(returnDb) {
 			URL data=this.getClass().getClassLoader().getResource("connection.cfg.xml");
 	    	Map<String,String> newenv=new TreeMap<String,String>(System.getenv());
@@ -152,11 +159,19 @@ class LoginControllerTest extends MockedApplicationTest{
 			for(int i=0;i<createUsers[0].value();++i) {
 				User user=new User();
 				user.setUserName("UserName");
-				System.out.println(String.valueOf(new char[] {'c', 'o', 'r', 'r', 'e', 'c', 't', ' ',Integer.toString(i).charAt(0)}));
 				user.setPassword(new char[] {'c', 'o', 'r', 'r', 'e', 'c', 't', ' ',Integer.toString(i).charAt(0)});
 				db.persistUser(user);
 			}
 			Mockito.reset(db);
+		}
+	}
+	
+	@AfterEach
+	public void checkNoPasswordInLogs() {
+		//Some people might like to write passwords to logs for debug purpose
+		//This should verify that all of those writes are removed before all test are valid
+		for(int i=0;i<50;++i) {
+			assertFalse(stdOutMock.toString().contains(String.format("correct %d",i)));
 		}
 	}
     
@@ -318,13 +333,9 @@ class LoginControllerTest extends MockedApplicationTest{
     @CreateUsers(1)
     @BehaviourMock(returnDatabase = true,waitMockDBCreation = false)
     public void checkLoginOK1() {
-		Platform.runLater(()-> {
-			usernameInputField.setText("UserName");
-			passwordInputField.requestFocus();
-			passwordInputField.selectRange(0, 0);
-			passwordInputField.setText("correct 0");
-		});
-		sleep(100);
+    	//One test has to manually insert anything to check if the input behavior works correctly
+		clickOn(usernameInputField).write("UserName");
+		type(KeyCode.TAB).write("correct 0");		
 		type(KeyCode.ENTER);
 		//To fail the test fast if it fails
 		assertFalse(progressbarLabel.getText().equals("Passwort oder Benutzname falsch."));

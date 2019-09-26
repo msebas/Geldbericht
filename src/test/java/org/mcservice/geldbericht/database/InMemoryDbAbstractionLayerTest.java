@@ -24,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -135,7 +136,7 @@ class InMemoryDbAbstractionLayerTest {
 		Company persCompany=db.getCompanies().get(0);
 		
 		db.loadAccountsToCompany(persCompany);
-		assertEquals(company,persCompany);
+		assertTrue(company.equals(persCompany,true));
 	}
 
 	@Test
@@ -238,13 +239,13 @@ class InMemoryDbAbstractionLayerTest {
 	@Test
 	public void testManageCompany() throws Exception {
 		ZonedDateTime act = ZonedDateTime.now();
-		Company Company=new Company(null,act, null,null, null, null);
+		Company company=new Company(null,act, null,null, null, null);
 		
 		DbAbstractionLayer db = new DbAbstractionLayer();
-		Company persCompanys=db.manageCompanies(new ArrayList<Company>(List.of(Company)),act).get(0);
-		Company=new Company(1L,act, null,null, null, null);
+		Company persCompanys=db.manageCompanies(new ArrayList<Company>(List.of(company)),act).get(0);
+		company=new Company(1L,act, null,null, null, null);
 		
-		assertEquals(Company,persCompanys);
+		assertTrue(company.equals(persCompanys,true));
 	}
 	
 	@Test
@@ -380,7 +381,9 @@ class InMemoryDbAbstractionLayerTest {
 				new User(6L,ZonedDateTime.now(),"name3",null)));
 		
 		DbAbstractionLayer db = new DbAbstractionLayer();
-		db.mergeData(List.of(list1,list2));
+		LinkedList<AbstractDataObject> linkedList=new LinkedList<AbstractDataObject>();
+		linkedList.addAll(list1);linkedList.addAll(list2);
+		db.mergeData(linkedList);
 		list1=db.getCompanies();
 		list2=db.getUsers();
 		
@@ -399,6 +402,7 @@ class InMemoryDbAbstractionLayerTest {
 		assertEquals(2,companies.size());
 	}
 
+	@Tag("Active")
 	@Test
 	public void testMergeData() throws Exception {
 		List<Company> list1=new ArrayList<Company>(List.of(
@@ -412,7 +416,9 @@ class InMemoryDbAbstractionLayerTest {
 				new User(6L,ZonedDateTime.now(),"name3",null)));
 		
 		DbAbstractionLayer db = new DbAbstractionLayer();
-		db.mergeData(List.of(list1,list2));
+		LinkedList<AbstractDataObject> linkedList=new LinkedList<AbstractDataObject>();
+		linkedList.addAll(list1);linkedList.addAll(list2);
+		db.mergeData(linkedList);
 		
 		
 		assertEquals(3,db.getUsers().size());
@@ -422,10 +428,11 @@ class InMemoryDbAbstractionLayerTest {
 		for (Company company : companies) {
 			db.loadAccountsToCompany(company);
 		}
-		assertTrue(list1.containsAll(companies));
-	}	
+		for (int i = 0; i < 3; i++) {
+			assertTrue(list1.get(i).equals(companies.get(i),true));
+		}
+	}
 
-	@Tag("Active")
 	@Test
 	public void testDeleteMonthAccountTurnoverNull() throws Exception {
 		Account accountMock=Mockito.mock(Account.class);
@@ -448,7 +455,6 @@ class InMemoryDbAbstractionLayerTest {
 		verify(listMock).remove(month);
 	}
 
-	@Tag("Active")
 	@Test
 	public void testDeleteMonthAccountTurnover() throws Exception {
 		Money m0=Money.of(0, "EUR");
@@ -465,7 +471,7 @@ class InMemoryDbAbstractionLayerTest {
 		
 		db.updateAccount(rawAccount);
 		rawAccount.addBalanceMonth(month);
-		db.mergeData(List.of(month.getTransactions()));
+		db.mergeData(month.getTransactions());
 		month=db.updateMonthAccountTurnover(month);
 		
 		assertEquals(Money.of(3, "EUR"),rawAccount.getBalance());

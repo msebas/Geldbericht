@@ -329,9 +329,7 @@ public class DbAbstractionLayer {
 		Session session=factory.getCurrentSession();
 		org.hibernate.Transaction transaction=session.beginTransaction();
 		try {
-			for (AbstractDataObject abstractDataObject : dataList) {
-				session.delete(abstractDataObject);
-			}
+			deleteData(dataList,session);
 			
 			transaction.commit();
 			transaction=null;
@@ -343,15 +341,29 @@ public class DbAbstractionLayer {
 		}
 	}
 	
-	public List<List<? extends AbstractDataObject>> mergeData(List<List<? extends AbstractDataObject>> dataList) {
+	public void deleteData(Collection<? extends AbstractDataObject> dataList, Session session) {
+		for(AbstractDataObject obj : dataList) {
+			if(obj instanceof Company) {
+				internalMergeData(((Company) obj).getAccounts(), session);
+			} else if(obj instanceof Account) {
+				internalMergeData(((Account) obj).getBalanceMonths(), session);
+			} else if(obj instanceof MonthAccountTurnover) {
+				internalMergeData(((MonthAccountTurnover) obj).getTransactions(), session);
+			}
+			if(null != obj.getUid()) {
+				session.delete(obj);
+			}
+		}
+	}
+	
+	public List<? extends AbstractDataObject> mergeData(List<? extends AbstractDataObject> dataList) {
 		Session session=factory.getCurrentSession();
 		org.hibernate.Transaction transaction=session.beginTransaction();
 		try {
 			//Here we have to persist first anything to that things persisted later hold a reference to.
 			//The simplest approach is to walk down the relation graph, but to do it this was is quite slow...
-			mergeByClass(dataList, session, Transaction.class);
-			mergeByClass(dataList, session, MonthAccountTurnover.class);
-			mergeByClass(dataList, session, null);
+			
+			internalMergeData(dataList, session);
 			
 			transaction.commit();
 			transaction=null;
@@ -364,23 +376,30 @@ public class DbAbstractionLayer {
 		return dataList;
 	}
 	
-	@SuppressWarnings("unchecked")
-	protected void mergeByClass(List<List<? extends AbstractDataObject>> dataList, Session session, Class<?> type) {
-		//This has to be unchecked and use rawtypes to allow replacing the objects by the persisted ones
-		//The correct type is guaranteed by using the runtime classes of the instances to create the references 
-		for(@SuppressWarnings("rawtypes") List data:dataList) {
-			for (int i=0;i<data.size();++i) {
-				if(type == null || type.isInstance(data.get(i))) {
-					if(((AbstractDataObject) data.get(i)).getUid()==null) {
-						Long uid=(Long) session.save(data.get(i));
-						data.set(i,session.byId(data.get(i).getClass()).getReference(uid));
-					} else {
-						session.merge(data.get(i));
-					}
-				}
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	protected void internalMergeData(List<? extends AbstractDataObject> dataList, Session session) {
+		for(int i=0;i<dataList.size();++i) {
+			AbstractDataObject obj=dataList.get(i);
+			if(obj instanceof Company) {
+				internalMergeData(((Company) obj).getAccounts(), session);
+			} else if(obj instanceof Account) {
+				internalMergeData(((Account) obj).getBalanceMonths(), session);
+			} else if(obj instanceof MonthAccountTurnover) {
+				internalMergeData(((MonthAccountTurnover) obj).getTransactions(), session);
+			}
+			if(null==obj.getUid()) {
+				Long uid=(Long) session.save(obj);
+				//This rawtype solution is secure, because the returned type is guaranteedeed to 
+				//be the type of the original object by hibernate. Otherwise this would be a
+				//typical casting problem...
+				List l=dataList;
+				l.set(i,(Object) session.byId(dataList.get(i).getClass()).getReference(uid));
+			} else {
+				session.merge(obj);
 			}
 		}
 	}
+	
 
 	public void remove(MonthAccountTurnover monthAccountTurnover) {
 		if(null==monthAccountTurnover.getUid()) {
