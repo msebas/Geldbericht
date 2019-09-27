@@ -344,11 +344,14 @@ public class DbAbstractionLayer {
 	public void deleteData(Collection<? extends AbstractDataObject> dataList, Session session) {
 		for(AbstractDataObject obj : dataList) {
 			if(obj instanceof Company) {
-				internalMergeData(((Company) obj).getAccounts(), session);
+				deleteData(((Company) obj).getAccounts(), session);
+				((Company) obj).getAccounts().clear();
 			} else if(obj instanceof Account) {
-				internalMergeData(((Account) obj).getBalanceMonths(), session);
+				deleteData(((Account) obj).getBalanceMonths(), session);
+				((Account) obj).getBalanceMonths().clear();
 			} else if(obj instanceof MonthAccountTurnover) {
-				internalMergeData(((MonthAccountTurnover) obj).getTransactions(), session);
+				deleteData(((MonthAccountTurnover) obj).getTransactions(), session);
+				((MonthAccountTurnover) obj).getTransactions().clear();
 			}
 			if(null != obj.getUid()) {
 				session.delete(obj);
