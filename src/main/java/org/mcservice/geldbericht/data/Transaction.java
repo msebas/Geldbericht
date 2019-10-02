@@ -415,7 +415,15 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 
 	@Override
 	public int compareTo(Transaction o) {
-		return number-o.number;
+		if(transactionDate!=o.transactionDate) {
+			if(null==transactionDate)
+				return -1;
+			if(null==o.transactionDate)
+				return 1;
+		}
+		if(transactionDate==o.transactionDate || transactionDate.equals(o.transactionDate))
+			return number-o.number;
+		return transactionDate.compareTo(o.transactionDate);
 	}
 
 	@Override

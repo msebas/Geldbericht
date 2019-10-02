@@ -277,6 +277,9 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 				initialAssets.getFactory().setCurrency(initialAssets.getCurrency());
 		if(transactionsLoaded) {
 			transactions.sort(null);
+			for (int i=0;i<transactions.size();++i) {
+				transactions.get(i).setNumber(i+1);
+			}
 			
 			MonetaryAmount nBalanceAssets = factory.setNumber(0).create();
 			MonetaryAmount nBalanceDebt = factory.setNumber(0).create();

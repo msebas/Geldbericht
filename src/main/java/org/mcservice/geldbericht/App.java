@@ -65,7 +65,7 @@ public class App extends Application {
     }
 
     public static void main(String[] args) {
-    	if(null != System.getProperty("GELDBERICHT_LOGFILE"))
+    	if(null == System.getProperty("GELDBERICHT_LOGFILE"))
     		System.setProperty("GELDBERICHT_LOGFILE", "geldbericht.log");
     	logger=Logger.getLogger(App.class);
         launch();

@@ -126,8 +126,8 @@ public class TransactionInputPaneController {
 	protected ReflectionTableView<Transaction> dataTableView;
 	@FXML
 	protected Button saveChangesButton;
-	@FXML
-	protected Button revertChangesButton;
+	//@FXML
+	//protected Button revertChangesButton;
 	@FXML
 	protected Button deleteActualMonthButton;
 	@FXML
@@ -300,7 +300,11 @@ public class TransactionInputPaneController {
 		
 		descriptionOfTransactionInput.setOnKeyPressed(keyPressedEvent -> {
 			if(keyPressedEvent.getCode().equals(KeyCode.ENTER)) {
-				addRowByFields();
+				try {
+					addRowByFields();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
 				clearInputFields();
 				receiptsInput.requestFocus();
 			}
@@ -355,7 +359,7 @@ public class TransactionInputPaneController {
 	}
 	
 	@FXML
-    protected void addRowByFields() {
+    protected void addRowByFields() throws IOException {
 		int counter=dataTableView.getItems().size()+1;
 		DefaultTableMonetaryAmountConverter moneyFormatter = new DefaultTableMonetaryAmountConverter();
 		MonetaryAmount receipts=moneyFormatter.fromString(receiptsInput.getText()==null?"":receiptsInput.getText());
@@ -376,6 +380,7 @@ public class TransactionInputPaneController {
 				inventoryNumber.length()>0?inventoryNumber:null,
 				description.length()>0?description:null);
         dataTableView.getItems().add(tmp);
+        persistChanges();
     }
 	
 	@FXML 

@@ -405,5 +405,9 @@ public class Account extends AbstractDataObject{
 			return false;
 		return true;
 	}
+
+	public boolean isCheckMonths() {
+		return checkMonths;
+	}
 	
 }

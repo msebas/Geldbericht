@@ -416,6 +416,8 @@ class InMemoryDbAbstractionLayerTest {
 				new User(6L,ZonedDateTime.now(),"name3",null)));
 		
 		DbAbstractionLayer db = new DbAbstractionLayer();
+		
+		
 		LinkedList<AbstractDataObject> linkedList=new LinkedList<AbstractDataObject>();
 		linkedList.addAll(list1);linkedList.addAll(list2);
 		db.mergeData(linkedList);

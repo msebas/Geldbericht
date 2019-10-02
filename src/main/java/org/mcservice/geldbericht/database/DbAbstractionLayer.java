@@ -326,6 +326,7 @@ public class DbAbstractionLayer {
 	}
 	
 	public void deleteData(Collection<? extends AbstractDataObject> dataList) {
+		recursiveLoadData(dataList);
 		Session session=factory.getCurrentSession();
 		org.hibernate.Transaction transaction=session.beginTransaction();
 		try {
@@ -359,13 +360,28 @@ public class DbAbstractionLayer {
 		}
 	}
 	
+	protected void recursiveLoadData(Collection<? extends AbstractDataObject> dataList) {
+		for(AbstractDataObject obj : dataList) {
+			if(obj instanceof Company) {
+				loadAccountsToCompany((Company) obj);
+				recursiveLoadData(((Company) obj).getAccounts());
+			} else if(obj instanceof Account) {
+				loadMonthsToAccount((Account) obj);
+				Hibernate.initialize(((Account) obj).getBalanceMonths());
+				recursiveLoadData(((Account) obj).getBalanceMonths());
+			} else if(obj instanceof MonthAccountTurnover) {
+				loadTransactionsToMonth((MonthAccountTurnover) obj);
+			}
+		}
+	}
+	
 	public List<? extends AbstractDataObject> mergeData(List<? extends AbstractDataObject> dataList) {
+		//recursiveLoadData(dataList);
 		Session session=factory.getCurrentSession();
 		org.hibernate.Transaction transaction=session.beginTransaction();
 		try {
 			//Here we have to persist first anything to that things persisted later hold a reference to.
 			//The simplest approach is to walk down the relation graph, but to do it this was is quite slow...
-			
 			internalMergeData(dataList, session);
 			
 			transaction.commit();
@@ -386,9 +402,13 @@ public class DbAbstractionLayer {
 			if(obj instanceof Company) {
 				internalMergeData(((Company) obj).getAccounts(), session);
 			} else if(obj instanceof Account) {
-				internalMergeData(((Account) obj).getBalanceMonths(), session);
+				Account act=(Account) obj;
+				if(act.isCheckMonths())
+					internalMergeData(act.getBalanceMonths(), session);
 			} else if(obj instanceof MonthAccountTurnover) {
-				internalMergeData(((MonthAccountTurnover) obj).getTransactions(), session);
+				MonthAccountTurnover month = ((MonthAccountTurnover) obj);
+				if(month.isTransactionsLoaded())
+					internalMergeData(month.getTransactions(), session);
 			}
 			if(null==obj.getUid()) {
 				Long uid=(Long) session.save(obj);

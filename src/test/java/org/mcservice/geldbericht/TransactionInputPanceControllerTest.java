@@ -82,6 +82,7 @@ import org.mockito.stubbing.Answer;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -132,7 +133,6 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
 	TextField descriptionOfTransactionInput;	
 	ReflectionTableView<Transaction> dataTableView;	 
 	Button saveChangesButton;	 
-	Button revertChangesButton;	
 	Button deleteActualMonthButton; 
 	Button insertLineButton;	
 	ComboBox<Company> companySelector;
@@ -257,7 +257,6 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	descriptionOfTransactionInput = (TextField) (lookup("#descriptionOfTransactionInput").query());
     	dataTableView = (ReflectionTableView<Transaction>) (lookup("#dataTableView").query());
     	saveChangesButton = (Button) (lookup("#saveChangesButton").query());
-    	revertChangesButton = (Button) (lookup("#revertChangesButton").query());
     	deleteActualMonthButton = (Button) (lookup("#deleteActualMonthButton").query());
     	insertLineButton = (Button) (lookup("#insertLineButton").query());
     	companySelector = (ComboBox<Company>) (lookup("#companySelector").query());
@@ -672,32 +671,6 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     }
     
     @Test
-    @CreateCompanies(value=1,accountNumber = 2,monthNumber = 2,transactionNumber = 2)
-    public void CheckRevertChanges() throws Exception {
-    	verify(db,times(1)).getCompanies();
-    	
-    	type(KeyCode.DOWN,KeyCode.TAB,KeyCode.DOWN,KeyCode.TAB);
-    	write("47").type(KeyCode.ENTER).type(KeyCode.TAB,10).type(KeyCode.ENTER);
-    	Field fieldTurnovers=TransactionInputPaneController.class.getDeclaredField("turnoverList");
-    	Field fieldActMonth=TransactionInputPaneController.class.getDeclaredField("actMonthList");
-    	fieldTurnovers.setAccessible(true);
-    	fieldActMonth.setAccessible(true);
-    	
-    	assertFalse(((Map<?,?>)fieldTurnovers.get(controller)).isEmpty());
-    	assertNotNull(fieldActMonth.get(controller));
-    	
-    	clickOn(revertChangesButton);
-    	
-    	verify(db,times(2)).getCompanies();
-    	assertTrue(((Map<?,?>)fieldTurnovers.get(controller)).isEmpty());
-    	assertNull(fieldActMonth.get(controller));
-    	
-    	assertNotNull(companySelector.getValue());
-    	assertNull(accountSelector.getValue());
-    	assertTrue(monthSelector.isDisabled());
-    }
-
-    @Test
     @CreateCompanies(value=2,accountNumber = 2,monthNumber = 2,transactionNumber = 2)
     public void CheckPersistChanges() {
     	Account actAccount=companies.get(0).getAccounts().get(0);
@@ -709,11 +682,10 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	reset(spyAccount);
     	clickOn(saveChangesButton);
     	LinkedList<AbstractDataObject> dataList = new LinkedList<AbstractDataObject>();
-    	dataList.addAll(actAccount.getBalanceMonths());
     	dataList.addAll(new ArrayList<Account>(List.of(spyAccount)));
     	
     	verify(spyAccount,atLeast(1)).updateBalance();
-    	verify(db).mergeData(dataList);    	
+    	verify(db,atLeast(1)).mergeData(dataList);    	
     }
     
     @Test
@@ -892,7 +864,7 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	assertEquals(4,transactions.size());
     }
     
-    @Test
+	@Test
     @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 3)
     public void CheckUpdateDataAddToActMonthBoth() {
     	type(KeyCode.F5);
@@ -900,24 +872,18 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	List<Company> locCompanies = new ArrayList<Company>(List.of(new Company(companies.get(0))));
     	locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).appendTranaction(getDummyTransaction(7L, 0));
     	List<Transaction> transactions=locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).getTransactions();
-    	List<Transaction> transactionsRef=new ArrayList<Transaction>();
-    	for (Transaction transaction : transactions) {
-			transactionsRef.add(new Transaction(transaction));
-		}
     	
-    	type(KeyCode.TAB,16);
+    	Platform.runLater(()->{descriptionOfTransactionInput.requestFocus();});
+    	sleep(10);
     	type(KeyCode.ENTER);
-    	transactionsRef.add(new Transaction(companies.get(0).getAccounts().get(0).
-    			getBalanceMonths().get(0).getTransactions().get(3)));
-    	transactionsRef.get(4).setNumber(5);
     	    	
     	reset(db);
     	when(db.getCompanies()).thenReturn(locCompanies);
     	    	
     	type(KeyCode.F5);
     	sleep(10);
-    	verify(db,times(1)).getCompanies();
-    	assertTrue(transactions.containsAll(transactionsRef));
+    	verify(db).getCompanies();
+    	assertEquals(5,transactions.size());
     }
 
     @Test
@@ -928,7 +894,8 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	List<Company> locCompanies = new ArrayList<Company>(List.of(new Company(companies.get(0))));
     	List<Transaction> transactions=locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).getTransactions();
 
-    	type(KeyCode.TAB,16);
+    	Platform.runLater(()->{descriptionOfTransactionInput.requestFocus();});
+    	sleep(10);
     	type(KeyCode.ENTER);
     	
     	reset(db);

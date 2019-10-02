@@ -239,7 +239,7 @@ class MonthAccountTurnoverTest {
     	act = ZonedDateTime.now();
     	
     	assertTrue(tstObj.getLastChange().isBefore(act));
-    	assertEquals(tstObj.getTransactions().get(2).getLastChange(), tstObj.getLastChange());
+    	assertEquals(tstObj.getTransactions().get(0).getLastChange(), tstObj.getLastChange());
     	assertEquals(Money.of(0.0, "EUR"),tstObj.getFinalDebt());
     	assertEquals(Money.of(0.5, "EUR"),tstObj.getFinalAssets());
     	assertEquals(Money.of(4.2, "EUR"),tstObj.getMonthBalanceDebt());
