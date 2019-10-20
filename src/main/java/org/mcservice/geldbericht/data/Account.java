@@ -19,6 +19,7 @@ package org.mcservice.geldbericht.data;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.money.MonetaryAmount;
@@ -31,13 +32,14 @@ import javax.persistence.Transient;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
-import org.hibernate.validator.constraints.Range;
 import org.mcservice.geldbericht.data.converters.MonetaryAmountConverter;
 import org.mcservice.javafx.TrimStringConverter;
 import org.mcservice.javafx.control.table.TableViewColumn;
 import org.mcservice.javafx.control.table.TableViewColumnOrder;
 import org.mcservice.javafx.control.table.TableViewConverter;
 import org.mcservice.javafx.control.table.TableViewFinalIfNotNull;
+
+import org.hibernate.validator.constraints.Range;
 
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
@@ -83,12 +85,14 @@ public class Account extends AbstractDataObject{
 	protected Company company=null;
 	
 	@Transient
-	protected boolean checkMonths=false;
+	protected boolean monthsLoaded=false;
+	@Transient
+	protected boolean changed=false;
 	
 	private Account() {
 		super(null,ZonedDateTime.now());
 	}
-	
+		
 	/**
 	 * @param uid
 	 * @param lastChange
@@ -103,16 +107,22 @@ public class Account extends AbstractDataObject{
 		this.initialBalance=initialBalance;
 		this.balance=initialBalance;
 		this.company=company;
+		if(uid==null) {
+			this.changed=true;
+			this.monthsLoaded=true;
+		}
 	}
 	
 	
 	public Account(Account otherAccount) {
-		super(otherAccount.uid,otherAccount.lastChange);
+		super(otherAccount.getUid(),otherAccount.lastChange);
 		this.accountNumber = otherAccount.accountNumber;
 		this.accountName = otherAccount.accountName;
 		this.initialBalance=otherAccount.initialBalance;
 		this.balance=otherAccount.balance;
 		this.company=otherAccount.company;
+		this.monthsLoaded=true;
+		this.changed=otherAccount.changed;
 		for (MonthAccountTurnover month : otherAccount.balanceMonths) {
 			MonthAccountTurnover tmp = new MonthAccountTurnover(month);
 			tmp.account=this;
@@ -146,6 +156,7 @@ public class Account extends AbstractDataObject{
 				( this.accountNumber!=null && this.accountNumber.equals(accountNumber) )
 				)
 			return;
+		this.changed=true;
 		this.accountNumber = accountNumber;
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -158,17 +169,8 @@ public class Account extends AbstractDataObject{
 				( this.accountName!=null && this.accountName.equals(accountName) )
 				)
 			return;
+		this.changed=true;
 		this.accountName = accountName; 
-		this.lastChange=ZonedDateTime.now();
-	}
-
-	/**
-	 * @param balance the balance to set
-	 */
-	public void setBalance(MonetaryAmount balance) {
-		if(this.balance==balance)
-			return;
-		this.balance = balance; 
 		this.lastChange=ZonedDateTime.now();
 	}
 
@@ -180,6 +182,7 @@ public class Account extends AbstractDataObject{
 				( this.company!=null && this.company.equals(company,false) )
 				)
 			return;
+		this.changed=true;
 		this.company = company; 
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -194,6 +197,7 @@ public class Account extends AbstractDataObject{
 		if(this.balanceMonths.size()>0) {
 			throw new RuntimeException("Initial balance could not be changed after a month was booked.");
 		}
+		this.changed=true;
 		this.balance=initialBalance;
 		this.initialBalance = initialBalance;
 		this.lastChange = ZonedDateTime.now();
@@ -238,7 +242,7 @@ public class Account extends AbstractDataObject{
 	 * @return the balanceMonths
 	 */
 	public List<MonthAccountTurnover> getBalanceMonths() {
-		checkMonths=true;
+		monthsLoaded=true;
 		return balanceMonths;
 	}
 
@@ -248,6 +252,7 @@ public class Account extends AbstractDataObject{
 	public void setBalanceMonths(List<MonthAccountTurnover> balanceMonths) {
 		if(null==balanceMonths) {
 			this.balanceMonths = balanceMonths;
+			changed=true;
 			return;
 		}
 		if(null==this.balanceMonths || !this.balanceMonths.containsAll(balanceMonths) || this.balanceMonths.size()!=balanceMonths.size()) {
@@ -256,11 +261,13 @@ public class Account extends AbstractDataObject{
 		} else {
 			this.balanceMonths = balanceMonths;
 		}
-		checkMonths=true;
+		monthsLoaded=true;
+		changed=true;
 	}
 	
 	public void addBalanceMonth(MonthAccountTurnover turnover) {
-		checkMonths=true;
+		monthsLoaded=true;
+		changed=true;
 		balanceMonths.add(turnover);
 		updateBalance();
 		this.lastChange = ZonedDateTime.now();
@@ -280,7 +287,7 @@ public class Account extends AbstractDataObject{
 		if(null==balanceMonths) {
 			return null;
 		}
-		if(!checkMonths) {
+		if(!monthsLoaded) {
 			return null;
 		}
 		
@@ -289,21 +296,23 @@ public class Account extends AbstractDataObject{
 		
 		MonetaryAmount nBalance = factory.setAmount(initialBalance).create();
 		
-		for (MonthAccountTurnover turnover:balanceMonths) {
+		for (MonthAccountTurnover month:balanceMonths) {
 			//First update 
 			if(nBalance.isPositiveOrZero()) {
-				turnover.setInitialAssets(nBalance);
-				turnover.setInitialDebt(factory.setNumber(0).create());
+				month.setInitialAssets(nBalance);
+				month.setInitialDebt(factory.setNumber(0).create());
 			} else {
-				turnover.setInitialAssets(factory.setNumber(0).create());
-				turnover.setInitialDebt(nBalance.multiply(-1));
+				month.setInitialAssets(factory.setNumber(0).create());
+				month.setInitialDebt(nBalance.multiply(-1));
 			}
-			turnover.updateBalance();
-			nBalance=nBalance.add(turnover.getMonthBalanceAssets())
-					.subtract(turnover.getMonthBalanceDebt());
-						
-			if(turnover.getLastChange().isAfter(this.getLastChange())) {
-				this.lastChange=turnover.getLastChange();
+			month.updateBalance();
+			nBalance=nBalance.add(month.getMonthBalanceAssets())
+					.subtract(month.getMonthBalanceDebt());
+			
+			if(month.isChanged())
+				changed=true;
+			if(month.getLastChange().isAfter(this.getLastChange())) {
+				this.lastChange=month.getLastChange();
 			}
 		}
 		
@@ -315,7 +324,7 @@ public class Account extends AbstractDataObject{
 
 	@Override
 	public int hashCode() {
-		return (int) (uid==null ? 0 : uid);
+		return (int) (getUid()==null ? 0 : getUid());
 	}
 
 	/**
@@ -344,7 +353,7 @@ public class Account extends AbstractDataObject{
 			return false;
 		Account other = (Account) obj;
 				
-		if (uid==other.uid) {
+		if (getUid()==other.getUid()) {
 			return true;
 		}
 		
@@ -361,7 +370,7 @@ public class Account extends AbstractDataObject{
 			return false;
 		Account other = (Account) obj;
 				
-		if (uid!=other.uid) {
+		if (getUid()!=other.getUid()) {
 			return false;
 		}
 		if (accountName == null) {
@@ -379,18 +388,20 @@ public class Account extends AbstractDataObject{
 				return false;
 		} else if (!balance.equals(other.balance))
 			return false;
-		if (balanceMonths == null || other.balanceMonths==null) {
-			if (other.balanceMonths != balanceMonths)
-				return false;
-		} else {
-			//This has to be done manual, because otherwise we run into 
-			//infinite recursive call problems because of backreferences
-			if (balanceMonths.size()!=other.balanceMonths.size()) {
-				return false;
-			}
-			Iterator<MonthAccountTurnover> otherIterator = other.balanceMonths.iterator();
-			for (Iterator<MonthAccountTurnover> iterator = balanceMonths.iterator(); iterator.hasNext();) {
-				iterator.next().equals(otherIterator.next(), false);
+		if(rec) {
+			if (balanceMonths == null || other.balanceMonths==null) {
+				if (other.balanceMonths != balanceMonths)
+					return false;
+			} else {
+				//This has to be done manual, because otherwise we run into 
+				//infinite recursive call problems because of backreferences
+				if (balanceMonths.size()!=other.balanceMonths.size()) {
+					return false;
+				}
+				Iterator<MonthAccountTurnover> otherIterator = other.balanceMonths.iterator();
+				for (Iterator<MonthAccountTurnover> iterator = balanceMonths.iterator(); iterator.hasNext();) {
+					iterator.next().equals(otherIterator.next(), false);
+				}
 			}
 		}
 		if (company == null) {
@@ -406,8 +417,106 @@ public class Account extends AbstractDataObject{
 		return true;
 	}
 
-	public boolean isCheckMonths() {
-		return checkMonths;
+	public boolean isMonthsLoaded() {
+		return monthsLoaded;
+	}
+	
+	public class AccountDatabaseQueueEntry extends AbstractDataObjectDatabaseQueueEntry{
+
+		protected AccountDatabaseQueueEntry(Account stateToPersist, boolean delete) {
+			super(stateToPersist,delete);
+		}
+
+		public void addToCompany(Company company) {
+			if(stateToPersist instanceof Account) {
+				company.getAccounts().add((Account) stateToPersist);
+			}
+		}
+		
+		@Override
+		public void applyPersistedState(AbstractDataObject persistedState) {
+			super.applyPersistedState(persistedState);
+			if(changed) {
+				if(Account.this.monthsLoaded) {
+					if(Account.this.equals(persistedState,true)) {
+						changed=false;
+					}
+				} else {
+					if(Account.this.equals(persistedState,false)) {
+						changed=false;
+					}
+				}
+			}
+		}
+	}
+
+	@Override
+	public List<AbstractDataObjectDatabaseQueueEntry> getPersistingList() {
+		return getPersistingList(false);
+	}
+	
+	List<AbstractDataObjectDatabaseQueueEntry> getPersistingList(boolean addAccount) {
+		LinkedList<AbstractDataObjectDatabaseQueueEntry> res=new LinkedList<>();
+		updateBalance();
+		
+		List<MonthAccountTurnover> months = null;
+		if(monthsLoaded) {
+			months = extracted(res);
+		}
+		
+		if(addAccount || changed) {
+			Account persistAccount=new Account(getUid(), lastChange, accountNumber, accountName, initialBalance, company);
+			persistAccount.balance=balance;
+			persistAccount.balanceMonths=null==months?balanceMonths:months;
+			res.add(new AccountDatabaseQueueEntry(persistAccount,false));
+		}
+		
+		if(res.size()>0) {
+			return res;
+		} else {
+			return null;
+		}
+	}
+
+	List<MonthAccountTurnover> extracted(LinkedList<AbstractDataObjectDatabaseQueueEntry> res) {
+		List<MonthAccountTurnover> months;
+		months=new ArrayList<>();
+		for (MonthAccountTurnover month : balanceMonths) {
+			List<Transaction> transactions = null;
+			if(month.isTransactionsLoaded()) {
+				transactions=new ArrayList<>();
+				for (Transaction transaction : month.getTransactions()) {
+					Transaction persistTransaction = new Transaction(transaction);
+					if(res!=null && transaction.isChanged()) {
+						res.add(transaction.new TransactionDatabaseQueueEntry(persistTransaction,false));
+					}
+					transactions.add(persistTransaction);
+				}
+			}
+			MonthAccountTurnover persistMonth=new MonthAccountTurnover(month, transactions);
+			if(res!=null && month.isChanged()) {
+				res.add(month.new MonthAccountTurnoverDatabaseQueueEntry(persistMonth,false));
+			}
+			months.add(persistMonth);
+		}
+		return months;
+	}
+
+	@Override
+	public List<AbstractDataObjectDatabaseQueueEntry> getDeleteList() {
+		LinkedList<AbstractDataObjectDatabaseQueueEntry> res=new LinkedList<>();
+		
+		for (MonthAccountTurnover month : balanceMonths) {
+			res.addAll(month.getDeleteList());
+		}
+		if(this.getUid()!=null) {
+			Account tmp = new Account(this);
+			tmp.balanceMonths.clear();
+			AccountDatabaseQueueEntry me = new AccountDatabaseQueueEntry(tmp,true);
+			res.add(me);
+		}
+				
+		return res;
 	}
 	
 }

@@ -42,7 +42,7 @@ class AccountTest {
 	static Stream<Arguments> getSettersGetters() throws Exception{
 		ArrayList<Arguments> result=new ArrayList<Arguments>();
 		Class<Account> clazz=Account.class;
-		String fields[]= {"accountNumber","accountName","balance","initialBalance","company",
+		String fields[]= {"accountNumber","accountName","initialBalance","company",
 				"balanceMonths"};
 		for(String fieldName : fields) {
 			Field field = clazz.getDeclaredField(fieldName);

@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 import javax.money.MonetaryAmount;
@@ -32,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mcservice.geldbericht.data.AbstractDataObject.AbstractDataObjectDatabaseQueueEntry;
 
 class VatTypeTest {
 
@@ -146,6 +148,40 @@ class VatTypeTest {
     public void checkSetValueException() {
     	VatType tstObj=new VatType(1L, ZonedDateTime.now(), null,null,null,null,null);
     	assertThrows(RuntimeException.class, ()->{ tstObj.setValue(BigDecimal.valueOf(0));});
+    }
+    
+    @Test 
+    public void checkGetPersistingList() {
+    	VatType tstObj=new VatType(null, ZonedDateTime.now(), null,null,null,null,null);
+    	VatType persistedState=new VatType(1L, ZonedDateTime.now(), null,null,null,null,null);
+    	List<AbstractDataObjectDatabaseQueueEntry> resList=tstObj.getPersistingList();
+    	
+    	assertEquals(1,resList.size());
+    	assertEquals(tstObj,resList.get(0).getStateToPersist());
+    	assertFalse(resList.get(0).isDelete());
+    	assertFalse(resList.get(0).isMerge());
+    	assertTrue( resList.get(0).isCreate());
+    	resList.get(0).applyPersistedState(persistedState);
+    	assertEquals(1L,tstObj.getUid());
+    }
+    
+    @Test 
+    public void checkGetDeleteListNull() {
+    	VatType tstObj=new VatType(null, ZonedDateTime.now(), null,null,null,null,null);
+    	assertNull(tstObj.getDeleteList());
+    }
+    
+    @Test 
+    public void checkGetDeleteListUid() {
+    	VatType tstObj=new VatType(1L, ZonedDateTime.now(), null,null,null,null,null);
+    	List<AbstractDataObjectDatabaseQueueEntry> resList=tstObj.getDeleteList();
+    	
+    	assertEquals(1,resList.size());
+    	assertEquals(tstObj,resList.get(0).getStateToPersist());
+    	assertTrue (resList.get(0).isDelete());
+    	assertFalse(resList.get(0).isMerge());
+    	assertFalse(resList.get(0).isCreate());
+    	resList.get(0).applyPersistedState(tstObj);
     }
     
 }

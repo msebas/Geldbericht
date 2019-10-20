@@ -383,7 +383,7 @@ class InMemoryDbAbstractionLayerTest {
 		DbAbstractionLayer db = new DbAbstractionLayer();
 		LinkedList<AbstractDataObject> linkedList=new LinkedList<AbstractDataObject>();
 		linkedList.addAll(list1);linkedList.addAll(list2);
-		db.mergeData(linkedList);
+		db.recursiveMergeData(linkedList);
 		list1=db.getCompanies();
 		list2=db.getUsers();
 		
@@ -420,7 +420,7 @@ class InMemoryDbAbstractionLayerTest {
 		
 		LinkedList<AbstractDataObject> linkedList=new LinkedList<AbstractDataObject>();
 		linkedList.addAll(list1);linkedList.addAll(list2);
-		db.mergeData(linkedList);
+		db.recursiveMergeData(linkedList);
 		
 		
 		assertEquals(3,db.getUsers().size());
@@ -473,7 +473,7 @@ class InMemoryDbAbstractionLayerTest {
 		
 		db.updateAccount(rawAccount);
 		rawAccount.addBalanceMonth(month);
-		db.mergeData(month.getTransactions());
+		db.recursiveMergeData(month.getTransactions());
 		month=db.updateMonthAccountTurnover(month);
 		
 		assertEquals(Money.of(3, "EUR"),rawAccount.getBalance());

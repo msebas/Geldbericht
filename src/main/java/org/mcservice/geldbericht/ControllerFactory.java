@@ -16,6 +16,7 @@
  ******************************************************************************/
 package org.mcservice.geldbericht;
 
+import org.mcservice.geldbericht.database.BackgroundDbThread;
 import org.mcservice.geldbericht.database.DbAbstractionLayer;
 
 import javafx.util.Callback;
@@ -23,13 +24,20 @@ import javafx.util.Callback;
 public class ControllerFactory implements Callback<Class<?>, Object>{
 	
 	private DbAbstractionLayer db=null;
+	private BackgroundDbThread backgroundDatabase;
+	private Thread backgroundThread;
 	
 	public ControllerFactory() {
-		this(null);
+		this(null,null);
+	}
+
+	public ControllerFactory(DbAbstractionLayer db) {
+		this(db,null);
 	}
 	
-	public ControllerFactory(DbAbstractionLayer db) {
+	public ControllerFactory(DbAbstractionLayer db, BackgroundDbThread backgroundDatabase) {
 		this.db=db;
+		this.backgroundDatabase=backgroundDatabase;
 	}
 	
 	public Object call(Class<?> clazz) {
@@ -45,17 +53,24 @@ public class ControllerFactory implements Callback<Class<?>, Object>{
 		if (PrimaryController.class.equals(clazz))
 			return new PrimaryController(db);
 		if (TransactionInputPaneController.class.equals(clazz))
-			return new TransactionInputPaneController(db);
+			return new TransactionInputPaneController(db,backgroundDatabase);
 		if (VatTypeManagerController.class.equals(clazz))
 			return new VatTypeManagerController(db);
 		throw new RuntimeException("Not implemented yet");	
 	}
 	
 	public void createDB() {
-		if(null!=db) {
-			return;
+		if(null==db) {
+			db=new DbAbstractionLayer();
+		}		
+		if(null==backgroundDatabase) {
+			backgroundDatabase=new BackgroundDbThread(db);
 		}
-		db=new DbAbstractionLayer();		
+		if(null==backgroundThread) {
+			backgroundThread = new Thread(backgroundDatabase);
+			backgroundThread.setDaemon(true);
+			backgroundThread.start();
+		}
 	}
 	
 	public DbAbstractionLayer getDB() {
@@ -64,6 +79,11 @@ public class ControllerFactory implements Callback<Class<?>, Object>{
 	
 	public void setDb(DbAbstractionLayer db) {
 		this.db=db;
+	}
+	
+	public void joinBackgroundThread() throws InterruptedException {
+		backgroundDatabase.stopThread();
+		backgroundThread.join();
 	}
 	
 }

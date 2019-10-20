@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import java.lang.*?>
+<?import java.net.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
@@ -50,4 +51,7 @@
          </children>
       </HBox>
    </children>
+   <stylesheets>
+    <URL value="@primary.css" />
+	</stylesheets>
 </VBox>

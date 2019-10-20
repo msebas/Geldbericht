@@ -29,11 +29,16 @@ import org.mcservice.javafx.BaseMatcherCallbackFilter;
 import org.mcservice.javafx.control.table.SupportsEndEditCallback;
 
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 
 public abstract class AbstractTimeField extends TextField implements SupportsEndEditCallback {
+	
+	private SimpleBooleanProperty allowNull=new SimpleBooleanProperty(false);
 	
 	private ObjectProperty<LocalDate> baseDate;
 	private ObjectProperty<Chronology> chronology;
@@ -44,6 +49,29 @@ public abstract class AbstractTimeField extends TextField implements SupportsEnd
 	private AbstractTimeField() {
 		super();
 		this.chronology=new SimpleObjectProperty<Chronology>(Chronology.ofLocale(Locale.getDefault()));
+		
+		this.focusedProperty().addListener(new ChangeListener<Boolean>()
+		{
+		    @Override
+		    public void changed(ObservableValue<? extends Boolean> arg0, Boolean oldPropertyValue, Boolean newPropertyValue)
+		    {
+		        if (newPropertyValue) {
+		        	getStyleClass().remove("textfield-validation-error");
+		        	if(!getAllowNull() && null==getDate()) {
+		            	getStyleClass().add("textfield-validation-error-editing");
+		            } else {
+		            	getStyleClass().remove("textfield-validation-error-editing");
+		            }
+		        } else {
+		        	getStyleClass().remove("textfield-validation-error-editing");
+		            if(!getAllowNull() && null==getDate()) {
+		            	getStyleClass().add("textfield-validation-error");
+		            } else {
+		            	getStyleClass().remove("textfield-validation-error");
+		            }
+		        }
+		    }
+		});
 	}
 	
 	protected AbstractTimeField(ObjectProperty<LocalDate> baseDate, String pattern) {
@@ -115,6 +143,18 @@ public abstract class AbstractTimeField extends TextField implements SupportsEnd
 	
 	public void setEndEditCallback(Consumer<String> endEditCallback) {
 		this.filter.setEndEditCallback(endEditCallback);
+	}
+
+	public Boolean getAllowNull() {
+		return allowNull.get();
+	}
+	
+	public SimpleBooleanProperty allowNullProperty() {
+		return allowNull;
+	}
+
+	public void setAllowNull(Boolean allowNull) {
+		this.allowNull.set(allowNull);
 	}
 
 }

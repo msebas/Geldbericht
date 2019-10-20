@@ -230,6 +230,7 @@ public class PdfGeneratorPaneController {
 		if(oldAccount!=null) {
 			Account tmpAccount=oldAccount;
 			oldAccount=null;
+			db.loadAccountsToCompany(oldCompany);
 			for (Account account : oldCompany.getAccounts()) {
 				if(account.getUid()==tmpAccount.getUid()) {
 					oldAccount=account;
@@ -244,6 +245,7 @@ public class PdfGeneratorPaneController {
 		if(oldMonth!=null) {
 			MonthAccountTurnover tmpMonth=oldMonth;
 			oldMonth=null;
+			db.loadMonthsToAccount(oldAccount);
 			for (MonthAccountTurnover month : oldAccount.getBalanceMonths()) {
 				if(month.getUid()==tmpMonth.getUid()) {
 					oldMonth=month;

@@ -18,6 +18,7 @@ package org.mcservice.geldbericht.data;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import javax.money.MonetaryAmount;
 import javax.persistence.Convert;
@@ -27,6 +28,7 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
 import org.hibernate.validator.constraints.Range;
@@ -101,7 +103,12 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 	@Size(max = 255)
 	@TableViewColumn(colName="Gegenstand der Buchung")
 	@TableViewColumnOrder(90)
-	String descriptionOfTransaction=null;	
+	String descriptionOfTransaction=null;
+	
+	@Transient
+	boolean changed=false;
+	@Transient
+	boolean changedAmount=false;
 
 	private Transaction() {
 		super(null,ZonedDateTime.now());
@@ -129,6 +136,7 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 			//AmortisationType amortisationType, Long amortisationValue, 
 			String descriptionOfTransaction) {
 		super(uid, lastChange);
+		
 		this.number=number;
 		this.receipts = receipts;
 		this.spending = spending;
@@ -142,6 +150,11 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 		//this.amortisationType = amortisationType;
 		//this.amortisationValue = amortisationValue;
 		this.descriptionOfTransaction = descriptionOfTransaction;
+		if(null==uid) {
+			this.changed=true;
+			this.changedAmount=true;
+		}
+			
 	}
 	
 	/**
@@ -178,10 +191,12 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 		//this.amortisationType = amortisationType;
 		//this.amortisationValue = amortisationValue;
 		this.descriptionOfTransaction = descriptionOfTransaction;
+		this.changed=true;
+		this.changedAmount=true;
 	}
 
 	public Transaction(Transaction otherTransaction) {
-		super(otherTransaction.uid, otherTransaction.lastChange);
+		super(otherTransaction.getUid(), otherTransaction.lastChange);
 		this.number=otherTransaction.number;
 		this.receipts = otherTransaction.receipts;
 		this.spending = otherTransaction.spending;
@@ -193,6 +208,8 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 		this.vat = otherTransaction.vat;
 		this.inventoryNumber = otherTransaction.inventoryNumber;
 		this.descriptionOfTransaction = otherTransaction.descriptionOfTransaction;
+		this.changed=otherTransaction.changed;
+		this.changedAmount=otherTransaction.changedAmount;
 	}
 
 	/**
@@ -206,6 +223,8 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 	 * @param number the number to set
 	 */
 	public void setNumber(int number) {
+		if(number!=this.number)
+			changed=true;
 		this.number = number;
 	}
 
@@ -224,6 +243,8 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 	public void setReceipts(MonetaryAmount receipts) {
 		if(this.receipts==receipts)
 			return;
+		this.changed=true;
+		this.changedAmount=true;
 		this.receipts = receipts;
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -243,6 +264,8 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 	public void setSpending(MonetaryAmount spending) {
 		if(this.spending==spending)
 			return;
+		this.changed=true;
+		this.changedAmount=true;
 		this.spending = spending;
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -264,6 +287,7 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 				( this.accountingContraAccount!=null && this.accountingContraAccount.equals(accountingContraAccount) )
 				)
 			return;
+		this.changed=true;
 		this.accountingContraAccount = accountingContraAccount;
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -285,6 +309,7 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 				( this.accountingCostGroup!=null && this.accountingCostGroup.equals(accountingCostGroup) )
 				)
 			return;
+		this.changed=true;
 		this.accountingCostGroup = accountingCostGroup;
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -306,6 +331,7 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 				( this.accountingCostCenter!=null && this.accountingCostCenter.equals(accountingCostCenter) )
 				)
 			return;
+		this.changed=true;
 		this.accountingCostCenter = accountingCostCenter;
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -327,6 +353,7 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 				( this.voucher!=null && this.voucher.equals(voucher) )
 				)
 			return;
+		this.changed=true;
 		this.voucher = voucher;
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -348,6 +375,7 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 				( this.transactionDate!=null && this.transactionDate.equals(transactionDate) )
 				)
 			return;
+		this.changed=true;
 		this.transactionDate = transactionDate;
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -367,6 +395,7 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 	public void setVat(VatType vat) {
 		if(this.vat==vat || ( this.vat!=null && this.vat.equals(vat) ) )
 			return;
+		this.changed=true;
 		this.vat = vat;
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -388,6 +417,7 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 				( this.inventoryNumber!=null && this.inventoryNumber.equals(inventoryNumber) )
 				)
 			return;
+		this.changed=true;
 		this.inventoryNumber = inventoryNumber;
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -409,6 +439,7 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 				( this.descriptionOfTransaction!=null && this.descriptionOfTransaction.equals(descriptionOfTransaction) )
 				)
 			return;
+		this.changed=true;
 		this.descriptionOfTransaction = descriptionOfTransaction;
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -458,7 +489,7 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 		Transaction other = (Transaction) obj;
 
 
-		if (uid!=other.uid) {
+		if (getUid()!=other.getUid()) {
 			return false;
 		}
 		if (accountingContraAccount == null) {
@@ -545,7 +576,56 @@ public class Transaction extends AbstractDataObject implements Comparable<Transa
 				+ "descriptionOfTransaction=%s, uid=%s, lastChange=%s]",
 				number, receipts, spending, accountingContraAccount, accountingCostGroup, 
 				accountingCostCenter, voucher, transactionDate, vat, inventoryNumber, 
-				descriptionOfTransaction, uid, lastChange);
+				descriptionOfTransaction, getUid(), lastChange);
 	}
+	
+	public class TransactionDatabaseQueueEntry extends AbstractDataObjectDatabaseQueueEntry{
+
+		protected TransactionDatabaseQueueEntry(Transaction stateToPersist,boolean delete) {
+			super(stateToPersist,delete);
+		}
+		
+		@Override
+		public void applyPersistedState(AbstractDataObject persistedState) {
+			super.applyPersistedState(persistedState);
+			if(Transaction.this.equals(persistedState)) {
+				changed=false;
+				changedAmount=false;
+			}
+		}
+	}
+
+	@Override
+	public List<AbstractDataObjectDatabaseQueueEntry> getPersistingList() {
+		if(changed || changedAmount) {
+			return List.of(new TransactionDatabaseQueueEntry(new Transaction(this),false));
+		} else {
+			return null;
+		}
+	}
+
+	@Override
+	public List<AbstractDataObjectDatabaseQueueEntry> getDeleteList() {
+		if(null!=getUid()) {
+			return List.of(new TransactionDatabaseQueueEntry(new Transaction(this),true));
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * @return the changed
+	 */
+	public boolean isChanged() {
+		return changed;
+	}
+
+	/**
+	 * @return the changedAmount
+	 */
+	public boolean isChangedAmount() {
+		return changedAmount;
+	}
+
 	
 }

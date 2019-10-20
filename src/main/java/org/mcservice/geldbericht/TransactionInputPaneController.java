@@ -21,7 +21,6 @@ import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.TextStyle;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,6 +44,7 @@ import org.mcservice.geldbericht.data.VatType;
 import org.mcservice.geldbericht.data.converters.AccountStringConverter;
 import org.mcservice.geldbericht.data.converters.CompanyStringConverter;
 import org.mcservice.geldbericht.data.converters.VatTypeStringConverter;
+import org.mcservice.geldbericht.database.BackgroundDbThread;
 import org.mcservice.geldbericht.database.DbAbstractionLayer;
 import org.mcservice.javafx.control.date.DayMonthField;
 import org.mcservice.javafx.control.date.MonthYearConverter;
@@ -84,16 +84,17 @@ import javafx.scene.layout.HBox;
 
 public class TransactionInputPaneController {
 	
-	protected DbAbstractionLayer db=null;
-	protected ZonedDateTime lastUpdate=ZonedDateTime.now();
-	protected Company actCompany=null;
-	protected Account actAccount=null;
-	protected MonthAccountTurnover actTurnover=null;
-	protected ListChangeListener<? super Transaction> transactionUpdateListener=null;
-	protected ItemUpdateListener accountUpdateListener= null;
-	protected Map<Account,ObservableList<MonthAccountTurnover>> turnoverList=new HashMap<Account,ObservableList<MonthAccountTurnover>>();
-	protected Set<AbstractDataObject> deletedItems = new HashSet<AbstractDataObject>();
-	protected ObservableList<LocalDate> actMonthList=null;
+	protected DbAbstractionLayer db = null;
+	protected BackgroundDbThread backgroundDatabase = null;
+	protected ZonedDateTime lastUpdate = ZonedDateTime.now();
+	protected Company actCompany = null;
+	protected Account actAccount = null;
+	protected MonthAccountTurnover actTurnover = null;
+	protected ListChangeListener<? super Transaction> transactionUpdateListener = null;
+	protected ItemUpdateListener accountUpdateListener =  null;
+	protected Map<Account,ObservableList<MonthAccountTurnover>> turnoverList = new HashMap<Account,ObservableList<MonthAccountTurnover>>();
+	protected Set<AbstractDataObject> deletedItems  =  new HashSet<AbstractDataObject>();
+	protected ObservableList<LocalDate> actMonthList = null;
 	protected VatType defaultVat;
 	
 	@FXML
@@ -145,7 +146,7 @@ public class TransactionInputPaneController {
 	
 	
 			
-	public TransactionInputPaneController(DbAbstractionLayer db) {
+	public TransactionInputPaneController(DbAbstractionLayer db, BackgroundDbThread backgroundDatabase) {
 		this.db=db;
 		this.transactionUpdateListener=new ListChangeListener<Transaction>() {
 			@Override
@@ -153,6 +154,8 @@ public class TransactionInputPaneController {
 				actTurnover.updateBalance();
 			}
 		};
+		
+		this.backgroundDatabase = backgroundDatabase;
 	}
 	
 	@FXML
@@ -208,9 +211,15 @@ public class TransactionInputPaneController {
 		mi1.setOnAction(event -> {
 			Transaction actTransaction=dataTableView.getSelectionModel().getSelectedItem();
 			if(actTransaction!=null) {
-				dataTableView.getItems().remove(actTransaction);
-				deletedItems.add(actTransaction);
-				actAccount.updateBalance();
+				//FIXME Introduces an inconsistency when an exception is thrown
+				try {
+					dataTableView.getItems().remove(actTransaction);
+					actAccount.updateBalance();
+					backgroundDatabase.addToQueue(actAccount, false);
+					backgroundDatabase.addToQueue(actTransaction, true);
+				} catch (Exception e) {
+					updateData();
+				}
 			}
 		});
 		
@@ -233,6 +242,9 @@ public class TransactionInputPaneController {
 		    }
 		});
 		
+		if(companySelector.getItems().size()==1) {
+			companySelector.setValue(companySelector.getItems().get(0));
+		}
 		companyChanged();
 		updateAccountingLabels();
     }
@@ -300,13 +312,16 @@ public class TransactionInputPaneController {
 		
 		descriptionOfTransactionInput.setOnKeyPressed(keyPressedEvent -> {
 			if(keyPressedEvent.getCode().equals(KeyCode.ENTER)) {
+				boolean res=false;
 				try {
-					addRowByFields();
+					res=addRowByFields();
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
-				clearInputFields();
-				receiptsInput.requestFocus();
+				if(res) {
+					clearInputFields();
+					receiptsInput.requestFocus();
+				}
 			}
 		});
 		clearInputFields();
@@ -359,7 +374,7 @@ public class TransactionInputPaneController {
 	}
 	
 	@FXML
-    protected void addRowByFields() throws IOException {
+    protected boolean addRowByFields() throws IOException {
 		int counter=dataTableView.getItems().size()+1;
 		DefaultTableMonetaryAmountConverter moneyFormatter = new DefaultTableMonetaryAmountConverter();
 		MonetaryAmount receipts=moneyFormatter.fromString(receiptsInput.getText()==null?"":receiptsInput.getText());
@@ -372,24 +387,36 @@ public class TransactionInputPaneController {
 		LocalDate transactionDate=transactionDateInput.getDate();
 		String inventoryNumber=inventoryNumberInput.getText().strip();
 		String description=descriptionOfTransactionInput.getText().strip();
-        Transaction tmp=new Transaction(counter,receipts,spending,
+		
+		//Verification
+		if(transactionDate==null) {
+			transactionDateInput.requestFocus();
+			return false;
+		}
+		
+		
+		Transaction tmp=new Transaction(counter,receipts,spending,
         		contraAccount.length()>0?Integer.parseInt(contraAccount):null,
 				costGroup.length()>0?Integer.parseInt(costGroup):null,
 				costCenter.length()>0?Integer.parseInt(costCenter):null,
 				voucher.length()>0?voucher:null,transactionDate,vatInput.getValue(),
 				inventoryNumber.length()>0?inventoryNumber:null,
 				description.length()>0?description:null);
-        dataTableView.getItems().add(tmp);
+		App.logger.debug(String.format("New Transaction created with Date %s",transactionDate.toString()));
+		dataTableView.getItems().add(tmp);
         persistChanges();
+        return true;
     }
 	
 	@FXML 
 	protected void companyChanged() {
-		if(companySelector.getItems().size()==1) {
+		if(null==companySelector.getValue() && companySelector.getItems().size()==1) {
 			companySelector.setValue(companySelector.getItems().get(0));
+			return;
 		}
+		
 		Company actCompany=companySelector.getValue();
-		if(actCompany!=null && actCompany.equals(this.actCompany)) {
+		if(actCompany!=null && actCompany==this.actCompany) {
 			return;
 		} else {
 			disableNoCompany();
@@ -411,13 +438,12 @@ public class TransactionInputPaneController {
 	protected void accountChanged() {
 		Account actAccount=accountSelector.getValue();
 		
-		if(actAccount!=null && actAccount.equals(this.actAccount,true)) {
+		if(actAccount!=null && actAccount==this.actAccount) {
 			return;
 		} else {
 			disableNoAccount();
 			this.actAccount=actAccount;
 		}
-		this.equals(null);
 
 		if(actAccount!=null) {
 			if(!turnoverList.containsKey(actAccount)) {
@@ -511,44 +537,33 @@ public class TransactionInputPaneController {
 			    return; //Just abort
 			}
 		}
-		deletedItems.addAll(actTurnover.getTransactions());
-		deletedItems.add(actTurnover);
-		actAccount.getBalanceMonths().remove(actTurnover);
-		accountSelector.getValue().updateBalance();
 		
+		actAccount.getBalanceMonths().remove(actTurnover);
+		actAccount.updateBalance();
+		
+		backgroundDatabase.addToQueue(actTurnover,true);
+		backgroundDatabase.addToQueue(actAccount,false);
 		LocalDate monthDate=monthSelector.getValue();
 		monthSelector.setValue(null);
 		monthSelector.getItems().remove(monthDate);
 		actTurnover=null;
 		monthChanged();
 	}
-	
-	@FXML
-    protected void revertChanges() throws IOException {
-		companySelector.setItems(FXCollections.observableList(db.getCompanies()));
-		companySelector.setValue(null);
-		accountSelector.setValue(null);
-		monthSelector.setValue(null);
-		deletedItems.clear();
-		turnoverList.clear();
-		actMonthList=null;
-		disableNoCompany();
-		lastUpdate=ZonedDateTime.now();
-		companyChanged();
-    }
-	
+		
 	@FXML
     protected void persistChanges() throws IOException {
-		ArrayList<Account> dataList = new ArrayList<Account>();
+		for (Account account : turnoverList.keySet()) {
+			backgroundDatabase.addToQueue(account, false);
+		}
+		//ArrayList<Account> dataList = new ArrayList<Account>();
+		//dataList.addAll(turnoverList.keySet());		
+		//db.recursiveMergeData(dataList);
+		//db.deleteData(deletedItems);
 		
-		dataList.addAll(turnoverList.keySet());
-		db.mergeData(dataList);
-		db.deleteData(deletedItems);
 		lastUpdate=ZonedDateTime.now();
 		updateAccountingLabels();
 		ObservableList<MonthAccountTurnover> tmpList = turnoverList.get(actAccount);
 		turnoverList.clear();
-		deletedItems.clear();
 		turnoverList.put(actAccount, tmpList);
     }
 	
@@ -580,6 +595,8 @@ public class TransactionInputPaneController {
 	
 	public void updateData() {
 		internalUpdateData();
+		dataTableView.refresh();
+		companyChanged();
 	}
 	
 	protected void internalUpdateData() {
@@ -591,7 +608,6 @@ public class TransactionInputPaneController {
 		setVatTypes();
 		mergeTurnoverList();
 		lastUpdate=ZonedDateTime.now();
-		disableNoCompany();
 				
 		if(null!=locActCompany) {
 			Company tmpCompany=null;
@@ -602,8 +618,15 @@ public class TransactionInputPaneController {
 				}
 			}
 			if(null!=tmpCompany) {
-				companySelector.setValue(tmpCompany);
-				companyChanged();
+				db.loadAccountsToCompany(tmpCompany);
+				if(companySelector.getValue()!=tmpCompany) {
+					companySelector.setValue(tmpCompany);
+					companyChanged();
+				}
+				if(tmpCompany.getAccounts().size()==1) {
+					locActAccount=tmpCompany.getAccounts().get(0);
+				}
+					
 				if(null!=locActAccount) {
 					Account tmpAccount=null;
 					for(Account account:tmpCompany.getAccounts()){
@@ -614,8 +637,13 @@ public class TransactionInputPaneController {
 					}
 					if(null!=tmpAccount) {
 						db.loadMonthsToAccount(tmpAccount);
-						accountSelector.setValue(tmpAccount);
+						if(accountSelector.getValue()!=tmpAccount) {
+							accountSelector.setValue(tmpAccount);
+						} else {
+							actAccount=null;
+						}
 						accountChanged();
+						
 						if(null!=locActTurnover) {
 							MonthAccountTurnover tmpTurnover=null;
 							for(MonthAccountTurnover turnover:tmpAccount.getBalanceMonths()){
@@ -625,8 +653,7 @@ public class TransactionInputPaneController {
 								}
 							}
 							if(null!=tmpTurnover) {
-								monthSelector.setValue(tmpTurnover.getMonth());
-								monthChanged();								
+								monthSelector.setValue(tmpTurnover.getMonth());								
 							}
 						}
 					}

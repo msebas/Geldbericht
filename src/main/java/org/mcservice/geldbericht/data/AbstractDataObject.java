@@ -17,6 +17,8 @@
 package org.mcservice.geldbericht.data;
 
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -24,6 +26,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
+import javax.persistence.Transient;
 
 @Entity
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
@@ -31,16 +34,18 @@ public abstract class AbstractDataObject {
 	
 	@Id
 	@GeneratedValue(strategy= GenerationType.SEQUENCE)
-	protected final Long uid;
+	private Long uid;
 	protected ZonedDateTime lastChange=ZonedDateTime.now();
+	
+	@Transient
+	private ReentrantLock firstPersistenceLock;
 	
 	/**
 	 * @param uid
 	 * @param lastChange
 	 */
 	protected AbstractDataObject(Long uid, ZonedDateTime lastChange) {
-		super();
-		this.uid = uid;
+		this(uid);
 		this.lastChange = lastChange;
 	}
 	
@@ -50,6 +55,9 @@ public abstract class AbstractDataObject {
 	protected AbstractDataObject(Long uid) {
 		super();
 		this.uid = uid;
+		if(null==this.uid) {
+			firstPersistenceLock=new ReentrantLock();
+		}
 	}
 	/**
 	 * @return the uid
@@ -94,6 +102,74 @@ public abstract class AbstractDataObject {
 		return true;
 	}
 	
+	public class AbstractDataObjectDatabaseQueueEntry {
+		
+		final AbstractDataObject stateToPersist;
+		final boolean delete;
+				
+		/**
+		 * @param stateToPersist
+		 * @param objectReference
+		 * @param callback
+		 */
+		protected AbstractDataObjectDatabaseQueueEntry(AbstractDataObject stateToPersist,boolean delete) {
+			this.delete=delete;
+			this.stateToPersist = stateToPersist;
+		}
+		
+		public AbstractDataObject getStateToPersist() {
+			if(null==stateToPersist.getUid()) {
+				firstPersistenceLock.lock();
+			}
+			return stateToPersist;
+		}
+		
+		/**
+		 * Updates the {@code uid} of the corresponding object to the one of the persisted state.
+		 * Any inheriting class should call this method to get the UID updated on the first
+		 * Persistence of an object. Additional the UID of the {@code stateToPersist} is updated
+		 * to allow references to compare if changes happened while the state was in the queue. 
+		 *  
+		 * @param persistedState
+		 */
+		public void applyPersistedState(AbstractDataObject persistedState) {
+			if(isDelete()) {
+				return;
+			}
+			
+			if(null != firstPersistenceLock) {
+				if(null==AbstractDataObject.this.uid) {
+					AbstractDataObject.this.uid=persistedState.uid;
+					stateToPersist.uid=persistedState.uid;
+					firstPersistenceLock.unlock();
+				} else {
+					if(firstPersistenceLock.isHeldByCurrentThread()) {
+						firstPersistenceLock.unlock();
+					}
+				}
+			}
+			if(AbstractDataObject.this.uid!=persistedState.uid){
+				throw new RuntimeException("Uid of object changed over persining process."
+						+ "Probably an implementation error.");
+			}
+		}
+		
+		public boolean isDelete() {
+			return delete;
+		}
+		
+		public boolean isMerge() {
+			return !delete && stateToPersist.getUid()!=null;
+		}
+		
+		public boolean isCreate() {
+			return !delete && stateToPersist.getUid()==null;
+		}
+		
+	}
 	
+	public abstract List<AbstractDataObjectDatabaseQueueEntry> getPersistingList();
+	
+	public abstract List<AbstractDataObjectDatabaseQueueEntry> getDeleteList();
 
 }

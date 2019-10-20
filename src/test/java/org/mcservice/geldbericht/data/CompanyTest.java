@@ -86,19 +86,21 @@ class CompanyTest {
     	} else {
     		assertEquals(act,tstObj1.getLastChange());
     	}
+    	getter.invoke(tstObj1);
+    	getter.invoke(tstObj2);
     	act=tstObj1.getLastChange();
     	setter.invoke(tstObj1, val1);
     	assertTrue(val1.equals(getter.invoke(tstObj1)));
     	assertEquals(act,tstObj1.getLastChange());
-    	assertFalse(tstObj2.equals(tstObj1,false));
-    	assertFalse(tstObj1.equals(tstObj2,false));
+    	assertFalse(tstObj2.equals(tstObj1,true));
+    	assertFalse(tstObj1.equals(tstObj2,true));
     	setter.invoke(tstObj2, val1);
-    	assertTrue(tstObj2.equals(tstObj1,false));
-    	assertTrue(tstObj1.equals(tstObj2,false));
+    	assertTrue(tstObj2.equals(tstObj1,true));
+    	assertTrue(tstObj1.equals(tstObj2,true));
     	assertEquals(tstObj1.hashCode(),tstObj2.hashCode());
     	setter.invoke(tstObj1, val2);
-    	assertFalse(tstObj2.equals(tstObj1,false));
-    	assertFalse(tstObj1.equals(tstObj2,false));
+    	assertFalse(tstObj2.equals(tstObj1,true));
+    	assertFalse(tstObj1.equals(tstObj2,true));
     }
     
     @SuppressWarnings("unlikely-arg-type")

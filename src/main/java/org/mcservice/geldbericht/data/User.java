@@ -18,11 +18,14 @@ package org.mcservice.geldbericht.data;
 
 import java.lang.management.ManagementFactory;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import javax.persistence.Entity;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.Table;
+
+import org.mcservice.geldbericht.data.AbstractDataObject.AbstractDataObjectDatabaseQueueEntry;
 
 import de.mkammerer.argon2.Argon2;
 import de.mkammerer.argon2.Argon2Factory;
@@ -80,7 +83,7 @@ public class User extends AbstractDataObject {
 		passwordForcedIterations=0;
 		passwordScaledMemory=1;
 	}
-		
+	
 	String userName=null;
 	String passwordHash=null;
 
@@ -91,7 +94,7 @@ public class User extends AbstractDataObject {
 	}
 	
 	public User(User user) {
-		super(user.uid, user.lastChange);
+		super(user.getUid(), user.lastChange);
 		this.userName=user.userName;
 		this.passwordHash=user.passwordHash;
 	}
@@ -212,6 +215,20 @@ public class User extends AbstractDataObject {
 		} else if (!userName.equals(other.userName))
 			return false;
 		return true;
+	}
+
+	@Override
+	public List<AbstractDataObjectDatabaseQueueEntry> getPersistingList() {
+		return List.of(new AbstractDataObjectDatabaseQueueEntry(new User(this),false));
+	}
+
+	@Override
+	public List<AbstractDataObjectDatabaseQueueEntry> getDeleteList() {
+		if(null!=getUid()) {
+			return List.of(new AbstractDataObjectDatabaseQueueEntry(new User(this),true));
+		} else {
+			return null;
+		}		
 	}
 
 }

@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -41,11 +42,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.apache.log4j.Logger;
 import org.javamoney.moneta.Money;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -67,6 +68,7 @@ import org.mcservice.geldbericht.data.Transaction;
 import org.mcservice.geldbericht.data.VatType;
 import org.mcservice.geldbericht.data.converters.AccountStringConverter;
 import org.mcservice.geldbericht.data.converters.CompanyStringConverter;
+import org.mcservice.geldbericht.database.BackgroundDbThread;
 import org.mcservice.geldbericht.database.DbAbstractionLayer;
 import org.mcservice.javafx.BaseMatcherCallbackFilter;
 import org.mcservice.javafx.control.date.DayMonthField;
@@ -99,6 +101,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
 @Tag("GUI")
+@Tag("Active")
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.WARN)
 //@MockitoSettings(strictness = Strictness.STRICT_STUBS)
@@ -114,6 +117,9 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
 	
 	@Mock
 	DbAbstractionLayer db;
+	
+	@Mock
+	BackgroundDbThread backgroundDb;
 	
 	String okText=javafx.scene.control.ButtonType.OK.getText();
 	String cancelText=javafx.scene.control.ButtonType.CANCEL.getText();
@@ -139,6 +145,7 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
 	ComboBox<Account> accountSelector;
 	ComboBox<LocalDate> monthSelector;
 	Label balanceLabel;
+	Label actAccountingYearLabel;
 	
 	ZonedDateTime mockListCreation=null;
 	List<Company> companies=null;
@@ -148,14 +155,17 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
 	
 	int allMembers=0;
 
-	private Label actAccountingYearLabel;
+	
 	static List<VatType> vats=new ArrayList<VatType>(List.of(new VatType(1L,ZonedDateTime.now(),"Full","19 %", BigDecimal.valueOf(0.19),false,false),
 			new VatType(1L,ZonedDateTime.now(),"Half","12 %", BigDecimal.valueOf(0.12),true,false)));
 		
 	@Override 
 	public void start(Stage stage) throws Exception {
 		FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("TransactionInputPane.fxml"));
-		fxmlLoader.setControllerFactory(new ControllerFactory(db));
+		fxmlLoader.setControllerFactory(new ControllerFactory(db,backgroundDb));
+		
+		System.setProperty("GELDBERICHT_LOGFILE", "geldbericht.log");
+		App.logger=Logger.getLogger(App.class);
 		
 		scene = new Scene(fxmlLoader.load());
 		controller=fxmlLoader.getController();
@@ -459,8 +469,8 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     				new Transaction(1,Money.of(4, "EUR"),Money.of(0, "EUR"),12345,12,123,"Voucher",LocalDate.of(2019, 3, 12),vats.get(1), "1234", "Description")),
     		Arguments.of(new String[] {""," 12","12345","12","123","Voucher","123","","1234","Description"},
     				new Transaction(1,Money.of(0, "EUR"),Money.of(12, "EUR"),12345,12,123,"Voucher",LocalDate.of(2019, 3, 12),vats.get(1), "1234", "Description")),
-    		Arguments.of(new String[] {"","","","","","","","","",""},
-    				new Transaction(1,Money.of(0, "EUR"),Money.of(0, "EUR"),null,null,null,null,null,vats.get(1), null, null)),
+    		Arguments.of(new String[] {"","","","","","","43","","",""},
+    				new Transaction(1,Money.of(0, "EUR"),Money.of(0, "EUR"),null,null,null,null,LocalDate.of(LocalDate.now().getYear(), 3,4),vats.get(1), null, null)),
     		Arguments.of(new String[] {"EUR 4","Ostern 4 ","EE12345EE","EE12EE","EE123EE","Voucher","EE123WW","V","1234","Description"},
     				new Transaction(1,Money.of(4, "EUR"),Money.of(4, "EUR"),12345,12,123,"Voucher",LocalDate.of(2019, 3, 12),vats.get(1), "1234", "Description"))
         		);
@@ -480,11 +490,36 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	assertEquals(ref,dataTableView.getItems().get(0));
     }
 	
+	@Test
+	@CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 0)
+	public void CheckJumpBackToDateOnNoInput() {
+		Platform.runLater(() ->	descriptionOfTransactionInput.requestFocus());
+		
+		type(KeyCode.ENTER);
+		
+		assertTrue(dataTableView.getItems().isEmpty());
+		assertTrue(transactionDateInput.isFocused());
+		assertTrue(transactionDateInput.getStyleClass().contains("textfield-validation-error-editing"));
+		
+		type(KeyCode.TAB);
+		
+		assertTrue(transactionDateInput.getStyleClass().contains("textfield-validation-error"));
+	}
+	
     @Test
     @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 0)
     public void CheckDeleteEmptyMonth() {
     	assertEquals(accountSelector.getItems().get(0).getBalanceMonths().get(0).getMonth(),monthSelector.getValue());
     	MonthAccountTurnover month=accountSelector.getItems().get(0).getBalanceMonths().get(0);
+    	
+    	List<Object> res=new ArrayList<Object>();
+    	doAnswer(new Answer<Void>() {
+			public Void answer(InvocationOnMock invocation) {
+    	        Object[] args = invocation.getArguments();
+	        	res.add(args[0]);
+    	        return null;
+    	    }
+		}).when(backgroundDb).addToQueue(any(),Mockito.eq(true));
     	
     	clickOn(deleteActualMonthButton);
     	
@@ -492,20 +527,9 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	assertTrue(monthSelector.getItems().isEmpty());
     	assertTrue(insertPane.isDisabled());
     	
-    	List<Object> res=new ArrayList<Object>();
-    	doAnswer(new Answer<Void>() {
-			@SuppressWarnings("unchecked")
-			public Void answer(InvocationOnMock invocation) {
-    	        Object[] args = invocation.getArguments();
-    	        if(args[0] instanceof Collection) {
-    	        	res.addAll((Collection<? extends Object>) args[0]);
-    	        }
-    	        return null;
-    	      }}).when(db).deleteData(any());
-    	
-    	verify(db,times(0)).deleteData(any());
+    	verify(backgroundDb).addToQueue(any(),Mockito.eq(true));
     	clickOn(saveChangesButton);
-    	verify(db).deleteData(any());
+    	verify(backgroundDb).addToQueue(any(),Mockito.eq(true));
     	
     	assertTrue(res.contains(month));
     	assertEquals(1,res.size());
@@ -523,6 +547,35 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	Set<Node> labelMain=lookup(".label").queryAll();
     	
     	clickOn(deleteActualMonthButton);
+    	
+    	List<Object> resDel=new ArrayList<Object>();
+    	doAnswer(new Answer<Void>() {
+			@SuppressWarnings("unchecked")
+			public Void answer(InvocationOnMock invocation) {
+    	        Object[] args = invocation.getArguments();
+    	        if(args[0] instanceof Collection) {
+    	        	resDel.addAll((Collection<? extends Object>) args[0]);
+    	        } else {
+    	        	resDel.add(args[0]);
+    	        }
+    	        return null;
+	        }
+		}).when(backgroundDb).addToQueue(any(),eq(true));
+    	List<Object> resAdd=new ArrayList<Object>();
+    	doAnswer(new Answer<Void>() {
+			@SuppressWarnings("unchecked")
+			public Void answer(InvocationOnMock invocation) {
+    	        Object[] args = invocation.getArguments();
+    	        if(args[0] instanceof Collection) {
+    	        	resAdd.addAll((Collection<? extends Object>) args[0]);
+    	        } else {
+    	        	resAdd.add(args[0]);
+    	        }
+    	        return null;
+	        }
+		}).when(backgroundDb).addToQueue(any(),eq(false));
+    	
+    	verify(backgroundDb,times(0)).addToQueue(any(),eq(true));
     	
     	Set<Node> bsAll=lookup(".button").queryAll();
     	List<String> buttonTexts = new ArrayList<String>(2);
@@ -553,12 +606,27 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	
     	assertNotNull(bc);
     	
+    	verify(backgroundDb,times(0)).addToQueue(any(),eq(true));
     	clickOn(bc);
+    	verify(backgroundDb,times(1)).addToQueue(any(),eq(true));
     	
     	assertNull(monthSelector.getValue());
     	assertTrue(monthSelector.getItems().isEmpty());
     	verify(spyAccount,atLeast(1)).updateBalance();
     	assertTrue(insertPane.isDisabled());
+    	
+
+    	assertEquals(1,resDel.size());
+    	assertEquals(1,resAdd.size());
+    	assertTrue(resDel.contains(month));
+    	assertTrue(resAdd.contains(accountSelector.getItems().get(0)));
+    }
+    
+    @Test
+    @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 7)
+    public void CheckDeleteFilledMonthCancel() {
+    	assertEquals(accountSelector.getItems().get(0).getBalanceMonths().get(0).getMonth(),monthSelector.getValue());
+    	Set<Node> bsMain=lookup(".button").queryAll();
     	
     	List<Object> res=new ArrayList<Object>();
     	doAnswer(new Answer<Void>() {
@@ -567,24 +635,12 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	        Object[] args = invocation.getArguments();
     	        if(args[0] instanceof Collection) {
     	        	res.addAll((Collection<? extends Object>) args[0]);
+    	        } else {
+    	        	res.add(args[0]);
     	        }
     	        return null;
-    	      }}).when(db).deleteData(any());
-    	
-    	verify(db,times(0)).deleteData(any());
-    	clickOn(saveChangesButton);
-    	verify(db).deleteData(any());
-    	
-    	assertTrue(res.contains(month));
-    	assertTrue(res.containsAll(month.getTransactions()));
-    	assertEquals(1+month.getTransactions().size(),res.size());
-    }
-    
-    @Test
-    @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 7)
-    public void CheckDeleteFilledMonthCancel() {
-    	assertEquals(accountSelector.getItems().get(0).getBalanceMonths().get(0).getMonth(),monthSelector.getValue());
-    	Set<Node> bsMain=lookup(".button").queryAll();
+	        }
+		}).when(backgroundDb).addToQueue(any(),eq(true));
     	
     	clickOn(deleteActualMonthButton);
     	
@@ -598,22 +654,9 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
 				bc=(Button) node;
 		}
     	
+    	verify(backgroundDb,times(0)).addToQueue(any(),eq(true));
     	clickOn(bc);
-    	
-    	List<Object> res=new ArrayList<Object>();
-    	doAnswer(new Answer<Void>() {
-			@SuppressWarnings("unchecked")
-			public Void answer(InvocationOnMock invocation) {
-    	        Object[] args = invocation.getArguments();
-    	        if(args[0] instanceof Collection) {
-    	        	res.addAll((Collection<? extends Object>) args[0]);
-    	        }
-    	        return null;
-    	      }}).when(db).deleteData(any());
-    	
-    	verify(db,times(0)).deleteData(any());
-    	clickOn(saveChangesButton);
-    	verify(db).deleteData(any());
+    	verify(backgroundDb,times(0)).addToQueue(any(),eq(true));
     	
     	assertTrue(res.isEmpty());    	
     	assertEquals(accountSelector.getItems().get(0).getBalanceMonths().get(0).getMonth(),monthSelector.getValue());
@@ -641,6 +684,7 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     		type(KeyCode.TAB,KeyCode.DOWN);
     		write("Hugo123");    		
     	}
+    	sleep(50);
     	type(KeyCode.ENTER);
     	assertTrue(dataTableView.getItems().size()==1);
     	assertEquals(receiptsInput,scene.focusOwnerProperty().get());
@@ -662,6 +706,7 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	assertTrue(dataTableView.getItems().size()==0);
     	type(KeyCode.TAB,3);
     	for(int j=0;j<2;++j) {
+    		transactionDateInput.accept(LocalDate.now());
 	    	for(int i=0;i<dataTableView.getColumns().size()-2;++i) {
 	    		type(KeyCode.TAB);    		
 	    	}
@@ -678,6 +723,7 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	companies.get(0).getAccounts().set(0, spyAccount);
     	type(KeyCode.DOWN).type(KeyCode.TAB).type(KeyCode.DOWN).type(KeyCode.TAB);
     	write("4.18").type(KeyCode.ENTER);
+    	transactionDateInput.accept(LocalDate.now());
     	clickOn(insertLineButton);
     	reset(spyAccount);
     	clickOn(saveChangesButton);
@@ -685,7 +731,7 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	dataList.addAll(new ArrayList<Account>(List.of(spyAccount)));
     	
     	verify(spyAccount,atLeast(1)).updateBalance();
-    	verify(db,atLeast(1)).mergeData(dataList);    	
+    	verify(backgroundDb,atLeast(1)).addToQueue(spyAccount, false);    	
     }
     
     @Test
@@ -873,7 +919,9 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).appendTranaction(getDummyTransaction(7L, 0));
     	List<Transaction> transactions=locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).getTransactions();
     	
+    	transactionDateInput.accept(LocalDate.now());
     	Platform.runLater(()->{descriptionOfTransactionInput.requestFocus();});
+    	
     	sleep(10);
     	type(KeyCode.ENTER);
     	    	
@@ -890,10 +938,11 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     @CreateCompanies(value=1,accountNumber = 1,monthNumber = 1,transactionNumber = 3)
     public void CheckUpdateDataAddToActMonthForm() {
     	type(KeyCode.F5);
-    	    	
+    	
     	List<Company> locCompanies = new ArrayList<Company>(List.of(new Company(companies.get(0))));
     	List<Transaction> transactions=locCompanies.get(0).getAccounts().get(0).getBalanceMonths().get(0).getTransactions();
 
+    	transactionDateInput.accept(LocalDate.now());
     	Platform.runLater(()->{descriptionOfTransactionInput.requestFocus();});
     	sleep(10);
     	type(KeyCode.ENTER);
@@ -950,7 +999,6 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
     	write("720").type(KeyCode.ENTER);
     	months.add(MonthAccountTurnover.getEmptyMonthAccountTurnover(LocalDate.of(2020,6,1), locCompanies.get(0).getAccounts().get(0)));
     	
-    	    	
     	reset(db);
     	when(db.getCompanies()).thenReturn(locCompanies);
     	    	

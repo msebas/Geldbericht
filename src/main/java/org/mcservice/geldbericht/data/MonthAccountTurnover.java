@@ -19,6 +19,7 @@ package org.mcservice.geldbericht.data;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.money.MonetaryAmount;
@@ -65,6 +66,8 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	boolean monthBlocked=false;
 	@Transient
 	protected boolean transactionsLoaded=false;
+	@Transient
+	protected boolean changed=false;
 	
 
 	public static MonthAccountTurnover getEmptyMonthAccountTurnover(LocalDate month, Account account) {
@@ -72,6 +75,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 		result.month=month;
 		result.account=account;
 		result.transactions=new ArrayList<Transaction>();
+		result.transactionsLoaded=true;
 		MonetaryAmount balance=result.account.getBalance();
 		MonetaryAmountFactory<? extends MonetaryAmount> factory = balance.getFactory().setCurrency(balance.getCurrency());
 		result.monthBalanceAssets=factory.setNumber(0).create();
@@ -82,12 +86,18 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 		result.initialDebt=result.initialDebt.multiply(-1);
 		result.finalDebt=factory.setAmount(result.initialDebt).create();
 		result.monthBlocked=false;
+		result.changed=true;
+		result.transactionsLoaded=true;
 		
 		return result;
 	}
 	
 	private MonthAccountTurnover() {
 		super(null,ZonedDateTime.now());
+	}
+	
+	private MonthAccountTurnover(Long uid) {
+		super(uid,ZonedDateTime.now());
 	}
 	
 	/**
@@ -108,7 +118,12 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 			LocalDate month, Account account, MonetaryAmount monthBalanceAssets, MonetaryAmount initialAssets,
 			MonetaryAmount finalAssets, MonetaryAmount monthBalanceDebt, MonetaryAmount initialDebt, MonetaryAmount finalDebt) {
 		super(uid,lastChange);
+		if(null==uid) {
+			this.changed=true;
+			this.transactionsLoaded=true;
+		}
 		this.transactions = transactions;
+		this.transactionsLoaded=true;
 		this.month = month;
 		this.account = account;
 		this.monthBalanceAssets = monthBalanceAssets;
@@ -121,7 +136,17 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	}
 
 	public MonthAccountTurnover(MonthAccountTurnover otherMonthAccountTurnover) {
-		super(otherMonthAccountTurnover.uid,otherMonthAccountTurnover.lastChange);
+		this(otherMonthAccountTurnover,null);
+		this.transactions=new ArrayList<>();
+		for (Transaction transaction : otherMonthAccountTurnover.transactions) {
+			Transaction tmp = new Transaction(transaction);
+			this.transactions.add(tmp);
+		}
+		this.transactionsLoaded=true;
+	}
+	
+	MonthAccountTurnover(MonthAccountTurnover otherMonthAccountTurnover,List<Transaction> transactions) {
+		super(otherMonthAccountTurnover.getUid(),otherMonthAccountTurnover.lastChange);
 		this.month = otherMonthAccountTurnover.month;
 		this.account = otherMonthAccountTurnover.account;
 		this.monthBalanceAssets = otherMonthAccountTurnover.monthBalanceAssets;
@@ -131,16 +156,20 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 		this.initialDebt = otherMonthAccountTurnover.initialDebt;
 		this.finalDebt = otherMonthAccountTurnover.finalDebt;
 		this.monthBlocked = otherMonthAccountTurnover.monthBlocked;
-		for (Transaction transaction : otherMonthAccountTurnover.transactions) {
-			Transaction tmp = new Transaction(transaction);
-			this.transactions.add(tmp);
-		}		
+		this.changed=otherMonthAccountTurnover.changed;
+		if(transactions==null) {
+			this.transactions=otherMonthAccountTurnover.transactions;
+		} else {
+			this.transactions=transactions;
+			this.transactionsLoaded=true;
+		}
 	}
 	
 	/**
 	 * @param runningTransaction The runningTransaction to append
 	 */
 	public void appendTranaction(Transaction transaction) {
+		changed=true;
 		transactionsLoaded=true;
 		transaction.setNumber(this.transactions.size());
 		this.transactions.add(transaction);
@@ -151,6 +180,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	 * @param number The number of the runningTransaction the should be removed
 	 */
 	public void removeTranaction(int number) {
+		changed=true;
 		transactionsLoaded=true;
 		this.transactions.remove(number);
 		updateBalance();
@@ -159,6 +189,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 	/**
 	 */
 	public void removeAllTranactions() {
+		changed=true;
 		transactionsLoaded=true;
 		this.transactions.clear();
 		this.lastChange=ZonedDateTime.now();
@@ -236,6 +267,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 				( this.initialAssets!=null && this.initialAssets.equals(initialAssets) )
 				)
 			return;
+		changed=true;
 		this.initialAssets = initialAssets; 
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -248,6 +280,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 				( this.initialDebt!=null && this.initialDebt.equals(initialDebt) )
 				)
 			return;
+		changed=true;
 		this.initialDebt = initialDebt; 
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -289,8 +322,9 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 				nBalanceDebt=nBalanceDebt.add(transaction.getSpending());
 				if(transaction.getLastChange().isAfter(this.getLastChange())) {
 					this.lastChange=transaction.getLastChange();
-					changed=true;
 				}
+				if(transaction.isChangedAmount())
+					changed=true;
 				++i;
 				transaction.setNumber(i);
 			}
@@ -310,8 +344,9 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 			finalAssets=factory.setNumber(0).create();
 			finalDebt=finalBalance.multiply(-1);
 		}
-		
-		return monthBalanceAssets.subtract(monthBalanceDebt).subtract(change).isZero() && changed;
+		changed=!monthBalanceAssets.subtract(monthBalanceDebt).subtract(change).isZero() || changed;
+		this.changed=this.changed || changed;
+		return changed;
 	}
 
 	@Override
@@ -349,7 +384,7 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 		if (getClass() != obj.getClass())
 			return false;
 		MonthAccountTurnover other = (MonthAccountTurnover) obj;
-		if (this.uid!=other.uid)
+		if (this.getUid()!=other.getUid())
 			return false;
 		if (account == null) {
 			if (other.account != null)
@@ -393,12 +428,16 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 			return false;
 		if (monthBlocked != other.monthBlocked)
 			return false;
-		if (transactions == null || other.transactions == null) {
-			if (other.transactions != transactions)
+		if(rec) {
+			if (transactions == null || other.transactions == null) {
+				if (other.transactions != transactions) {
+					return false;
+				}
+			} else if (transactions.size()!=other.transactions.size() || 
+					!transactions.containsAll(other.transactions)) {
 				return false;
-		} else if (transactions.size()!=other.transactions.size() || 
-				!transactions.containsAll(other.transactions))
-			return false;
+			}
+		}
 		return true;
 	}
 
@@ -418,4 +457,83 @@ public class MonthAccountTurnover extends AbstractDataObject implements Comparab
 		this.monthBlocked = monthBlocked;
 		this.lastChange=ZonedDateTime.now();
 	}
+	
+	public class MonthAccountTurnoverDatabaseQueueEntry extends AbstractDataObjectDatabaseQueueEntry{
+
+		protected MonthAccountTurnoverDatabaseQueueEntry(MonthAccountTurnover stateToPersist, boolean delete) {
+			super(stateToPersist, delete);
+		}
+
+		@Override
+		public void applyPersistedState(AbstractDataObject persistedState) {
+			super.applyPersistedState(persistedState);
+			if(changed) {
+				if(transactionsLoaded) {
+					if(MonthAccountTurnover.this.equals(persistedState,true)) {
+						changed=false;
+					}
+				} else {
+					if(MonthAccountTurnover.this.equals(persistedState,false)) {
+						changed=false;
+					}
+				}
+			}
+		}
+		
+	}
+
+	@Override
+	public List<AbstractDataObjectDatabaseQueueEntry> getPersistingList() {
+		LinkedList<AbstractDataObjectDatabaseQueueEntry> res=new LinkedList<>();
+		updateBalance();
+		if(changed) {
+			res.addAll(this.account.getPersistingList());
+		} else if(transactionsLoaded){
+			for (Transaction transaction : transactions) {
+				List<AbstractDataObjectDatabaseQueueEntry> innerRes=transaction.getPersistingList();
+				if (innerRes!=null) {
+					res.addAll(innerRes);
+				}
+			}
+		}
+		
+		if(res.size()>0) {
+			return res;
+		} else {
+			return null;
+		}
+	}
+	
+	@Override
+	public List<AbstractDataObjectDatabaseQueueEntry> getDeleteList() {
+		LinkedList<AbstractDataObjectDatabaseQueueEntry> res=new LinkedList<>();
+		
+		for (Transaction transaction : transactions) {
+			List<AbstractDataObjectDatabaseQueueEntry> tmp = transaction.getDeleteList();
+			if(null!=tmp) {
+				res.addAll(tmp);
+			}
+		}
+		if(this.getUid()!=null) {
+			MonthAccountTurnover tmp = new MonthAccountTurnover(this);
+			tmp.transactions.clear();
+			MonthAccountTurnoverDatabaseQueueEntry deleteMe = new MonthAccountTurnoverDatabaseQueueEntry(tmp,true);
+			res.add(deleteMe);
+		}
+		
+		if(res.size()>0) {
+			return res;
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * @return the changed
+	 */
+	public boolean isChanged() {
+		return changed;
+	}
+
+	
 }

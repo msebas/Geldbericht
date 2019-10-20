@@ -18,6 +18,8 @@ package org.mcservice.geldbericht.data;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
+import java.util.List;
+
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.validation.constraints.Size;
@@ -85,7 +87,7 @@ public class VatType  extends AbstractDataObject {
 	}
 	
 	public VatType(VatType otherVatType) {
-		super(otherVatType.uid, otherVatType.lastChange);
+		super(otherVatType.getUid(), otherVatType.lastChange);
 		this.name = otherVatType.name;
 		this.shortName = otherVatType.shortName;
 		this.value = otherVatType.value;
@@ -234,5 +236,20 @@ public class VatType  extends AbstractDataObject {
 			return false;
 		return true;
 	}
+
+	@Override
+	public List<AbstractDataObjectDatabaseQueueEntry> getPersistingList() {
+		return List.of(new AbstractDataObjectDatabaseQueueEntry(new VatType(this),false));
+	}
+
+	@Override
+	public List<AbstractDataObjectDatabaseQueueEntry> getDeleteList() {
+		if(null!=getUid()) {
+			return List.of(new AbstractDataObjectDatabaseQueueEntry(new VatType(this),true));
+		} else {
+			return null;
+		}
+	}
+
 
 }

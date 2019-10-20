@@ -34,6 +34,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import javax.money.MonetaryAmount;
 import org.javamoney.moneta.Money;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -49,7 +50,7 @@ import org.mcservice.geldbericht.data.Company;
 import org.mcservice.geldbericht.database.DbAbstractionLayer;
 import org.mockito.Mock;
 import org.mockito.quality.Strictness;
-import com.sun.javafx.scene.control.LabeledText;
+import javafx.scene.text.Text;
 
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -258,7 +259,7 @@ class AccountManagerTest extends MockedApplicationTest{
     @CreateCompanies()
     public void selectACompanySelectNextCompany() {
     	clickOn(companySelector);
-    	LabeledText l = getComboPopupList(this).get(0);
+    	Text l = getComboPopupList(this).get(0);
     	clickOn(l);
     	    	
     	assertTrue(companySelector.getValue()==this.companies.get(0));
@@ -336,7 +337,7 @@ class AccountManagerTest extends MockedApplicationTest{
     @CreateCompanies()
     public void CheckMessageUnsavedChangesCancel() {
     	clickOn(companySelector);
-    	LabeledText l = getComboPopupList(this).get(0);
+    	Text l = getComboPopupList(this).get(0);
     	clickOn(l);
     	
     	clickOn("#addButton");
@@ -376,7 +377,7 @@ class AccountManagerTest extends MockedApplicationTest{
     @CreateCompanies()
     public void CheckMessageUnsavedChangesOK() {
     	clickOn(companySelector);
-    	LabeledText l = getComboPopupList(this).get(0);
+    	Text l = getComboPopupList(this).get(0);
     	clickOn(l);
     	
     	clickOn("#addButton");

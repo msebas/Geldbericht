@@ -45,6 +45,7 @@ import org.mcservice.geldbericht.data.MonthAccountTurnover;
 import org.mcservice.geldbericht.data.Transaction;
 import org.mcservice.geldbericht.data.User;
 import org.mcservice.geldbericht.data.VatType;
+import org.mcservice.geldbericht.data.AbstractDataObject.AbstractDataObjectDatabaseQueueEntry;
 
 public class DbAbstractionLayer {
 	
@@ -203,7 +204,10 @@ public class DbAbstractionLayer {
 	}
 	
 	public void loadAccountsToCompany(Company company){
-		//TODO check if initialized before session is created..
+		if(company.isAccountsLoaded()) {
+			return;
+		}
+		
 		Session session=factory.openSession();
 		try {
 			session.refresh(company);
@@ -215,7 +219,10 @@ public class DbAbstractionLayer {
 	}
 
 	public void loadMonthsToAccount(Account account){
-		//TODO check if initialized before session is created..
+		if(account.isMonthsLoaded()) {
+			return;
+		}
+		
 		Session session=factory.openSession();
 		try {
 			session.refresh(account);
@@ -227,10 +234,12 @@ public class DbAbstractionLayer {
 	}
 
 	public void loadTransactionsToMonth(MonthAccountTurnover month){
-		//TODO check if initialized before session is created..
+		if(month.isTransactionsLoaded()) {
+			return;
+		}
+
 		Session session=factory.openSession();
 		try {
-			
 			session.refresh(month);
 			Hibernate.initialize(month.getTransactions());
 		} finally {
@@ -375,7 +384,36 @@ public class DbAbstractionLayer {
 		}
 	}
 	
-	public List<? extends AbstractDataObject> mergeData(List<? extends AbstractDataObject> dataList) {
+	public void mergeDataPersistanceQueue(List<AbstractDataObjectDatabaseQueueEntry> dataList) {
+		Session session=factory.getCurrentSession();
+		org.hibernate.Transaction transaction=session.beginTransaction();
+		try {
+			for (AbstractDataObjectDatabaseQueueEntry queueEntry : dataList) {
+				if(null==queueEntry)
+					continue;
+				AbstractDataObject obj = queueEntry.getStateToPersist();
+				if(queueEntry.isCreate()) {
+					Long uid=(Long) session.save(obj);
+					obj=session.byId(obj.getClass()).getReference(uid);
+				} else if (queueEntry.isMerge()){
+					session.merge(obj);
+				} else if (queueEntry.isDelete() && null!=obj.getUid()) {
+					session.delete(obj);
+				}
+				queueEntry.applyPersistedState(obj);
+			}
+			
+			transaction.commit();
+			transaction=null;
+		} finally {
+			if(null!=transaction) {
+				transaction.rollback();
+			}
+			session.close();
+		}
+	}
+	
+	public List<? extends AbstractDataObject> recursiveMergeData(List<? extends AbstractDataObject> dataList) {
 		//recursiveLoadData(dataList);
 		Session session=factory.getCurrentSession();
 		org.hibernate.Transaction transaction=session.beginTransaction();
@@ -403,7 +441,7 @@ public class DbAbstractionLayer {
 				internalMergeData(((Company) obj).getAccounts(), session);
 			} else if(obj instanceof Account) {
 				Account act=(Account) obj;
-				if(act.isCheckMonths())
+				if(act.isMonthsLoaded())
 					internalMergeData(act.getBalanceMonths(), session);
 			} else if(obj instanceof MonthAccountTurnover) {
 				MonthAccountTurnover month = ((MonthAccountTurnover) obj);

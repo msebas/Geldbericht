@@ -36,6 +36,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mcservice.geldbericht.data.AbstractDataObject.AbstractDataObjectDatabaseQueueEntry;
+import org.mcservice.geldbericht.data.MonthAccountTurnover.MonthAccountTurnoverDatabaseQueueEntry;
 import org.mockito.Mockito;
 
 class MonthAccountTurnoverTest {
@@ -291,4 +293,197 @@ class MonthAccountTurnoverTest {
     
     
 
+    @Test 
+    public void checkGetPersistingListChanged() {
+    	Money zero=Money.of(0,"EUR"),one=Money.of(1,"EUR");
+    	Account accountMock=Mockito.mock(Account.class);
+    	MonthAccountTurnover tstObj=new MonthAccountTurnover(1L, ZonedDateTime.now(), new ArrayList<>(), 
+    			null, accountMock,one,zero,one,zero,one,one);
+    	List<AbstractDataObjectDatabaseQueueEntry> answerList=List.of(Mockito.mock(MonthAccountTurnoverDatabaseQueueEntry.class));
+    	Mockito.when(accountMock.getPersistingList()).thenReturn(answerList);
+    	List<AbstractDataObjectDatabaseQueueEntry> resList=tstObj.getPersistingList();
+    	
+    	Mockito.verify(accountMock).getPersistingList();
+    	assertEquals(1,resList.size());
+    	assertEquals(answerList.get(0),resList.get(0));
+    	assertEquals(zero,tstObj.getFinalAssets());
+    	assertEquals(one,tstObj.getFinalDebt());
+    }
+    
+    @Test 
+    public void checkGetPersistingListNoChangeTransactionsLoaded() throws Exception{
+    	Money zero=Money.of(0,"EUR");
+    	List<AbstractDataObjectDatabaseQueueEntry> answerList=List.of(Mockito.mock(MonthAccountTurnoverDatabaseQueueEntry.class));
+    	ArrayList<Transaction> transactionList=new ArrayList<>(
+    			List.of(Mockito.mock(Transaction.class),Mockito.mock(Transaction.class)));
+    	Mockito.when(transactionList.get(0).getPersistingList()).thenReturn(answerList);
+    	Mockito.when(transactionList.get(1).getPersistingList()).thenReturn(null);
+    	Mockito.when(transactionList.get(0).getReceipts()).thenReturn(zero);
+    	Mockito.when(transactionList.get(1).getReceipts()).thenReturn(zero);
+    	Mockito.when(transactionList.get(0).getSpending()).thenReturn(zero);
+    	Mockito.when(transactionList.get(1).getSpending()).thenReturn(zero);
+    	Mockito.when(transactionList.get(0).getLastChange()).thenReturn(ZonedDateTime.now());
+    	Mockito.when(transactionList.get(1).getLastChange()).thenReturn(ZonedDateTime.now());
+    	Mockito.when(transactionList.get(0).compareTo(transactionList.get(1))).thenReturn(1);
+    	Mockito.when(transactionList.get(1).compareTo(transactionList.get(0))).thenReturn(-1);
+    	Account accountMock=Mockito.mock(Account.class);
+    	MonthAccountTurnover tstObj=new MonthAccountTurnover(1L, ZonedDateTime.now(), transactionList, 
+    			null, accountMock,zero,zero,zero,zero,zero,zero);
+    	tstObj.getTransactions();
+    	
+    	List<AbstractDataObjectDatabaseQueueEntry> resList=tstObj.getPersistingList();
+    	
+    	Mockito.verify(transactionList.get(0)).getPersistingList();
+    	Mockito.verify(transactionList.get(1)).getPersistingList();
+    	Mockito.verify(transactionList.get(0)).getReceipts();
+    	Mockito.verify(transactionList.get(1)).getReceipts();
+    	assertEquals(1,resList.size());
+    	assertEquals(answerList.get(0),resList.get(0));
+    }
+    
+    @Test 
+    public void checkGetPersistingListNoChange() {
+    	Money zero=Money.of(0,"EUR");
+    	Account accountMock=Mockito.mock(Account.class);
+    	MonthAccountTurnover tstObj=new MonthAccountTurnover(1L, ZonedDateTime.now(), new ArrayList<>(), 
+    			null, accountMock,zero,zero,zero,zero,zero,zero);
+    	
+    	Mockito.verify(accountMock,Mockito.times(0)).getPersistingList();
+    	assertNull(tstObj.getPersistingList());
+    }
+
+    @Test 
+    public void checkApplyPersistedStateNullNotChanged() {
+    	Money zero=Money.of(0,"EUR");
+    	Account accountMock=Mockito.mock(Account.class);
+    	MonthAccountTurnover month=new MonthAccountTurnover(null, ZonedDateTime.now(), new ArrayList<>(), 
+    			null, accountMock,zero,zero,zero,zero,zero,zero);
+    	MonthAccountTurnover persistedState=new MonthAccountTurnover(1L, ZonedDateTime.now(), new ArrayList<>(), 
+    			null, accountMock,zero,zero,zero,zero,zero,zero);
+    	
+    	MonthAccountTurnover.MonthAccountTurnoverDatabaseQueueEntry tstObj=
+    			month.new MonthAccountTurnoverDatabaseQueueEntry(month, false);
+    	assertEquals(month,tstObj.getStateToPersist());
+    	
+    	tstObj.applyPersistedState(persistedState);
+    	assertEquals(1L,month.getUid());
+    }
+
+    @Test 
+    public void checkApplyPersistedStateChangedNoTransactionsLoadedNoChangedState() throws Exception{
+    	Money zero=Money.of(0,"EUR"),one=Money.of(1,"EUR");
+    	Account accountMock=Mockito.mock(Account.class);
+    	MonthAccountTurnover month=new MonthAccountTurnover(1L, ZonedDateTime.now(), null, 
+    			null, accountMock,zero,zero,zero,zero,zero,zero);
+    	month.setInitialAssets(one);
+    	MonthAccountTurnover.class.getDeclaredField("transactionsLoaded").setAccessible(true);
+    	MonthAccountTurnover.class.getDeclaredField("transactionsLoaded").set(month,false);
+    	MonthAccountTurnover.class.getDeclaredField("transactionsLoaded").setAccessible(false);
+    	
+    	MonthAccountTurnover.MonthAccountTurnoverDatabaseQueueEntry tstObj=
+    			month.new MonthAccountTurnoverDatabaseQueueEntry(month, false);
+    	assertEquals(month,tstObj.getStateToPersist());
+    	
+    	assertTrue(month.isChanged());
+    	assertFalse(month.isTransactionsLoaded());
+    	tstObj.applyPersistedState(month);
+    	assertFalse(month.isChanged());
+    }
+    
+    @Test 
+    public void checkApplyPersistedStateChangedNoTransactionsLoadedChangedState()  throws Exception{
+    	Money zero=Money.of(0,"EUR"),one=Money.of(1,"EUR");
+    	Account accountMock=Mockito.mock(Account.class);
+    	MonthAccountTurnover month=new MonthAccountTurnover(1L, ZonedDateTime.now(), null, 
+    			null, accountMock,zero,zero,zero,zero,zero,zero);
+    	month.setInitialAssets(one);
+    	MonthAccountTurnover.class.getDeclaredField("transactionsLoaded").setAccessible(true);
+    	MonthAccountTurnover.class.getDeclaredField("transactionsLoaded").set(month,false);
+    	MonthAccountTurnover.class.getDeclaredField("transactionsLoaded").setAccessible(false);
+    	MonthAccountTurnover persistedState=new MonthAccountTurnover(1L, ZonedDateTime.now(), null, 
+    			null, accountMock,zero,zero,zero,zero,zero,zero);
+    	
+    	MonthAccountTurnover.MonthAccountTurnoverDatabaseQueueEntry tstObj=
+    			month.new MonthAccountTurnoverDatabaseQueueEntry(persistedState, false);
+    	assertEquals(persistedState,tstObj.getStateToPersist());
+    	
+    	assertTrue(month.isChanged());
+    	assertFalse(month.isTransactionsLoaded());
+    	tstObj.applyPersistedState(persistedState);
+    	assertTrue(month.isChanged());
+    }
+    
+
+    @Test 
+    public void checkApplyPersistedStateChangedTransactionsLoaded() {
+    	Money zero=Money.of(0,"EUR"),one=Money.of(1,"EUR");
+    	Account accountMock=Mockito.mock(Account.class);
+    	MonthAccountTurnover month=new MonthAccountTurnover(1L, ZonedDateTime.now(), new ArrayList<>(), 
+    			null, accountMock,zero,zero,zero,zero,zero,zero);
+    	month.setInitialAssets(one);
+    	
+    	MonthAccountTurnover.MonthAccountTurnoverDatabaseQueueEntry tstObj=
+    			month.new MonthAccountTurnoverDatabaseQueueEntry(month, false);
+    	assertEquals(month,tstObj.getStateToPersist());
+    	
+    	assertTrue(month.isChanged());
+    	assertTrue(month.isTransactionsLoaded());
+    	tstObj.applyPersistedState(month);
+    	assertFalse(month.isChanged());
+    }
+    
+    @Test
+    public void checkGetDeleteListNullEmpty() {
+    	Money zero=Money.of(0,"EUR"),one=Money.of(1,"EUR");
+    	Account accountMock=Mockito.mock(Account.class);
+    	MonthAccountTurnover month=new MonthAccountTurnover(null, ZonedDateTime.now(), new ArrayList<>(), 
+    			null, accountMock,zero,zero,zero,zero,zero,zero);
+    	
+    	assertNull(month.getDeleteList());
+    }
+    
+    @Test
+    public void checkGetDeleteListNullTransactions() {
+    	Money zero=Money.of(0,"EUR");
+    	List<AbstractDataObjectDatabaseQueueEntry> answerList=List.of(Mockito.mock(MonthAccountTurnoverDatabaseQueueEntry.class));
+    	ArrayList<Transaction> transactionList=new ArrayList<>(
+    			List.of(Mockito.mock(Transaction.class),Mockito.mock(Transaction.class)));
+    	Mockito.when(transactionList.get(0).getDeleteList()).thenReturn(answerList);
+    	Mockito.when(transactionList.get(1).getDeleteList()).thenReturn(null);
+    	MonthAccountTurnover tstObj=new MonthAccountTurnover(null, ZonedDateTime.now(), transactionList, 
+    			null, null,zero,zero,zero,zero,zero,zero);
+    	
+    	List<AbstractDataObjectDatabaseQueueEntry> resList=tstObj.getDeleteList();
+    	
+    	Mockito.verify(transactionList.get(0)).getDeleteList();
+    	Mockito.verify(transactionList.get(1)).getDeleteList();
+    	assertEquals(1,resList.size());
+    	assertEquals(answerList.get(0),resList.get(0));
+    }
+    
+    @Test
+    public void checkGetDeleteListIdTransactions() {
+    	Money zero=Money.of(0,"EUR");
+    	List<AbstractDataObjectDatabaseQueueEntry> answerList=List.of(Mockito.mock(MonthAccountTurnoverDatabaseQueueEntry.class));
+    	ArrayList<Transaction> transactionList=new ArrayList<>(
+    			List.of(Mockito.mock(Transaction.class),Mockito.mock(Transaction.class)));
+    	Mockito.when(transactionList.get(0).getDeleteList()).thenReturn(answerList);
+    	Mockito.when(transactionList.get(1).getDeleteList()).thenReturn(null);
+    	MonthAccountTurnover tstObj=new MonthAccountTurnover(1L, ZonedDateTime.now(), transactionList, 
+    			null, null,zero,zero,zero,zero,zero,zero);
+    	
+    	List<AbstractDataObjectDatabaseQueueEntry> resList=tstObj.getDeleteList();
+    	
+    	Mockito.verify(transactionList.get(0)).getDeleteList();
+    	Mockito.verify(transactionList.get(1)).getDeleteList();
+    	assertEquals(2,resList.size());
+    	assertEquals(answerList.get(0),resList.get(0));
+    	assertTrue(resList.get(1).isDelete());
+    	MonthAccountTurnover resState = (MonthAccountTurnover) resList.get(1).getStateToPersist();
+    	assertEquals(1L,resState.getUid());
+    	assertTrue(resState.getTransactions().isEmpty());
+    	resList.get(1).applyPersistedState(null);
+    }
+    
+    //TODO Add missing tests
 }

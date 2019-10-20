@@ -45,13 +45,12 @@ import org.mcservice.javafx.control.table.factories.SelectorColumnFactory;
 import org.mockito.Mockito;
 import org.testfx.api.FxRobot;
 
-import com.sun.javafx.scene.control.LabeledText;
-
 import javafx.beans.property.ObjectProperty;
 import javafx.scene.Node;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.text.Text;
 
 public class TestTypes {
 	
@@ -75,25 +74,25 @@ public class TestTypes {
         return null;
     }
 	
-	public static List<LabeledText> getComboPopupList(FxRobot node) {
+	public static List<Text> getComboPopupList(FxRobot node) {
 		Node t=node.lookup(".combo-box-popup").query();
     	Set<Node> b=t.lookupAll(".text");
-    	List<LabeledText> l=new ArrayList<LabeledText>();
+    	List<Text> l=new ArrayList<Text>();
     	for (Node labeledText : b) {
-			if(labeledText instanceof LabeledText && ((LabeledText) labeledText).getText().length()!=0) {
-				l.add((LabeledText) labeledText);
+			if(labeledText instanceof Text && ((Text) labeledText).getText().length()!=0) {
+				l.add((Text) labeledText);
 			}
 		}
 		return l;
 	}
 	
-	public static List<LabeledText> getChoicePopupList(FxRobot node) {
+	public static List<Text> getChoicePopupList(FxRobot node) {
 		Node t=node.lookup(".choice-box-popup").query();
     	Set<Node> b=t.lookupAll(".text");
-    	List<LabeledText> l=new ArrayList<LabeledText>();
+    	List<Text> l=new ArrayList<Text>();
     	for (Node labeledText : b) {
-			if(labeledText instanceof LabeledText && ((LabeledText) labeledText).getText().length()!=0) {
-				l.add((LabeledText) labeledText);
+			if(labeledText instanceof Text && ((Text) labeledText).getText().length()!=0) {
+				l.add((Text) labeledText);
 			}
 		}
 		return l;

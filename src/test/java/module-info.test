@@ -24,6 +24,8 @@ module org.mcservice.geldbericht {
 	requires org.hibernate.orm.envers;
 	requires javafx.base;
 	requires javafx.graphics;
+	requires javax.money;
+	requires 
 	
 	//TODO remove these for non test builds
 	requires org.junit.jupiter.api;
@@ -32,6 +34,8 @@ module org.mcservice.geldbericht {
 	requires hamcrest.core;
 	requires org.mockito;
 	requires mockito.junit.jupiter;
+	requires java.money;
+	requires org.hibernate.validator;
 
     opens org.mcservice.geldbericht to javafx.fxml;
     opens org.mcservice.geldbericht.data to org.hibernate.orm.core,javafx.base;

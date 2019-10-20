@@ -19,6 +19,7 @@ package org.mcservice.geldbericht.data;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.persistence.Entity;
@@ -27,6 +28,7 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
@@ -61,12 +63,15 @@ public class Company extends AbstractDataObject{
 	@TableViewConverter(converter=TrimStringConverter.class)
 	String companyBookkeepingAppointment=null;
 	
+	@Transient
+	boolean accountsLoaded = false;
+	
 	private Company() {
 		super(null,ZonedDateTime.now());
 	}
 	
 	public Company(Company otherCompany) {
-		super(otherCompany.uid,otherCompany.lastChange);
+		super(otherCompany.getUid(),otherCompany.lastChange);
 		this.companyName=otherCompany.companyName;
 		this.companyNumber=otherCompany.companyNumber;
 		this.companyBookkeepingAppointment=otherCompany.companyBookkeepingAppointment;
@@ -75,6 +80,7 @@ public class Company extends AbstractDataObject{
 			tmp.company=this;
 			accounts.add(tmp);
 		}
+		accountsLoaded=true;
 	}
 
 	/**
@@ -90,6 +96,7 @@ public class Company extends AbstractDataObject{
 		this.companyName = companyName;
 		this.companyNumber = companyNumber;
 		this.companyBookkeepingAppointment = companyBookkeepingAppointment;
+		accountsLoaded=true;
 	}
 
 	/**
@@ -107,12 +114,14 @@ public class Company extends AbstractDataObject{
 		this.companyName = companyName;
 		this.companyNumber = companyNumber;
 		this.companyBookkeepingAppointment = companyBookkeepingAppointment;
+		accountsLoaded=true;
 	}
 
 	/**
 	 * @return the accounts
 	 */
 	public List<Account> getAccounts() {
+		accountsLoaded=true;
 		return accounts;
 	}
 	
@@ -124,6 +133,7 @@ public class Company extends AbstractDataObject{
 				( this.accounts!=null && this.accounts.equals(accounts) )
 				)
 			return;
+		accountsLoaded=true;
 		this.accounts = accounts;
 		this.lastChange=ZonedDateTime.now();
 	}
@@ -201,10 +211,7 @@ public class Company extends AbstractDataObject{
 		if (getClass() != obj.getClass())
 			return false;
 		Company other = (Company) obj;
-		if (uid!=other.uid) {
-			return false;
-		}
-		if (lastChange.equals(other.lastChange)) {
+		if (getUid()!=other.getUid()) {
 			return false;
 		}
 		return true;			
@@ -218,21 +225,23 @@ public class Company extends AbstractDataObject{
 		if (getClass() != obj.getClass())
 			return false;
 		Company other = (Company) obj;
-		if (uid!=other.uid) {
+		if (getUid()!=other.getUid()) {
 			return false;
 		}
-		if (accounts == null || other.accounts == null) {
-			if(accounts != other.accounts)
-				return false;
-		} else {
-			//This has to be done manual, because otherwise we run into 
-			//call problems because of backreferences
-			if (accounts.size()!=other.accounts.size()) {
-				return false;
-			}
-			Iterator<Account> otherIterator = other.accounts.iterator();
-			for (Iterator<Account> iterator = accounts.iterator(); iterator.hasNext();) {
-				iterator.next().equals(otherIterator.next(), false);
+		if(rec) {
+			if (accounts == null || other.accounts == null) {
+				if(accounts != other.accounts)
+					return false;
+			} else {
+				//This has to be done manual, because otherwise we run into 
+				//recursion problems because of backreferences
+				if (accounts.size()!=other.accounts.size()) {
+					return false;
+				}
+				Iterator<Account> otherIterator = other.accounts.iterator();
+				for (Iterator<Account> iterator = accounts.iterator(); iterator.hasNext();) {
+					iterator.next().equals(otherIterator.next(), false);
+				}
 			}
 		}
 		if (companyBookkeepingAppointment == null) {
@@ -252,5 +261,50 @@ public class Company extends AbstractDataObject{
 			return false;
 		return true;
 	}
+
+	@Override
+	public List<AbstractDataObjectDatabaseQueueEntry> getPersistingList() {
+		LinkedList<AbstractDataObjectDatabaseQueueEntry> res=new LinkedList<>();
+		
+		Company companyState=new Company(getUid(), lastChange, new ArrayList<Account>(), companyName, companyNumber, companyBookkeepingAppointment);
+		
+		if(accountsLoaded) {
+			for (Account account : accounts) {
+				res.addAll(account.getPersistingList(true));
+				AbstractDataObjectDatabaseQueueEntry obj = res.get(res.size()-1);
+				if (obj instanceof Account.AccountDatabaseQueueEntry) {
+					((Account.AccountDatabaseQueueEntry) obj).addToCompany(companyState);
+				}
+			}
+		} else {
+			companyState.accounts=accounts;
+		}
+		
+		res.add(new AbstractDataObjectDatabaseQueueEntry(companyState,false));
+		return res;
+	}
+
+	@Override
+	public List<AbstractDataObjectDatabaseQueueEntry> getDeleteList() {
+		LinkedList<AbstractDataObjectDatabaseQueueEntry> res=new LinkedList<>();
+		
+		for (Account account : accounts) {
+			res.addAll(account.getDeleteList());
+		}
+		if(this.getUid()!=null) {
+			Company tmp = new Company(this);
+			tmp.accounts.clear();
+			AbstractDataObjectDatabaseQueueEntry me = new AbstractDataObjectDatabaseQueueEntry(tmp,true);
+			res.add(me);
+		}
+		
+		return res;
+	}
+
+	public boolean isAccountsLoaded() {
+		return accountsLoaded;
+	}
+	
+	
 
 }

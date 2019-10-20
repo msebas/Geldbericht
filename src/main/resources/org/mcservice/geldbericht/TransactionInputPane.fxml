@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import java.lang.*?>
+<?import java.net.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
@@ -155,11 +156,6 @@
                              <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
                           </HBox.margin>
                        </Button>
-                       <!-- Button fx:id="revertChangesButton" mnemonicParsing="false" onAction="#revertChanges" text="Änderungen Verwerfen">
-                          <HBox.margin>
-                             <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
-                          </HBox.margin>
-                       </Button -->
                        <Button fx:id="deleteActualMonthButton" mnemonicParsing="false" onAction="#deleteActualMonth" text="Aktuellen Monat löschen">
                           <HBox.margin>
                              <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
@@ -174,13 +170,16 @@
                     </children>
                  </HBox>
                  <ReflectionTableView fx:id="dataTableView" fx:value="org.mcservice.geldbericht.data.Transaction" VBox.vgrow="ALWAYS" editable="true" minWidth="700.0" prefHeight="319.0" prefWidth="965.0" GridPane.halignment="LEFT" GridPane.hgrow="ALWAYS" GridPane.valignment="TOP" GridPane.vgrow="ALWAYS">
-    <columnResizePolicy>
-        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-    </columnResizePolicy>
-</ReflectionTableView>
+    				<columnResizePolicy>
+        				<TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+    				</columnResizePolicy>
+				</ReflectionTableView>
               </children>
            </VBox>
        </items>
      </SplitPane>
-   </children>
+   	</children>
+   	<stylesheets>
+   		<URL value="@TransactionInputPane.css" />
+	</stylesheets>
 </VBox>
