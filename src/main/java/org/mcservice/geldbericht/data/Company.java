@@ -71,16 +71,26 @@ public class Company extends AbstractDataObject{
 	}
 	
 	public Company(Company otherCompany) {
+		this(otherCompany,null);
+	}
+	
+	private Company(Company otherCompany,List<Account> accounts) {
 		super(otherCompany.getUid(),otherCompany.lastChange);
 		this.companyName=otherCompany.companyName;
 		this.companyNumber=otherCompany.companyNumber;
 		this.companyBookkeepingAppointment=otherCompany.companyBookkeepingAppointment;
-		for (Account account : otherCompany.accounts) {
-			Account tmp=new Account(account);
-			tmp.company=this;
-			accounts.add(tmp);
+		if(accounts==null) {
+			for (Account account : otherCompany.accounts) {
+				Account tmp=new Account(account);
+				tmp.company=this;
+				this.accounts.add(tmp);
+			}
+			accountsLoaded=true;
+		} else {
+			this.accounts=accounts;
+			accountsLoaded=true;
 		}
-		accountsLoaded=true;
+		
 	}
 
 	/**
@@ -107,7 +117,7 @@ public class Company extends AbstractDataObject{
 	 * @param companyNumber
 	 * @param companyBookkeepingAppointment
 	 */
-	public Company(Long uid, ZonedDateTime lastChange,ArrayList<Account> accounts, String companyName,
+	public Company(Long uid, ZonedDateTime lastChange,List<Account> accounts, String companyName,
 			String companyNumber, String companyBookkeepingAppointment) {
 		super(uid,lastChange);
 		this.accounts = accounts;
@@ -266,16 +276,20 @@ public class Company extends AbstractDataObject{
 	public List<AbstractDataObjectDatabaseQueueEntry> getPersistingList() {
 		LinkedList<AbstractDataObjectDatabaseQueueEntry> res=new LinkedList<>();
 		
-		Company companyState=new Company(getUid(), lastChange, new ArrayList<Account>(), companyName, companyNumber, companyBookkeepingAppointment);
+		Company companyState=new Company(this,new ArrayList<Account>());
 		
 		if(accountsLoaded) {
 			for (Account account : accounts) {
-				res.addAll(account.getPersistingList(true));
-				AbstractDataObjectDatabaseQueueEntry obj = res.get(res.size()-1);
+				//This forces an account to be added to the persisting list, even if it is not
+				//required, but this has to be done to 
+				List<AbstractDataObjectDatabaseQueueEntry> tmp = account.getPersistingList(true);
+				res.addAll(tmp);
+			}
+			for(AbstractDataObjectDatabaseQueueEntry obj : res) {
 				if (obj instanceof Account.AccountDatabaseQueueEntry) {
 					((Account.AccountDatabaseQueueEntry) obj).addToCompany(companyState);
 				}
-			}
+			}		
 		} else {
 			companyState.accounts=accounts;
 		}
@@ -289,11 +303,13 @@ public class Company extends AbstractDataObject{
 		LinkedList<AbstractDataObjectDatabaseQueueEntry> res=new LinkedList<>();
 		
 		for (Account account : accounts) {
-			res.addAll(account.getDeleteList());
+			List<AbstractDataObjectDatabaseQueueEntry> tmp = account.getDeleteList();
+			if(null!=tmp) {
+				res.addAll(tmp);
+			}
 		}
 		if(this.getUid()!=null) {
-			Company tmp = new Company(this);
-			tmp.accounts.clear();
+			Company tmp = new Company(this,new ArrayList<Account>());
 			AbstractDataObjectDatabaseQueueEntry me = new AbstractDataObjectDatabaseQueueEntry(tmp,true);
 			res.add(me);
 		}

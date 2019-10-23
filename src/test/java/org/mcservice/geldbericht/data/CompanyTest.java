@@ -17,25 +17,25 @@
 package org.mcservice.geldbericht.data;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import javax.money.MonetaryAmount;
-
-import org.javamoney.moneta.Money;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.Mockito;
+import org.mcservice.geldbericht.data.AbstractDataObject.AbstractDataObjectDatabaseQueueEntry;
+import org.mcservice.geldbericht.data.Account.AccountDatabaseQueueEntry;
+import org.mcservice.geldbericht.data.MonthAccountTurnover.MonthAccountTurnoverDatabaseQueueEntry;
 
 class CompanyTest {
 
@@ -55,7 +55,7 @@ class CompanyTest {
 				val1="Str1";
 				val2="Str2";
 			} else if(field.getType()==List.class) {
-				val1=new ArrayList<Account>(List.of(Mockito.mock(Account.class)));
+				val1=new ArrayList<Account>(List.of(mock(Account.class)));
 				val2=new ArrayList<Account>();
 			} else {
 				assertTrue(false,"Not implemented yet");
@@ -120,4 +120,77 @@ class CompanyTest {
     	assertFalse(tstObj1.equals(tstObj3));
 	}
     
+    @Test
+    public void checkGetDeleteListNull() {
+    	Company tstObj=new Company(null, ZonedDateTime.now(), new ArrayList<>(),null,null,null);
+    	assertNull(tstObj.getDeleteList());
+    }
+    
+    @Test
+    public void checkGetDeleteListAccounts() {
+    	Account accountMock=mock(Account.class);
+    	List<AbstractDataObjectDatabaseQueueEntry> fakeList=List.of(mock(AccountDatabaseQueueEntry.class));
+		when(accountMock.getDeleteList()).thenReturn(fakeList).thenReturn(null);
+    	
+    	Company tstObj=new Company(1L, ZonedDateTime.now(), new ArrayList<>(List.of(accountMock,accountMock)),null,null,null);
+    	List<AbstractDataObjectDatabaseQueueEntry> resultList = tstObj.getDeleteList();
+    	
+    	verify(accountMock,times(2)).getDeleteList();
+    	assertEquals(2,resultList.size());
+    	assertTrue(resultList.get(0)==fakeList.get(0));
+    	assertTrue(resultList.get(1).isDelete());
+    	
+    	AbstractDataObject persistState = resultList.get(1).getStateToPersist();
+    	assertTrue(persistState.getUid()==tstObj.getUid());
+    	assertEquals(2,tstObj.getAccounts().size());
+    	assertTrue(((Company) persistState).getAccounts().isEmpty());
+    	assertFalse(persistState==tstObj);
+    }
+    
+    @Test
+    public void checkGetPersistingListNoAccounts() {
+    	Company tstObj=new Company(1L, ZonedDateTime.now(), new ArrayList<>(),null,null,null);
+    	List<AbstractDataObjectDatabaseQueueEntry> resultList = tstObj.getPersistingList();
+    	
+    	AbstractDataObject persistState = resultList.get(0).getStateToPersist();
+    	assertTrue(persistState.equals(tstObj));
+    	assertEquals(1,resultList.size());
+    	assertFalse(((Company) persistState).getAccounts()==tstObj.getAccounts());
+    	assertFalse(persistState==tstObj);
+    }
+    
+    @Test
+    public void checkGetPersistingListAccountsNotLoaded() throws Exception{
+    	@SuppressWarnings("unchecked")
+		Company tstObj=new Company(1L, ZonedDateTime.now(), mock(List.class),null,null,null);
+    	Company.class.getDeclaredField("accountsLoaded").setAccessible(true);
+    	Company.class.getDeclaredField("accountsLoaded").set(tstObj,false);
+    	Company.class.getDeclaredField("accountsLoaded").setAccessible(false);
+    	
+    	List<AbstractDataObjectDatabaseQueueEntry> resultList = tstObj.getPersistingList();
+    	
+    	AbstractDataObject persistState = resultList.get(0).getStateToPersist();
+    	assertTrue(persistState.equals(tstObj));
+    	assertEquals(1,resultList.size());
+    	assertTrue(((Company) persistState).getAccounts()==tstObj.getAccounts());
+    	assertFalse(persistState==tstObj);
+    }
+    
+    @Test
+    public void checkGetPersistListAccounts() {
+    	Account accountMock=mock(Account.class);
+    	List<AbstractDataObjectDatabaseQueueEntry> fakeList1=List.of(mock(AccountDatabaseQueueEntry.class));
+    	List<AbstractDataObjectDatabaseQueueEntry> fakeList2=List.of(mock(MonthAccountTurnoverDatabaseQueueEntry.class));
+		when(accountMock.getPersistingList(true)).thenReturn(fakeList1).thenReturn(fakeList2);
+    	
+    	Company tstObj=new Company(1L, ZonedDateTime.now(), new ArrayList<>(List.of(accountMock,accountMock)),null,null,null);
+    	List<AbstractDataObjectDatabaseQueueEntry> resultList = tstObj.getPersistingList();
+    	
+    	verify(accountMock,times(2)).getPersistingList(true);
+    	assertEquals(3,resultList.size());
+    	assertTrue(resultList.get(0)==fakeList1.get(0));
+    	assertTrue(resultList.get(1)==fakeList2.get(0));
+    	verify((AccountDatabaseQueueEntry) fakeList1.get(0)).addToCompany(tstObj);
+    	assertTrue(resultList.get(2).isMerge());
+    }
 }

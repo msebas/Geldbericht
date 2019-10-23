@@ -162,12 +162,18 @@ class UserTest {
     @Test
     public void checkGetDeleteList() {
     	User tstObj=new User(1L, ZonedDateTime.now(), null,null);
-    	List<AbstractDataObjectDatabaseQueueEntry> persList=tstObj.getPersistingList();
+    	List<AbstractDataObjectDatabaseQueueEntry> persList=tstObj.getDeleteList();
     	
     	User persState=(User) persList.get(0).getStateToPersist();
     	
-    	assertTrue( persList.get(0).isMerge());
+    	assertTrue( persList.get(0).isDelete());
     	assertFalse(persState==tstObj);
     	assertTrue( persState.equals(tstObj));
+    }
+    
+    @Test
+    public void checkGetDeleteListNull() {
+    	User tstObj=new User(null, ZonedDateTime.now(), null,null);
+    	assertNull(tstObj.getDeleteList());
     }
 }
