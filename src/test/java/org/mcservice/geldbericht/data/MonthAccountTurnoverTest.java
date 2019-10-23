@@ -97,8 +97,8 @@ class MonthAccountTurnoverTest {
 				val1=Money.of(1.2, "EUR");
 				val2=Money.of(3.4, "EUR");
 			} else if(field.getType()==Account.class) {
-				val1=new Account(2L,  ZonedDateTime.now(), "Name 1", "Name 2", null, null);
-				val2=new Account(1L,  ZonedDateTime.now(), "Name 3", "Name 4", null, null);
+				val1=new Account(2L,  ZonedDateTime.now(), "Name 1", "Name 2", null, null,null);
+				val2=new Account(1L,  ZonedDateTime.now(), "Name 3", "Name 4", null, null,null);
 			} else {
 				fail(String.format("Type %s not implemented yet",field.getType().getName()));
 			}
@@ -223,7 +223,7 @@ class MonthAccountTurnoverTest {
     @Test
     public void checkUpdateBalance() throws Exception {
     	LocalDate date = LocalDate.of(2019, 1, 1);
-    	Account acc=new Account(2L,  ZonedDateTime.now(), "Name 1", "Name 2", Money.of(2, "EUR"),null);
+    	Account acc=new Account(2L,  ZonedDateTime.now(), "Name 1", "Name 2", Money.of(2, "EUR"),null,null);
     	MonthAccountTurnover tstObj=MonthAccountTurnover.getEmptyMonthAccountTurnover(date,acc);
     	tstObj.appendTranaction(getTransaction(date.plusDays(1), -4.2));
     	ZonedDateTime act = ZonedDateTime.now();
@@ -251,7 +251,7 @@ class MonthAccountTurnoverTest {
     @Test
     public void checkRemoveTransaction() throws Exception {
     	LocalDate date = LocalDate.of(2019, 1, 1);
-    	Account acc=new Account(2L,  ZonedDateTime.now(), "Name 1", "Name 2", Money.of(2, "EUR"),null);
+    	Account acc=new Account(2L,  ZonedDateTime.now(), "Name 1", "Name 2", Money.of(2, "EUR"),null,null);
     	MonthAccountTurnover tstObj=Mockito.spy(MonthAccountTurnover.getEmptyMonthAccountTurnover(date,acc));
     	Transaction actTransaction = getTransaction(date.plusDays(2), 2.2);
     	tstObj.appendTranaction(getTransaction(date.plusDays(1), -4.2));
@@ -273,7 +273,7 @@ class MonthAccountTurnoverTest {
     @Test
     public void checkRemoveAllTransactions() throws Exception {
     	LocalDate date = LocalDate.of(2019, 1, 1);
-    	Account acc=new Account(2L,  ZonedDateTime.now(), "Name 1", "Name 2", Money.of(2, "EUR"),null);
+    	Account acc=new Account(2L,  ZonedDateTime.now(), "Name 1", "Name 2", Money.of(2, "EUR"),null,null);
     	MonthAccountTurnover tstObj=Mockito.spy(MonthAccountTurnover.getEmptyMonthAccountTurnover(date,acc));
     	Transaction actTransaction = getTransaction(date.plusDays(2), 2.2);
     	tstObj.appendTranaction(getTransaction(date.plusDays(1), -4.2));
@@ -290,8 +290,6 @@ class MonthAccountTurnoverTest {
     	assertTrue(tstObj.getTransactions().isEmpty());
     	assertTrue(tstObj.isTransactionsLoaded());
     }
-    
-    
 
     @Test 
     public void checkGetPersistingListChanged() {
@@ -376,9 +374,7 @@ class MonthAccountTurnoverTest {
     	MonthAccountTurnover month=new MonthAccountTurnover(1L, ZonedDateTime.now(), null, 
     			null, accountMock,zero,zero,zero,zero,zero,zero);
     	month.setInitialAssets(one);
-    	MonthAccountTurnover.class.getDeclaredField("transactionsLoaded").setAccessible(true);
-    	MonthAccountTurnover.class.getDeclaredField("transactionsLoaded").set(month,false);
-    	MonthAccountTurnover.class.getDeclaredField("transactionsLoaded").setAccessible(false);
+    	disableTransactionsLoaded(month);
     	
     	MonthAccountTurnover.MonthAccountTurnoverDatabaseQueueEntry tstObj=
     			month.new MonthAccountTurnoverDatabaseQueueEntry(month, false);
@@ -389,7 +385,14 @@ class MonthAccountTurnoverTest {
     	tstObj.applyPersistedState(month);
     	assertFalse(month.isChanged());
     }
-    
+
+    static void disableTransactionsLoaded(MonthAccountTurnover month)
+			throws Exception{
+		MonthAccountTurnover.class.getDeclaredField("transactionsLoaded").setAccessible(true);
+    	MonthAccountTurnover.class.getDeclaredField("transactionsLoaded").set(month,false);
+    	MonthAccountTurnover.class.getDeclaredField("transactionsLoaded").setAccessible(false);
+	}
+        
     @Test 
     public void checkApplyPersistedStateChangedNoTransactionsLoadedChangedState()  throws Exception{
     	Money zero=Money.of(0,"EUR"),one=Money.of(1,"EUR");
@@ -397,9 +400,7 @@ class MonthAccountTurnoverTest {
     	MonthAccountTurnover month=new MonthAccountTurnover(1L, ZonedDateTime.now(), null, 
     			null, accountMock,zero,zero,zero,zero,zero,zero);
     	month.setInitialAssets(one);
-    	MonthAccountTurnover.class.getDeclaredField("transactionsLoaded").setAccessible(true);
-    	MonthAccountTurnover.class.getDeclaredField("transactionsLoaded").set(month,false);
-    	MonthAccountTurnover.class.getDeclaredField("transactionsLoaded").setAccessible(false);
+    	disableTransactionsLoaded(month);
     	MonthAccountTurnover persistedState=new MonthAccountTurnover(1L, ZonedDateTime.now(), null, 
     			null, accountMock,zero,zero,zero,zero,zero,zero);
     	
@@ -413,7 +414,6 @@ class MonthAccountTurnoverTest {
     	assertTrue(month.isChanged());
     }
     
-
     @Test 
     public void checkApplyPersistedStateChangedTransactionsLoaded() {
     	Money zero=Money.of(0,"EUR"),one=Money.of(1,"EUR");
@@ -434,7 +434,7 @@ class MonthAccountTurnoverTest {
     
     @Test
     public void checkGetDeleteListNullEmpty() {
-    	Money zero=Money.of(0,"EUR"),one=Money.of(1,"EUR");
+    	Money zero=Money.of(0,"EUR");
     	Account accountMock=Mockito.mock(Account.class);
     	MonthAccountTurnover month=new MonthAccountTurnover(null, ZonedDateTime.now(), new ArrayList<>(), 
     			null, accountMock,zero,zero,zero,zero,zero,zero);

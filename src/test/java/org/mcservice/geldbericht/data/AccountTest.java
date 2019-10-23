@@ -34,6 +34,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mcservice.geldbericht.data.AbstractDataObject.AbstractDataObjectDatabaseQueueEntry;
+import org.mcservice.geldbericht.data.MonthAccountTurnover.MonthAccountTurnoverDatabaseQueueEntry;
 import org.mockito.Mockito;
 
 class AccountTest {
@@ -79,8 +81,8 @@ class AccountTest {
     public void checkSetterAndEquals(Method setter, Method getter, 
     		Object val1, Object val2,boolean setNull) throws Exception {
     	ZonedDateTime act=ZonedDateTime.now();
-    	Account tstObj1=new Account(null, act, null,null,val1 instanceof List ? Money.of(0,"EUR") : null ,null);
-    	Account tstObj2=new Account(null, act, null,null,val1 instanceof List ? Money.of(0,"EUR") : null ,null);
+    	Account tstObj1=new Account(null, act, null,null,val1 instanceof List ? Money.of(0,"EUR") : null ,null,new ArrayList<>());
+    	Account tstObj2=new Account(null, act, null,null,val1 instanceof List ? Money.of(0,"EUR") : null ,null,new ArrayList<>());
     	if(setNull) {
     		setter.invoke(tstObj1,new Object[] {null});
     		setter.invoke(tstObj2,new Object[] {null});
@@ -113,8 +115,8 @@ class AccountTest {
     @Test
     public void checkEqualsBalance() throws Exception {
     	ZonedDateTime act=ZonedDateTime.now();
-    	Account tstObj1=new Account(null, act, null, null, Money.of(0,"EUR"), null);
-    	Account tstObj2=new Account(null, act, null, null, Money.of(0,"EUR"), null);
+    	Account tstObj1=new Account(null, act, null, null, Money.of(0,"EUR"), null,null);
+    	Account tstObj2=new Account(null, act, null, null, Money.of(0,"EUR"), null,null);
     	
     	Field field = Account.class.getDeclaredField("balance");
     	field.setAccessible(true);
@@ -132,8 +134,8 @@ class AccountTest {
     @Test
     public void checkEqualsInitialBalance() throws Exception {
     	ZonedDateTime act=ZonedDateTime.now();
-    	Account tstObj1=new Account(null, act, null, null, Money.of(0,"EUR"), null);
-    	Account tstObj2=new Account(null, act, null, null, Money.of(0,"EUR"), null);
+    	Account tstObj1=new Account(null, act, null, null, Money.of(0,"EUR"), null,null);
+    	Account tstObj2=new Account(null, act, null, null, Money.of(0,"EUR"), null,null);
     	
     	//To prevent the setter from changing the value of the balance field
     	Field field = Account.class.getDeclaredField("initialBalance");
@@ -152,10 +154,10 @@ class AccountTest {
     @Test
     public void checkEqualsUid() throws Exception {
     	ZonedDateTime act=ZonedDateTime.now();
-    	Account tstObj1=new Account(1L, act, null,null,null,null);
-    	Account tstObj2=new Account(null, act, null,null,null,null);;
-    	Account tstObj3=new Account(2L, act, null,null,null,null);
-    	Account tstObj4=new Account(1L, act, null,null,null,null);;
+    	Account tstObj1=new Account(1L, act, null,null,null,null,null);
+    	Account tstObj2=new Account(null, act, null,null,null,null,null);
+    	Account tstObj3=new Account(2L, act, null,null,null,null,null);
+    	Account tstObj4=new Account(1L, act, null,null,null,null,null);
     	
     	assertTrue(tstObj1.equals(tstObj1,true));
     	assertTrue(tstObj1.equals(tstObj4,true));
@@ -169,7 +171,7 @@ class AccountTest {
     @Test
     public void checkUpdateBalanceSingleMonth(){
     	final String e="EUR";
-    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,Money.of(1, e),null);
+    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,Money.of(1, e),null,new ArrayList<>());
     	
     	ZonedDateTime act1 = ZonedDateTime.now();
     	MonthAccountTurnover monthMock1=Mockito.mock(MonthAccountTurnover.class);
@@ -190,7 +192,7 @@ class AccountTest {
     @Test
     public void checkUpdateBalanceTwoMonths(){
     	final String e="EUR";
-    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,Money.of(1, e),null);
+    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,Money.of(1, e),null,new ArrayList<>());
     	
     	ZonedDateTime act2 = ZonedDateTime.now();
     	ZonedDateTime act1 = ZonedDateTime.now();
@@ -228,7 +230,7 @@ class AccountTest {
     @Test
     public void checkSetInitialBalanceException(){
     	final String e="EUR";
-    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,null,null);
+    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,null,null,new ArrayList<>());
     	MonthAccountTurnover monthMock1=Mockito.mock(MonthAccountTurnover.class);
 		tstObj.setInitialBalance(Money.of(1, e));
 		tstObj.getBalanceMonths().add(monthMock1);
@@ -239,7 +241,7 @@ class AccountTest {
     
     @Test
     public void checkNullBalanceMonthsUpdate(){
-    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,null,null);
+    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,null,null,null);
     	assertNull(tstObj.updateBalance());
     	tstObj.setBalanceMonths(null);
     	assertNull(tstObj.updateBalance());
@@ -248,7 +250,7 @@ class AccountTest {
     @Test
     public void checkAddBalanceMonth(){
     	final String e="EUR";
-    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,Money.of(1, e),null);
+    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,Money.of(1, e),null,new ArrayList<>());
     	
     	ZonedDateTime act1 = ZonedDateTime.now();
     	MonthAccountTurnover monthMock1=Mockito.mock(MonthAccountTurnover.class);
@@ -265,9 +267,9 @@ class AccountTest {
     @SuppressWarnings("unlikely-arg-type")
 	@Test
     public void checkBaseEquals(){
-    	Account tstObj1=new Account(1L, null, null,null,null,null);
-    	Account tstObj2=new Account(2L, null, null,null,null,null);
-    	Account tstObj3=new Account(1L, null, null,null,null,null);
+    	Account tstObj1=new Account(1L, null, null,null,null,null,null);
+    	Account tstObj2=new Account(2L, null, null,null,null,null,null);
+    	Account tstObj3=new Account(1L, null, null,null,null,null,null);
     	
     	assertTrue(tstObj1.equals(tstObj1));
     	assertTrue(tstObj1.equals(tstObj3));
@@ -275,4 +277,250 @@ class AccountTest {
     	assertFalse(tstObj1.equals(Integer.valueOf(0)));
     }
     
+    @Test 
+    public void checkGetDeleteListUidNoMonths(){
+    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,null,null,List.of());
+    	
+    	List<AbstractDataObjectDatabaseQueueEntry> resList=tstObj.getDeleteList();
+    	
+    	assertEquals(1,resList.size());
+    	assertEquals(1L,resList.get(0).getStateToPersist().getUid());
+    	assertTrue(resList.get(0).isDelete());
+    }
+    
+    @Test 
+    public void checkGetDeleteListNoUid(){
+    	MonthAccountTurnover monthMock1=Mockito.mock(MonthAccountTurnover.class);
+    	MonthAccountTurnover monthMock2=Mockito.mock(MonthAccountTurnover.class);
+    	Account tstObj=new Account(null, ZonedDateTime.now(), null,null,null,null,List.of(monthMock1,monthMock2));
+    	
+    	List<AbstractDataObjectDatabaseQueueEntry> answerList=List.of(Mockito.mock(MonthAccountTurnoverDatabaseQueueEntry.class));
+    	Mockito.when(monthMock1.getDeleteList()).thenReturn(answerList);
+    	List<AbstractDataObjectDatabaseQueueEntry> resList=tstObj.getDeleteList();
+    	
+    	Mockito.verify(monthMock1).getDeleteList();
+    	assertEquals(1,resList.size());
+    	assertEquals(answerList.get(0),resList.get(0));
+    }
+    
+    @Test 
+    public void checkGetDeleteListNull(){
+    	Account tstObj=new Account(null, ZonedDateTime.now(), null,null,null,null,new ArrayList<>());
+    	assertNull(tstObj.getDeleteList());
+    }
+    
+    @Test 
+    public void checkGetPersistingListNull(){
+    	Money zero=Money.of(0,"EUR");
+    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,zero,null,new ArrayList<>());
+    	assertNull(tstObj.getPersistingList());
+    }
+    
+    @Test 
+    public void checkGetPersistingListChangedMonthsLoaded(){
+    	Money zero=Money.of(0,"EUR");
+    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,zero,null,new ArrayList<>());
+    	tstObj.setAccountName("Change Name");
+    	
+    	assertTrue(tstObj.isChanged());
+    	List<AbstractDataObjectDatabaseQueueEntry> resList=tstObj.getPersistingList();
+    	
+    	assertTrue(tstObj.equals(resList.get(0).getStateToPersist(),true));
+    	assertTrue(resList.get(0).isMerge());
+    }
+    
+    @Test 
+    public void checkGetPersistingListChangedNoMonthsLoaded() throws Exception{
+    	Money zero=Money.of(0,"EUR");
+    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,zero,null,new ArrayList<>());
+    	tstObj.setAccountName("Change Name");
+    	setMonthsLoadedToFalse(tstObj);
+    	
+    	assertTrue(tstObj.isChanged());
+    	assertFalse(tstObj.isMonthsLoaded());
+    	List<AbstractDataObjectDatabaseQueueEntry> resList=tstObj.getPersistingList();
+    	
+    	assertTrue(tstObj.equals(resList.get(0).getStateToPersist(),true));
+    	assertTrue(resList.get(0).isMerge());
+    }
+
+	protected void setMonthsLoadedToFalse(Account tstObj) throws NoSuchFieldException, IllegalAccessException {
+		Account.class.getDeclaredField("monthsLoaded").setAccessible(true);
+    	Account.class.getDeclaredField("monthsLoaded").set(tstObj,false);
+    	Account.class.getDeclaredField("monthsLoaded").setAccessible(false);
+	}
+
+    @Test 
+    public void checkGetPersistingListMonthNoTransactionsNoMonthChanges(){
+    	Money zero=Money.of(0,"EUR");
+    	
+    	MonthAccountTurnover month=new MonthAccountTurnover(1L, ZonedDateTime.now(), new ArrayList<>(), 
+    			null, null,zero,zero,zero,zero,zero,zero);
+    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,zero,null,new ArrayList<>(List.of(month)));
+    	tstObj.setAccountName("Change Name");
+    	assertTrue(tstObj.isChanged());
+    	List<AbstractDataObjectDatabaseQueueEntry> resList=tstObj.getPersistingList();
+    	Account resAccount=(Account) resList.get(0).getStateToPersist();
+    	assertFalse(resAccount.getBalanceMonths().get(0)==month);
+    	assertTrue(resAccount.getBalanceMonths().get(0).equals(month,true));
+    	assertFalse(resAccount.getBalanceMonths().get(0).getTransactions()==month.getTransactions());
+    }
+
+    @Test 
+    public void checkGetPersistingListMonthNoTransactionsLoadedNoMonthChanges() throws Exception{
+    	Money zero=Money.of(0,"EUR");
+    	
+    	MonthAccountTurnover month=new MonthAccountTurnover(1L, ZonedDateTime.now(), new ArrayList<>(), 
+    			null, null,zero,zero,zero,zero,zero,zero);
+    	MonthAccountTurnoverTest.disableTransactionsLoaded(month);
+    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,zero,null,new ArrayList<>(List.of(month)));
+    	tstObj.setAccountName("Change Name");
+    	assertTrue(tstObj.isChanged());
+    	List<AbstractDataObjectDatabaseQueueEntry> resList=tstObj.getPersistingList();
+    	Account resAccount=(Account) resList.get(0).getStateToPersist();
+    	assertFalse(resAccount.getBalanceMonths().get(0)==month);
+    	assertTrue(resAccount.getBalanceMonths().get(0).equals(month,true));
+    	assertTrue(resAccount.getBalanceMonths().get(0).getTransactions()==month.getTransactions());
+    }
+    
+
+    @Test 
+    public void checkGetPersistingListOnlyMonthChanged() throws Exception{
+    	Money zero=Money.of(0,"EUR"),one=Money.of(1, "EUR");
+    	
+    	MonthAccountTurnover month=new MonthAccountTurnover(1L, ZonedDateTime.now(), new ArrayList<>(), 
+    			null, null,zero,zero,zero,zero,zero,zero);
+    	month.setInitialAssets(one);
+    	
+    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,zero,null,new ArrayList<>(List.of(month)));
+    	assertTrue(month.isChanged());
+    	List<AbstractDataObjectDatabaseQueueEntry> resList=tstObj.getPersistingList();
+    	assertEquals(month,resList.get(0).getStateToPersist());
+    }
+    
+    @Test 
+    public void checkGetPersistingListTransactionsOnlyMonthChanged() throws Exception {
+    	Money zero=Money.of(0,"EUR"),one=Money.of(1, "EUR");
+    	
+    	Transaction transaction=new Transaction(1L, ZonedDateTime.now(), 1, 
+    			zero,zero,null,null,null,null,null,null,null,null);
+    	
+    	MonthAccountTurnover month=new MonthAccountTurnover(1L, ZonedDateTime.now(), 
+    			new ArrayList<>(List.of(transaction)), null, null,zero,zero,zero,zero,zero,zero);
+    	month.setInitialAssets(one);
+    	
+    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,zero,null,new ArrayList<>(List.of(month)));
+    	assertFalse(tstObj.isChanged());
+    	assertTrue(month.isChanged());
+    	assertFalse(transaction.isChanged());
+    	List<AbstractDataObjectDatabaseQueueEntry> resList=tstObj.getPersistingList();
+    	
+    	MonthAccountTurnover persistState = (MonthAccountTurnover) resList.get(0).getStateToPersist();
+    	assertFalse(month==persistState);
+    	assertEquals(month,persistState);
+    	assertTrue(tstObj.equals(resList.get(1).getStateToPersist(),true));
+    	assertEquals(2,resList.size());
+    }
+    
+    @Test 
+    public void checkGetPersistingListTransactionsTransactionChanged() throws Exception {
+    	Money zero=Money.of(0,"EUR");
+    	
+    	Transaction transaction=new Transaction(1L, ZonedDateTime.now(), 0, 
+    			zero,zero,null,null,null,null,null,null,null,null);
+    	transaction.setNumber(1);
+    	
+    	MonthAccountTurnover month=new MonthAccountTurnover(1L, ZonedDateTime.now(), 
+    			new ArrayList<>(List.of(transaction)), null, null,zero,zero,zero,zero,zero,zero);
+    	
+    	Account tstObj=new Account(1L, ZonedDateTime.now(), null,null,zero,null,new ArrayList<>(List.of(month)));
+    	assertFalse(tstObj.isChanged());
+    	assertFalse(month.isChanged());
+    	assertTrue(transaction.isChanged());
+    	List<AbstractDataObjectDatabaseQueueEntry> resList=tstObj.getPersistingList();
+    	
+    	Transaction persistState = (Transaction) resList.get(0).getStateToPersist();
+    	assertFalse(transaction==persistState);
+    	assertEquals(transaction,persistState);
+    	assertEquals(1,resList.size());
+    }
+    
+    @Test 
+    public void checkApplyPersistedStateNullNotChanged() {
+    	Money zero=Money.of(0,"EUR");
+    	Account account=new Account(null, ZonedDateTime.now(), null,null,zero,null,new ArrayList<>());
+    	Account persistedState=new Account(1L, ZonedDateTime.now(), null,null,zero,null,new ArrayList<>());
+    	
+    	assertTrue(account.isChanged());
+    	Account.AccountDatabaseQueueEntry tstObj=account.new AccountDatabaseQueueEntry(account, false);
+    	assertEquals(account,tstObj.getStateToPersist());
+    	
+    	tstObj.applyPersistedState(persistedState);
+    	assertEquals(1L,account.getUid());
+    	assertFalse(account.isChanged());
+    }
+
+    @Test 
+    public void checkApplyPersistedStateChangedNoTransactionsLoadedNoChangedState() throws Exception{
+    	Money zero=Money.of(0,"EUR");
+    	Account account=new Account(null, ZonedDateTime.now(), null,null,zero,null,new ArrayList<>());
+    	Account persistedState=new Account(1L, ZonedDateTime.now(), null,null,zero,null,new ArrayList<>());
+    	
+    	setMonthsLoadedToFalse(account);
+    	assertTrue(account.isChanged());
+    	Account.AccountDatabaseQueueEntry tstObj=account.new AccountDatabaseQueueEntry(account, false);
+    	assertEquals(account,tstObj.getStateToPersist());
+    	
+    	tstObj.applyPersistedState(persistedState);
+    	assertEquals(1L,account.getUid());
+    	assertFalse(account.isChanged());
+    	assertFalse(account.isMonthsLoaded());
+    }
+    
+    @Test 
+    public void checkApplyPersistedStateNullChanged() {
+    	Money zero=Money.of(0,"EUR"),one=Money.of(1,"EUR");
+    	Account account=new Account(null, ZonedDateTime.now(), null,null,zero,null,new ArrayList<>());
+    	Account persistedState=new Account(1L, ZonedDateTime.now(), null,null,one,null,new ArrayList<>());
+    	
+    	assertTrue(account.isChanged());
+    	Account.AccountDatabaseQueueEntry tstObj=account.new AccountDatabaseQueueEntry(account, false);
+    	assertEquals(account,tstObj.getStateToPersist());
+    	
+    	tstObj.applyPersistedState(persistedState);
+    	assertEquals(1L,account.getUid());
+    	assertTrue(account.isChanged());
+    }
+
+    @Test 
+    public void checkApplyPersistedStateChangedNoTransactionsLoadedChangedState() throws Exception{
+    	Money zero=Money.of(0,"EUR"),one=Money.of(1,"EUR");
+    	Account account=new Account(null, ZonedDateTime.now(), null,null,zero,null,new ArrayList<>());
+    	Account persistedState=new Account(1L, ZonedDateTime.now(), null,null,one,null,new ArrayList<>());
+    	
+    	setMonthsLoadedToFalse(account);
+    	assertTrue(account.isChanged());
+    	Account.AccountDatabaseQueueEntry tstObj=account.new AccountDatabaseQueueEntry(account, false);
+    	assertEquals(account,tstObj.getStateToPersist());
+    	
+    	tstObj.applyPersistedState(persistedState);
+    	assertEquals(1L,account.getUid());
+    	assertTrue(account.isChanged());
+    }
+    
+    @Test 
+    public void checkAddToCompany() throws Exception{
+    	Money zero=Money.of(0,"EUR");
+    	Account account=new Account(null, ZonedDateTime.now(), null,null,zero,null,new ArrayList<>());
+    	Account.AccountDatabaseQueueEntry tstObj=account.new AccountDatabaseQueueEntry(account, false);
+    	
+    	Company companyMock=Mockito.mock(Company.class);
+    	List<Account> resultList=new ArrayList<>();
+		Mockito.when(companyMock.getAccounts()).thenReturn(resultList);
+    	
+    	tstObj.addToCompany(companyMock);
+    	
+    	assertEquals(1,resultList.size());
+    	assertTrue(account==resultList.get(0));
+    }
 }

@@ -100,7 +100,7 @@ public class Account extends AbstractDataObject{
 	 * @param accountName
 	 */
 	public Account(Long uid, ZonedDateTime lastChange, String accountNumber, String accountName,
-			MonetaryAmount initialBalance, Company company) {
+			MonetaryAmount initialBalance, Company company, List<MonthAccountTurnover> balanceMonths) {
 		super(uid,lastChange);
 		this.accountNumber = accountNumber;
 		this.accountName = accountName;
@@ -109,8 +109,12 @@ public class Account extends AbstractDataObject{
 		this.company=company;
 		if(uid==null) {
 			this.changed=true;
+		}
+		this.balanceMonths=balanceMonths;
+		if(this.balanceMonths!=null) {
 			this.monthsLoaded=true;
 		}
+			
 	}
 	
 	
@@ -421,6 +425,10 @@ public class Account extends AbstractDataObject{
 		return monthsLoaded;
 	}
 	
+	public boolean isChanged() {
+		return changed;
+	}
+	
 	public class AccountDatabaseQueueEntry extends AbstractDataObjectDatabaseQueueEntry{
 
 		protected AccountDatabaseQueueEntry(Account stateToPersist, boolean delete) {
@@ -455,17 +463,17 @@ public class Account extends AbstractDataObject{
 		return getPersistingList(false);
 	}
 	
-	List<AbstractDataObjectDatabaseQueueEntry> getPersistingList(boolean addAccount) {
+	List<AbstractDataObjectDatabaseQueueEntry> getPersistingList(boolean forceAddAccount) {
 		LinkedList<AbstractDataObjectDatabaseQueueEntry> res=new LinkedList<>();
 		updateBalance();
 		
 		List<MonthAccountTurnover> months = null;
 		if(monthsLoaded) {
-			months = extracted(res);
+			months = addChangedMonthsAndGetMonthList(res);
 		}
 		
-		if(addAccount || changed) {
-			Account persistAccount=new Account(getUid(), lastChange, accountNumber, accountName, initialBalance, company);
+		if(forceAddAccount || changed) {
+			Account persistAccount=new Account(getUid(), lastChange, accountNumber, accountName, initialBalance, company,null);
 			persistAccount.balance=balance;
 			persistAccount.balanceMonths=null==months?balanceMonths:months;
 			res.add(new AccountDatabaseQueueEntry(persistAccount,false));
@@ -478,7 +486,7 @@ public class Account extends AbstractDataObject{
 		}
 	}
 
-	List<MonthAccountTurnover> extracted(LinkedList<AbstractDataObjectDatabaseQueueEntry> res) {
+	List<MonthAccountTurnover> addChangedMonthsAndGetMonthList(LinkedList<AbstractDataObjectDatabaseQueueEntry> res) {
 		List<MonthAccountTurnover> months;
 		months=new ArrayList<>();
 		for (MonthAccountTurnover month : balanceMonths) {
@@ -516,7 +524,11 @@ public class Account extends AbstractDataObject{
 			res.add(me);
 		}
 				
-		return res;
+		if(res.size()>0) {
+			return res;
+		} else {
+			return null;
+		}
 	}
 	
 }

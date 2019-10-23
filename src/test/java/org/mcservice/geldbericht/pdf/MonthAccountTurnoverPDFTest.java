@@ -42,7 +42,7 @@ class MonthAccountTurnoverPDFTest {
 	@BeforeEach
 	public void setup() {
 		Company company=new Company(1L, ZonedDateTime.now(), null, "Company 1", "55555", "4444064444");
-		Account account=new Account(2L, ZonedDateTime.now(), "4444", "Account 1", Money.of(2200, "EUR"),company);
+		Account account=new Account(2L, ZonedDateTime.now(), "4444", "Account 1", Money.of(2200, "EUR"),company,new ArrayList<>());
 		company.setAccounts(Collections.singletonList(account));
 		VatType vat=new VatType("Full Vat Name", "12%", new BigDecimal(0.12), true);
 		

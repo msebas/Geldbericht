@@ -34,7 +34,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import javax.money.MonetaryAmount;
 import org.javamoney.moneta.Money;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -123,7 +122,7 @@ class AccountManagerTest extends MockedApplicationTest{
 		result.add(new Account(Long.valueOf(12), ZonedDateTime.now(),
 				String.format("%05d",allAccounts+n-1),
 				String.format("Account UID  %5d",allAccounts+n-1),
-				Money.of(allAccounts+n-1,"EUR"), company));	
+				Money.of(allAccounts+n-1,"EUR"), company,new ArrayList<>()));	
 		allAccounts+=n;
 		return result;
 	}

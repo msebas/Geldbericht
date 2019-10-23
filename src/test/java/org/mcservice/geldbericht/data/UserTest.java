@@ -24,12 +24,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mcservice.geldbericht.data.AbstractDataObject.AbstractDataObjectDatabaseQueueEntry;
 
 class UserTest {
 
@@ -145,5 +147,27 @@ class UserTest {
     	assertTrue(diff.toNanos()<0.2e9);
     }
     
-        
+    @Test
+    public void checkGetPersistList() {
+    	User tstObj=new User(1L, ZonedDateTime.now(), null,null);
+    	List<AbstractDataObjectDatabaseQueueEntry> persList=tstObj.getPersistingList();
+    	
+    	User persState=(User) persList.get(0).getStateToPersist();
+    	
+    	assertTrue( persList.get(0).isMerge());
+    	assertFalse(persState==tstObj);
+    	assertTrue( persState.equals(tstObj));
+    }
+    
+    @Test
+    public void checkGetDeleteList() {
+    	User tstObj=new User(1L, ZonedDateTime.now(), null,null);
+    	List<AbstractDataObjectDatabaseQueueEntry> persList=tstObj.getPersistingList();
+    	
+    	User persState=(User) persList.get(0).getStateToPersist();
+    	
+    	assertTrue( persList.get(0).isMerge());
+    	assertFalse(persState==tstObj);
+    	assertTrue( persState.equals(tstObj));
+    }
 }

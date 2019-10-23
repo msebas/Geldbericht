@@ -107,7 +107,7 @@ class InMemoryDbAbstractionLayerTest {
 
 	@Test
 	public void testPersistAccount() throws Exception {
-		Account account=new Account(1L,ZonedDateTime.now(),null,null,null,null);		
+		Account account=new Account(1L,ZonedDateTime.now(),null,null,null,null,null);		
 		
 		DbAbstractionLayer db = new DbAbstractionLayer();
 		db.persistAccount(account);
@@ -190,11 +190,11 @@ class InMemoryDbAbstractionLayerTest {
 	@Test
 	public void testManageAccount() throws Exception {
 		ZonedDateTime act = ZonedDateTime.now();
-		Account Account=new Account(null,act, null,null, null, null);
+		Account Account=new Account(null,act, null,null, null, null,null);
 		
 		DbAbstractionLayer db = new DbAbstractionLayer();
 		Account persAccounts=db.manageAccounts(new ArrayList<Account>(List.of(Account)),act).get(0);
-		Account=new Account(1L,act, null,null, null, null);
+		Account=new Account(1L,act, null,null, null, null,null);
 		
 		assertEquals(Account,persAccounts);
 	}
@@ -305,7 +305,7 @@ class InMemoryDbAbstractionLayerTest {
 
 	@Test
 	public void testMergeAccount() throws Exception {
-		Account account=new Account(1L,ZonedDateTime.now(),null,null,null,null);		
+		Account account=new Account(1L,ZonedDateTime.now(),null,null,null,null,null);		
 		
 		DbAbstractionLayer db = Mockito.spy(new DbAbstractionLayer());
 		db.updateAccount(account);

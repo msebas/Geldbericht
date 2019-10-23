@@ -298,7 +298,11 @@ public class Company extends AbstractDataObject{
 			res.add(me);
 		}
 		
-		return res;
+		if (res.size()>0) {
+			return res;
+		} else {
+			return null;
+		}
 	}
 
 	public boolean isAccountsLoaded() {

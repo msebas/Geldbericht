@@ -210,7 +210,7 @@ class TransactionInputPanceControllerTest extends MockedApplicationTest{
 		for (int j = 0; j < n; j++) {
 			result.add(new Account((long) allMembers,ZonedDateTime.now(),String.format("%05d",allMembers),
 								String.format("Account %5d",allMembers),
-								Money.of(10*allMembers,"EUR"), company));
+								Money.of(10*allMembers,"EUR"), company,new ArrayList<>()));
 			createMonths(m,o,result.get(result.size()-1));
 			allMembers++;
 		}

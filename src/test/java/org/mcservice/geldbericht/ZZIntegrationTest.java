@@ -190,7 +190,7 @@ class ZZIntegrationTest extends MockedApplicationTest{
 			return result;
 		for (int j = 0; j < n; j++) {
 			Account a=new Account((long) allMembers,ZonedDateTime.now(),String.format("%05d",allMembers),
-					String.format("Account %5d",allMembers),Money.of(10*allMembers,"EUR"), company);
+					String.format("Account %5d",allMembers),Money.of(10*allMembers,"EUR"), company,new ArrayList<>());
 			a=db.persistAccount(a);
 			createMonths(m,o,vatNr,a);
 			a=db.updateAccount(a);
